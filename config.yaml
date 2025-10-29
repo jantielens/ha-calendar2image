@@ -1,0 +1,19 @@
+name: Calendar2Image
+version: "0.1.0"
+slug: calendar2image
+description: Generate images from calendar data (ICS URLs) using customizable templates
+url: https://github.com/jantielens/ha-calendar2image
+arch:
+  - aarch64
+  - armv7
+init: false
+startup: application
+boot: auto
+options:
+  port: 3000
+schema:
+  port: port
+ports:
+  3000/tcp: 3000
+ports_description:
+  3000/tcp: Web server port for API endpoints
