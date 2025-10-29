@@ -14,6 +14,6 @@ options:
 schema:
   port: port
 ports:
-  3000/tcp: 3000
+  3000/tcp: null
 ports_description:
   3000/tcp: Web server port for API endpoints
