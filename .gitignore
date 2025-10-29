@@ -30,3 +30,9 @@ build/
 
 # Plan files
 plan.md
+
+# Development/Testing
+data/
+src/
+package.json
+package-lock.json
