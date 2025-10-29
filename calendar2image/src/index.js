@@ -1,31 +1,7 @@
 const express = require('express');
-const fs = require('fs');
-const path = require('path');
 
 const app = express();
-
-// Read configuration from Home Assistant options
-function getConfig() {
-    const optionsPath = '/data/options.json';
-    let port = 3000; // Default port
-
-    try {
-        if (fs.existsSync(optionsPath)) {
-            const options = JSON.parse(fs.readFileSync(optionsPath, 'utf8'));
-            port = options.port || port;
-            console.log('Loaded configuration from options.json');
-        } else {
-            console.log('No options.json found, using defaults');
-        }
-    } catch (error) {
-        console.error('Error reading options.json:', error.message);
-        console.log('Using default configuration');
-    }
-
-    return { port };
-}
-
-const config = getConfig();
+const PORT = 3000; // Fixed internal port (HA handles external port mapping)
 
 // Middleware to log requests
 app.use((req, res, next) => {
@@ -67,11 +43,11 @@ app.use((err, req, res, next) => {
 });
 
 // Start server
-const server = app.listen(config.port, '0.0.0.0', () => {
+const server = app.listen(PORT, '0.0.0.0', () => {
     console.log('='.repeat(50));
     console.log('Calendar2Image Add-on');
     console.log('='.repeat(50));
-    console.log(`Server running on port ${config.port}`);
+    console.log(`Server running on port ${PORT}`);
     console.log(`Available endpoints:`);
     console.log(`  - GET /api/0    : Test endpoint`);
     console.log(`  - GET /health   : Health check`);

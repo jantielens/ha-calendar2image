@@ -9,11 +9,7 @@ arch:
 init: false
 startup: application
 boot: auto
-options:
-  port: 3000
-schema:
-  port: port
 ports:
-  3000/tcp: null
+  3000/tcp: 3000
 ports_description:
   3000/tcp: Web server port for API endpoints
