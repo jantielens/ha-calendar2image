@@ -1,0 +1,24 @@
+{
+  "name": "ha-calendar2image",
+  "version": "0.1.0",
+  "description": "Home Assistant add-on to generate images from calendar data",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node src/index.js"
+  },
+  "keywords": [
+    "home-assistant",
+    "calendar",
+    "ics",
+    "image-generation"
+  ],
+  "author": "jantielens",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  }
+}

@@ -1,9 +1,9 @@
-# Node.js
-node_modules/
+# Node.js (root level only)
+/node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-package-lock.json
+/package-lock.json
 
 # IDE
 .vscode/
@@ -31,8 +31,8 @@ build/
 # Plan files
 plan.md
 
-# Development/Testing
-data/
-src/
-package.json
-package-lock.json
+# Development/Testing (root level only)
+/data/
+/src/
+/package.json
+/package-lock.json
