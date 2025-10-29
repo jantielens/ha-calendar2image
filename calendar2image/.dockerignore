@@ -2,10 +2,6 @@ node_modules
 npm-debug.log
 .git
 .gitignore
-README.md
-plan.md
 .vscode
 .idea
-*.md
-!package.json
-!package-lock.json
+plan.md
