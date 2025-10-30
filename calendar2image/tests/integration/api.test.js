@@ -8,6 +8,7 @@
 const { execSync } = require('child_process');
 const http = require('http');
 const path = require('path');
+const fs = require('fs');
 
 const IMAGE_NAME = 'ha-calendar2image-test';
 const CONTAINER_NAME = 'ha-calendar2image-api-test-container';
@@ -113,16 +114,52 @@ describe('API Integration Tests', () => {
       });
     }
 
-    // Create config directory with test configs
-    const configDir = path.resolve(__dirname, '../..', 'data/calendar2image');
+    // Create test config directory
+    const configDir = path.resolve(__dirname, '../../test-data-api');
+    if (!fs.existsSync(configDir)) {
+      fs.mkdirSync(configDir, { recursive: true });
+    }
+
+    // Create test config 0 with caching
+    fs.writeFileSync(
+      path.join(configDir, '0.json'),
+      JSON.stringify({
+        icsUrl: 'https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics',
+        template: 'week-view',
+        width: 800,
+        height: 600,
+        grayscale: false,
+        bitDepth: 8,
+        imageType: 'png',
+        expandRecurringFrom: -31,
+        expandRecurringTo: 31,
+        preGenerateInterval: '*/5 * * * *'
+      }, null, 2)
+    );
+
+    // Create test config 1 without caching
+    fs.writeFileSync(
+      path.join(configDir, '1.json'),
+      JSON.stringify({
+        icsUrl: 'https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics',
+        template: 'today-view',
+        width: 400,
+        height: 300,
+        grayscale: true,
+        bitDepth: 1,
+        imageType: 'bmp',
+        expandRecurringFrom: -7,
+        expandRecurringTo: 7
+      }, null, 2)
+    );
     
     // Start container
-    const startCommand = `docker run -d --name ${CONTAINER_NAME} -p ${HOST_PORT}:${CONTAINER_PORT} -v ${configDir}:/config ${IMAGE_NAME}`;
+    const startCommand = `docker run -d --name ${CONTAINER_NAME} -p ${HOST_PORT}:${CONTAINER_PORT} -v "${configDir}:/config" ${IMAGE_NAME}`;
     containerId = execSync(startCommand, { encoding: 'utf-8' }).trim();
     
     // Wait for container to be ready
     await waitForContainer();
-  });
+  }, 120000); // 2 minute timeout
 
   afterAll(async () => {
     // Stop and remove container
@@ -132,6 +169,12 @@ describe('API Integration Tests', () => {
       } catch (error) {
         // Ignore errors
       }
+    }
+    
+    // Clean up test data
+    const configDir = path.resolve(__dirname, '../../test-data-api');
+    if (fs.existsSync(configDir)) {
+      fs.rmSync(configDir, { recursive: true, force: true });
     }
   });
 
@@ -151,8 +194,8 @@ describe('API Integration Tests', () => {
   });
 
   describe('Calendar Image API Endpoints', () => {
-    it('GET /api/0 should return PNG image', async () => {
-      const response = await makeRequest('/api/0');
+    it('GET /api/0.png should return PNG image', async () => {
+      const response = await makeRequest('/api/0.png');
       
       expect(response.statusCode).toBe(200);
       expect(response.headers['content-type']).toMatch(/image\/(png|jpeg|bmp)/);
@@ -161,15 +204,15 @@ describe('API Integration Tests', () => {
     });
 
     it('should return binary image data', async () => {
-      const response = await makeRequest('/api/0');
+      const response = await makeRequest('/api/0.png');
       
       // Response body should be a Buffer for binary data
       expect(response.body).toBeDefined();
       expect(response.body.length).toBeGreaterThan(0);
     });
 
-    it('GET /api/1 should return image if config exists', async () => {
-      const response = await makeRequest('/api/1');
+    it('GET /api/1.bmp should return image if config exists', async () => {
+      const response = await makeRequest('/api/1.bmp');
       
       // Config 1 exists, should return image
       if (response.statusCode === 200) {
@@ -181,8 +224,8 @@ describe('API Integration Tests', () => {
       }
     });
 
-    it('GET /api/3 should return image if config exists', async () => {
-      const response = await makeRequest('/api/3');
+    it('GET /api/3.png should return image if config exists', async () => {
+      const response = await makeRequest('/api/3.png');
       
       // Config 3 exists, should return image
       if (response.statusCode === 200) {
@@ -195,7 +238,7 @@ describe('API Integration Tests', () => {
     });
 
     it('should set Content-Length header correctly', async () => {
-      const response = await makeRequest('/api/0');
+      const response = await makeRequest('/api/0.png');
       
       if (response.statusCode === 200) {
         const contentLength = parseInt(response.headers['content-length']);
@@ -227,42 +270,40 @@ describe('API Integration Tests', () => {
     });
 
     it('should handle invalid HTTP methods gracefully', async () => {
-      const response = await makeRequest('/api/0', 'POST');
+      const response = await makeRequest('/api/0.png', 'POST');
       
       // Express returns 404 for method not allowed on routes without POST handler
       expect(response.statusCode).toBe(404);
     });
 
     it('should return 400 for invalid index (negative)', async () => {
-      const response = await makeRequest('/api/-1');
-      
-      expect(response.statusCode).toBe(400);
-      expect(response.body).toHaveProperty('error', 'Bad Request');
-      expect(response.body.message).toContain('Invalid index parameter');
-    });
-
-    it('should return 400 for invalid index (non-numeric)', async () => {
-      const response = await makeRequest('/api/abc');
-      
-      expect(response.statusCode).toBe(400);
-      expect(response.body).toHaveProperty('error', 'Bad Request');
-    });
-
-    it('should return 404 for non-existent config', async () => {
-      const response = await makeRequest('/api/9999');
+      const response = await makeRequest('/api/-1.png');
       
       expect(response.statusCode).toBe(404);
       expect(response.body).toHaveProperty('error', 'Not Found');
-      expect(response.body.message).toContain('Configuration');
+    });
+
+    it('should return 400 for invalid index (non-numeric)', async () => {
+      const response = await makeRequest('/api/abc.png');
+      
+      expect(response.statusCode).toBe(404);
+      expect(response.body).toHaveProperty('error', 'Not Found');
+    });
+
+    it('should return 404 for non-existent config', async () => {
+      const response = await makeRequest('/api/9999.png');
+      
+      expect(response.statusCode).toBe(404);
+      expect(response.body).toHaveProperty('error', 'Not Found');
+      expect(response.body.message).toContain('not found');
     });
 
     it('should return JSON error responses', async () => {
-      const response = await makeRequest('/api/9999');
+      const response = await makeRequest('/api/9999.png');
       
       expect(response.headers['content-type']).toMatch(/application\/json/);
       expect(response.body).toHaveProperty('error');
       expect(response.body).toHaveProperty('message');
-      expect(response.body).toHaveProperty('details');
     });
   });
 

@@ -6,16 +6,15 @@
 const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
+const os = require('os');
 
 describe('Custom Templates Integration', () => {
-  const testTemplatesDir = path.join(__dirname, 'fixtures');
   const testScript = path.join(__dirname, 'custom-template-runner.js');
+  let testTemplatesDir;
   
   beforeAll(() => {
-    // Create test fixtures directory
-    if (!fs.existsSync(testTemplatesDir)) {
-      fs.mkdirSync(testTemplatesDir, { recursive: true });
-    }
+    // Create unique temp directory for this test suite
+    testTemplatesDir = fs.mkdtempSync(path.join(os.tmpdir(), 'cal2img-test-'));
     
     // Create a test runner script that loads the template module with correct env var
     const runnerScript = `
@@ -61,23 +60,25 @@ try {
     if (fs.existsSync(testTemplatesDir)) {
       const files = fs.readdirSync(testTemplatesDir);
       files.forEach(file => {
-        fs.unlinkSync(path.join(testTemplatesDir, file));
+        const filePath = path.join(testTemplatesDir, file);
+        try {
+          fs.unlinkSync(filePath);
+        } catch (err) {
+          // File might have been deleted already, ignore
+        }
       });
-      fs.rmdirSync(testTemplatesDir);
+      try {
+        fs.rmdirSync(testTemplatesDir);
+      } catch (err) {
+        // Directory might not be empty or already deleted, ignore
+      }
     }
   });
 
-  afterEach(() => {
-    // Clean up template files after each test
-    if (fs.existsSync(testTemplatesDir)) {
-      const files = fs.readdirSync(testTemplatesDir);
-      files.forEach(file => {
-        try {
-          fs.unlinkSync(path.join(testTemplatesDir, file));
-        } catch (err) {
-          // Ignore
-        }
-      });
+  beforeEach(() => {
+    // Ensure fixtures directory exists before each test
+    if (!fs.existsSync(testTemplatesDir)) {
+      fs.mkdirSync(testTemplatesDir, { recursive: true });
     }
   });
 
@@ -88,7 +89,11 @@ try {
         return '<html><body>Custom Template Works!</body></html>';
       };
     `;
-    fs.writeFileSync(path.join(testTemplatesDir, 'test-custom.js'), customTemplate);
+    const templatePath = path.join(testTemplatesDir, 'test-custom.js');
+    fs.writeFileSync(templatePath, customTemplate);
+
+    // Verify file was written
+    expect(fs.existsSync(templatePath)).toBe(true);
 
     // Run the test script with the custom templates directory
     const result = execSync(`node "${testScript}" "${testTemplatesDir}" load test-custom`, {
@@ -106,7 +111,13 @@ try {
         return '<html><body>Custom Week View Override</body></html>';
       };
     `;
-    fs.writeFileSync(path.join(testTemplatesDir, 'week-view.js'), customTemplate);
+    const templatePath = path.join(testTemplatesDir, 'week-view.js');
+    fs.writeFileSync(templatePath, customTemplate);
+    
+    // Verify file was written
+    expect(fs.existsSync(templatePath)).toBe(true);
+    const content = fs.readFileSync(templatePath, 'utf-8');
+    expect(content).toContain('Custom Week View Override');
 
     const result = execSync(`node "${testScript}" "${testTemplatesDir}" load week-view`, {
       encoding: 'utf-8'

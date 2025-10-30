@@ -164,7 +164,28 @@ async function handleImageRequest(req, res, next) {
 
   try {
     // Check if config has preGenerateInterval to determine caching behavior
-    const config = await loadConfig(index);
+    let config;
+    try {
+      config = await loadConfig(index);
+    } catch (configError) {
+      // Re-throw with appropriate status code
+      const errorMessage = configError.message || 'Unknown error';
+      if (errorMessage.includes('Configuration file not found')) {
+        const notFoundError = new Error(`Configuration ${index} not found`);
+        notFoundError.statusCode = 404;
+        notFoundError.details = errorMessage;
+        throw notFoundError;
+      } else if (errorMessage.includes('Invalid config index') || 
+                 errorMessage.includes('Configuration validation failed')) {
+        const badRequestError = new Error(`Invalid configuration ${index}`);
+        badRequestError.statusCode = 400;
+        badRequestError.details = errorMessage;
+        throw badRequestError;
+      }
+      // Other config errors are 500
+      configError.statusCode = 500;
+      throw configError;
+    }
     
     // Validate requested extension matches config imageType
     if (requestedExt !== config.imageType) {
@@ -257,7 +278,28 @@ async function handleFreshImageRequest(req, res, next) {
 
   try {
     // Load config to validate extension
-    const config = await loadConfig(index);
+    let config;
+    try {
+      config = await loadConfig(index);
+    } catch (configError) {
+      // Re-throw with appropriate status code
+      const errorMessage = configError.message || 'Unknown error';
+      if (errorMessage.includes('Configuration file not found')) {
+        const notFoundError = new Error(`Configuration ${index} not found`);
+        notFoundError.statusCode = 404;
+        notFoundError.details = errorMessage;
+        throw notFoundError;
+      } else if (errorMessage.includes('Invalid config index') || 
+                 errorMessage.includes('Configuration validation failed')) {
+        const badRequestError = new Error(`Invalid configuration ${index}`);
+        badRequestError.statusCode = 400;
+        badRequestError.details = errorMessage;
+        throw badRequestError;
+      }
+      // Other config errors are 500
+      configError.statusCode = 500;
+      throw configError;
+    }
     
     // Validate requested extension matches config imageType
     if (requestedExt !== config.imageType) {
