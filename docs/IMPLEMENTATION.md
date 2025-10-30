@@ -58,7 +58,7 @@ This document describes the implementation of Step 2 (ICS Calendar Data Fetching
 }
 ```
 
-**Configuration Location**: `/data/ha-calendar2image/`
+**Configuration Location**: `/addon_configs/calendar2image/`
 - Files must be named: `0.json`, `1.json`, `2.json`, etc.
 
 ## Code Coverage

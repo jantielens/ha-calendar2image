@@ -2,6 +2,12 @@
 
 This folder contains sample configuration files for the HA Calendar2Image add-on.
 
+## Configuration Location
+
+Configuration files are stored in: `/addon_configs/calendar2image/`
+
+This follows the Home Assistant standard for add-on configurations.
+
 ## File Naming Pattern
 
 Configuration files must follow the naming pattern: `0.json`, `1.json`, `2.json`, etc.

@@ -9,9 +9,9 @@ const { getCalendarEvents } = require('./src/calendar');
 async function example() {
   try {
     // Load configuration for calendar index 0
-    // In production, this would use /data/ha-calendar2image/
+    // In production, this would use /addon_configs/calendar2image/
     // For this example, we'll use the data folder
-    const config = await loadConfig(0, '../data/ha-calendar2image');
+    const config = await loadConfig(0, '../data/calendar2image');
     
     console.log('Loaded configuration:');
     console.log(JSON.stringify(config, null, 2));

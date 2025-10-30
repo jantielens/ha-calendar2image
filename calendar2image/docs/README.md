@@ -76,7 +76,7 @@ See [CONFIGURATION.md](./CONFIGURATION.md) for complete details on all configura
 
 - Ensure files are named `0.json`, `1.json`, etc.
 - Check the file location matches your folder mapping
-- Default location: `/data/ha-calendar2image/`
+- Default location: `/addon_configs/calendar2image/`
 
 ### Invalid ICS URL
 

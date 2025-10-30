@@ -2,8 +2,8 @@ const fs = require('fs').promises;
 const path = require('path');
 const { validateConfig, applyDefaults } = require('./schema');
 
-// Default configuration directory
-const CONFIG_DIR = '/data/ha-calendar2image';
+// Default configuration directory (Home Assistant standard location)
+const CONFIG_DIR = '/addon_configs/calendar2image';
 
 /**
  * Loads a single configuration file by index
