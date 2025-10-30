@@ -18,13 +18,16 @@ RUN npm ci --only=production
 # Copy application code
 COPY src ./src
 
-# Create config directory and copy sample files
-RUN mkdir -p /addon_configs/calendar2image
-COPY sample-0.json /addon_configs/calendar2image/
-COPY config-sample-README.md /addon_configs/calendar2image/README.md
+# Copy sample files to /app (will be copied to config dir at runtime)
+COPY sample-0.json ./sample-0.json
+COPY config-sample-README.md ./config-sample-README.md
+
+# Copy entrypoint script
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 
 # Expose port (will be overridden by config.yaml)
 EXPOSE 3000
 
-# Start the application
-CMD ["node", "src/index.js"]
+# Start the application via entrypoint
+CMD ["/entrypoint.sh"]
