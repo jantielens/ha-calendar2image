@@ -1,6 +1,5 @@
 # Quick Start: API Integration Tests
-
-This script helps you run API integration tests.
+# This script helps you run API integration tests.
 
 Write-Host "============================================" -ForegroundColor Cyan
 Write-Host "  Calendar2Image - API Integration Test" -ForegroundColor Cyan
@@ -11,10 +10,10 @@ Write-Host ""
 Write-Host "Checking if server is running on port 3000..." -ForegroundColor Yellow
 try {
     $response = Invoke-WebRequest -Uri "http://localhost:3000/health" -TimeoutSec 2 -UseBasicParsing -ErrorAction Stop
-    Write-Host "✓ Server is running" -ForegroundColor Green
+    Write-Host "[OK] Server is running" -ForegroundColor Green
     $serverRunning = $true
 } catch {
-    Write-Host "✗ Server is not running" -ForegroundColor Red
+    Write-Host "[FAIL] Server is not running" -ForegroundColor Red
     $serverRunning = $false
 }
 
@@ -44,7 +43,7 @@ if (-not $serverRunning) {
             Start-Sleep -Seconds 1
             try {
                 $response = Invoke-WebRequest -Uri "http://localhost:3000/health" -TimeoutSec 2 -UseBasicParsing -ErrorAction Stop
-                Write-Host "✓ Server is ready" -ForegroundColor Green
+                Write-Host "[OK] Server is ready" -ForegroundColor Green
                 break
             } catch {
                 $attempts++
@@ -82,7 +81,7 @@ if (-not $serverRunning) {
 if ($LASTEXITCODE -eq 0) {
     Write-Host ""
     Write-Host "============================================" -ForegroundColor Green
-    Write-Host "  All tests passed! ✓" -ForegroundColor Green
+    Write-Host "  All tests passed!" -ForegroundColor Green
     Write-Host "============================================" -ForegroundColor Green
 } else {
     Write-Host ""

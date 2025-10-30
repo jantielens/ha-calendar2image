@@ -74,9 +74,16 @@ describe('Docker Integration Tests', () => {
   beforeAll(async () => {
     console.log('\n🐳 Building Docker image...');
     
-    // Build Docker image
+    // Clean up any existing test containers first
     try {
-      execSync(`docker build -t ${IMAGE_NAME} --build-arg BUILD_FROM=alpine:3.18 .`, {
+      execSync(`docker rm -f ${CONTAINER_NAME}`, { stdio: 'ignore' });
+    } catch (error) {
+      // Ignore if container doesn't exist
+    }
+    
+    // Build Docker image (use HA base image for proper s6-overlay support)
+    try {
+      execSync(`docker build -t ${IMAGE_NAME} --build-arg BUILD_FROM=ghcr.io/home-assistant/amd64-base:3.20 .`, {
         cwd: path.resolve(__dirname, '../..'),
         stdio: 'inherit'
       });
@@ -102,10 +109,10 @@ describe('Docker Integration Tests', () => {
       })
     );
 
-    // Start container
+    // Start container (mount config to /config as that's what the app expects)
     try {
       const output = execSync(
-        `docker run -d --name ${CONTAINER_NAME} -p ${HOST_PORT}:${CONTAINER_PORT} -v "${configDir}:/data/ha-calendar2image" ${IMAGE_NAME}`,
+        `docker run -d --name ${CONTAINER_NAME} -p ${HOST_PORT}:${CONTAINER_PORT} -v "${configDir}:/config" ${IMAGE_NAME}`,
         { encoding: 'utf8' }
       );
       containerId = output.trim();
@@ -218,7 +225,7 @@ describe('Docker Integration Tests', () => {
     it('should have access to mounted configuration', async () => {
       // Verify the container can access the config file
       const configExists = execSync(
-        `docker exec ${CONTAINER_NAME} test -f /data/ha-calendar2image/0.json && echo exists || echo missing`,
+        `docker exec ${CONTAINER_NAME} test -f /config/0.json && echo exists || echo missing`,
         { encoding: 'utf8' }
       ).trim().replace(/['"]/g, ''); // Remove quotes from output
       
