@@ -159,25 +159,33 @@ async function handleImageRequest(req, res, next) {
   }
 
   try {
-    // Try to load cached image first
-    console.log(`[API] Checking cache for config ${index}...`);
-    const cached = await loadCachedImage(index);
+    // Check if config has preGenerateInterval to determine caching behavior
+    const config = await loadConfig(index);
+    const useCache = !!config.preGenerateInterval;
     
-    if (cached) {
-      // Serve cached image
-      res.set('Content-Type', cached.contentType);
-      res.set('Content-Length', cached.buffer.length);
-      res.set('X-Cache', 'HIT');
-      res.set('X-Generated-At', cached.metadata.generatedAt);
-      res.set('X-CRC32', cached.metadata.crc32 || calculateCRC32(cached.buffer));
+    if (useCache) {
+      // Try to load cached image first
+      console.log(`[API] Checking cache for config ${index}...`);
+      const cached = await loadCachedImage(index);
       
-      console.log(`[API] Serving cached image for config ${index} (${cached.buffer.length} bytes)`);
-      return res.send(cached.buffer);
+      if (cached) {
+        // Serve cached image
+        res.set('Content-Type', cached.contentType);
+        res.set('Content-Length', cached.buffer.length);
+        res.set('X-Cache', 'HIT');
+        res.set('X-Generated-At', cached.metadata.generatedAt);
+        res.set('X-CRC32', cached.metadata.crc32 || calculateCRC32(cached.buffer));
+        
+        console.log(`[API] Serving cached image for config ${index} (${cached.buffer.length} bytes)`);
+        return res.send(cached.buffer);
+      }
+    } else {
+      console.log(`[API] Config ${index} has no preGenerateInterval, generating fresh image...`);
     }
     
-    // No cache available, generate fresh image
-    console.log(`[API] No cache available for config ${index}, generating fresh image...`);
-    const result = await generateCalendarImage(index, { saveCache: true });
+    // No cache available or no preGenerateInterval, generate fresh image
+    console.log(`[API] Generating fresh image for config ${index}...`);
+    const result = await generateCalendarImage(index, { saveCache: useCache });
 
     // Calculate CRC32 for fresh image
     const crc32 = calculateCRC32(result.buffer);
@@ -185,7 +193,7 @@ async function handleImageRequest(req, res, next) {
     // Set response headers
     res.set('Content-Type', result.contentType);
     res.set('Content-Length', result.buffer.length);
-    res.set('X-Cache', 'MISS');
+    res.set('X-Cache', useCache ? 'MISS' : 'DISABLED');
     res.set('X-CRC32', crc32);
     
     console.log(`[API] Successfully returning fresh image for config ${index} (${result.buffer.length} bytes)`);

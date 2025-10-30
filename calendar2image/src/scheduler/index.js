@@ -126,17 +126,26 @@ async function initializeScheduler() {
 
 /**
  * Generate all configured images immediately
- * Used on startup to populate cache
+ * Used on startup to populate cache (only for configs with preGenerateInterval)
  */
 async function generateAllImagesNow() {
-  console.log('[Scheduler] Generating all configured images...');
+  console.log('[Scheduler] Generating cached images on startup...');
   
   try {
     const configs = await loadAllConfigs();
-    console.log(`[Scheduler] Generating images for ${configs.length} configuration(s)`);
+    
+    // Only pre-generate for configs with preGenerateInterval
+    const configsToGenerate = configs.filter(({ config }) => config.preGenerateInterval);
+    
+    console.log(`[Scheduler] Generating images for ${configsToGenerate.length}/${configs.length} configuration(s) with preGenerateInterval`);
+
+    if (configsToGenerate.length === 0) {
+      console.log('[Scheduler] No configs with preGenerateInterval - skipping initial generation');
+      return { successful: 0, failed: 0, total: 0 };
+    }
 
     const results = await Promise.allSettled(
-      configs.map(({ index }) => preGenerateImage(index))
+      configsToGenerate.map(({ index }) => preGenerateImage(index))
     );
 
     const successful = results.filter(r => r.status === 'fulfilled' && r.value === true).length;

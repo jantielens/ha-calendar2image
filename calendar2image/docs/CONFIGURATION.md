@@ -42,12 +42,12 @@ Each configuration file should contain:
 - **imageType** (string, default: `"png"`): Output image format. Options: `"jpg"`, `"png"`, `"bmp"`
 - **expandRecurringFrom** (number, default: `-31`): Days from today to start expanding recurring events (negative for past)
 - **expandRecurringTo** (number, default: `31`): Days from today to stop expanding recurring events
-- **preGenerateInterval** (string, optional): Cron expression for automatic image pre-generation. When set, images are generated in the background on this schedule and served from cache for ultra-fast responses. Examples:
-  - `"*/5 * * * *"` - Every 5 minutes (recommended)
+- **preGenerateInterval** (string, optional): Cron expression for automatic image pre-generation. When set, images are generated in the background on this schedule and served from cache for ultra-fast responses. **When NOT set, images are always generated fresh on each request** to ensure up-to-date calendar data. Examples:
+  - `"*/5 * * * *"` - Every 5 minutes (recommended for cached mode)
   - `"*/1 * * * *"` - Every 1 minute (very frequent)
   - `"*/15 * * * *"` - Every 15 minutes
   - `"0 * * * *"` - Every hour at :00
-  - If not set, images are generated on-demand only
+  - **(omitted)** - No caching, always generate fresh (ensures real-time calendar data)
 
 ## Example Configurations
 
@@ -85,6 +85,17 @@ Each configuration file should contain:
 }
 ```
 With pre-generation enabled, images are regenerated every 5 minutes in the background. API requests return cached images in <100ms instead of ~8 seconds for on-demand generation.
+
+### Configuration without Pre-generation (Always Fresh)
+```json
+{
+  "icsUrl": "https://example.com/calendar.ics",
+  "template": "week-view",
+  "grayscale": false,
+  "imageType": "png"
+}
+```
+Without `preGenerateInterval`, images are **always generated fresh** on each request, ensuring real-time calendar data at the cost of slower response times (~8 seconds).
 
 ## API Endpoints
 

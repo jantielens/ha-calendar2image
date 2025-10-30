@@ -41,12 +41,17 @@ GET http://homeassistant.local:3000/api/{index}
 
 Returns a binary image (PNG, JPG, or BMP) based on the configuration file (`0.json`, `1.json`, etc.).
 
-**Caching:** If pre-generation is configured (`preGenerateInterval` in config), images are served from cache for ultra-fast response times (<100ms). Otherwise, images are generated on-demand.
+**Caching Behavior:**
+- **With `preGenerateInterval` configured:** Images are pre-generated on schedule and served from cache for ultra-fast response times (<100ms)
+- **Without `preGenerateInterval`:** Images are generated fresh on every request (~8 seconds on Raspberry Pi) to ensure always up-to-date calendar data
 
 **Response Headers:**
 - `Content-Type`: `image/png`, `image/jpeg`, or `image/bmp`
 - `Content-Length`: Size of the image in bytes
-- `X-Cache`: Cache status (`HIT` for cached, `MISS` for fresh generation)
+- `X-Cache`: Cache status
+  - `HIT` - Served from cache (only when `preGenerateInterval` is configured)
+  - `DISABLED` - Fresh generation (when `preGenerateInterval` is not configured)
+  - `MISS` - Cache miss, generated fresh (rare, only if cache was deleted)
 - `X-CRC32`: CRC32 checksum of the image (lowercase hex)
 - `X-Generated-At`: ISO timestamp of when the image was generated
 
