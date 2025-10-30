@@ -1,0 +1,24 @@
+services:
+  calendar2image:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        BUILD_FROM: "ghcr.io/home-assistant/amd64-base:3.20"
+    container_name: calendar2image-dev
+    ports:
+      - "3000:3000"
+    volumes:
+      # Mount the data/calendar2image directory to /config for JSON config files
+      - ../data/calendar2image:/config
+      # Mount templates directory to the custom templates path
+      - ../data/calendar2image/templates:/data/calendar2image/templates
+    restart: unless-stopped
+    environment:
+      - TZ=UTC
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s

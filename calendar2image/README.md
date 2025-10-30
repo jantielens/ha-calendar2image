@@ -151,6 +151,22 @@ See [tests/integration/README.md](./tests/integration/README.md) for details.
 
 - [Configuration Guide](./docs/CONFIGURATION.md) - How to configure calendar settings
 
+### Developer Docs
+
+- **[Template Development Guide](/docs/DEV-GUIDE.md)** - Complete guide for developing custom templates with live reload
+
+**Quick Start:**
+```powershell
+# Terminal 1: Start container
+docker compose up
+
+# Terminal 2: Create & watch template
+node dev-setup.js my-template
+npm run watch 99
+```
+
+- [Testing Guide](./TESTING.md) - How to run tests
+
 ## Support
 
 For issues and feature requests, please use the [GitHub issue tracker](https://github.com/jantielens/ha-calendar2image/issues).

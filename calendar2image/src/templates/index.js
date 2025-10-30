@@ -11,32 +11,40 @@ const CUSTOM_TEMPLATES_DIR = process.env.TEMPLATES_DIR || '/data/calendar2image/
 /**
  * Load a template by name
  * First checks custom templates directory, then falls back to built-in templates
- * Templates are cached after first load
+ * Templates are cached after first load, but custom templates can be hot-reloaded
  * 
  * @param {string} templateName - Name of the template (without .js extension)
+ * @param {boolean} forceReload - Force reload template from disk (useful for development)
  * @returns {Function} Template function that accepts data and returns HTML string
  * @throws {Error} If template is not found or fails to load
  */
-function loadTemplate(templateName) {
-  // Check cache first
-  if (templateCache.has(templateName)) {
-    return templateCache.get(templateName);
-  }
-
+function loadTemplate(templateName, forceReload = false) {
   // Try custom templates first
   const customPath = path.join(CUSTOM_TEMPLATES_DIR, `${templateName}.js`);
   if (fs.existsSync(customPath)) {
     try {
+      // For custom templates, always clear require cache to enable hot-reload during development
+      if (require.cache[require.resolve(customPath)]) {
+        delete require.cache[require.resolve(customPath)];
+      }
+      
       const template = require(customPath);
       if (typeof template !== 'function') {
         throw new Error(`Template ${templateName} must export a function`);
       }
+      
+      // Update cache with fresh template
       templateCache.set(templateName, template);
-      console.log(`Loaded custom template: ${templateName}`);
+      console.log(`Loaded custom template: ${templateName} (hot-reloaded)`);
       return template;
     } catch (error) {
       throw new Error(`Failed to load custom template ${templateName}: ${error.message}`);
     }
+  }
+
+  // For built-in templates, check cache first (they don't change)
+  if (!forceReload && templateCache.has(templateName)) {
+    return templateCache.get(templateName);
   }
 
   // Fall back to built-in templates

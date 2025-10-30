@@ -4,6 +4,14 @@ This directory contains technical documentation for developers working on the Ca
 
 ## Contents
 
+- [**DEV-GUIDE.md**](./DEV-GUIDE.md) - Complete template development guide with live reload functionality:
+  - Quick start and setup
+  - Container management
+  - Development workflow
+  - Template format and best practices
+  - Troubleshooting
+  - Advanced usage
+
 - [**IMPLEMENTATION.md**](./IMPLEMENTATION.md) - Steps 2-5 implementation details, including:
   - ICS Calendar Data Fetching module
   - Configuration System module

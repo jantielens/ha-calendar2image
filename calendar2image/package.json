@@ -6,6 +6,7 @@
   "scripts": {
     "start": "node src/index.js",
     "dev": "node src/index.js",
+    "watch": "node watch-template.js",
     "test:local": "jest",
     "test:coverage": "jest --coverage",
     "test:ci": "jest --config=jest.integration.config.js",
