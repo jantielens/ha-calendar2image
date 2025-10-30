@@ -3,7 +3,9 @@ const path = require('path');
 const { validateConfig, applyDefaults } = require('./schema');
 
 // Default configuration directory (Home Assistant standard location)
-const CONFIG_DIR = '/addon_configs/calendar2image';
+// Home Assistant uses /data/addon_configs/<repo>_<slug> format where <repo> is a hash
+// We need to detect this dynamically or use environment variable
+const CONFIG_DIR = process.env.CONFIG_DIR || '/data/addon_configs/17f877f5_calendar2image';
 
 /**
  * Loads a single configuration file by index
