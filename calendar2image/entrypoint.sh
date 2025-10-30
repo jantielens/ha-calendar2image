@@ -1,31 +1,52 @@
 #!/bin/sh
 set -e
 
-# Copy sample files to config directory if they don't exist
-# Home Assistant uses /data/addon_configs/<repo>_<slug> format
-# Try to auto-detect the actual folder name
-if [ -d "/data/addon_configs" ]; then
-    # Find the directory that ends with _calendar2image
-    CONFIG_DIR=$(find /data/addon_configs -maxdepth 1 -type d -name "*_calendar2image" | head -n 1)
-    if [ -z "$CONFIG_DIR" ]; then
-        echo "Warning: Could not find config directory matching *_calendar2image"
-        CONFIG_DIR="/data/addon_configs/calendar2image"
-    fi
-else
-    CONFIG_DIR="/addon_configs/calendar2image"
-fi
+echo "=== Calendar2Image Entrypoint Starting ==="
+
+# Home Assistant mounts addon_config at /addon_configs/<slug>
+# where <slug> is defined in config.yaml
+CONFIG_DIR="/addon_configs/calendar2image"
 
 echo "Using config directory: $CONFIG_DIR"
+
+# Create directory if it doesn't exist (though HA should create it)
+if [ ! -d "$CONFIG_DIR" ]; then
+    echo "Creating config directory: $CONFIG_DIR"
+    mkdir -p "$CONFIG_DIR"
+fi
+
+
+
+# Create directory if it doesn't exist
+if [ ! -d "$CONFIG_DIR" ]; then
+    echo "Creating config directory: $CONFIG_DIR"
+    mkdir -p "$CONFIG_DIR"
+fi
+
+# List what's in /app
+echo "Files in /app:"
+ls -la /app/
 
 if [ ! -f "$CONFIG_DIR/sample-0.json" ]; then
     echo "Copying sample-0.json to $CONFIG_DIR..."
     cp /app/sample-0.json "$CONFIG_DIR/sample-0.json"
+    echo "Copy completed"
+else
+    echo "sample-0.json already exists"
 fi
 
 if [ ! -f "$CONFIG_DIR/README.md" ]; then
     echo "Copying README.md to $CONFIG_DIR..."
     cp /app/config-sample-README.md "$CONFIG_DIR/README.md"
+    echo "Copy completed"
+else
+    echo "README.md already exists"
 fi
 
+echo "Final config directory contents:"
+ls -la "$CONFIG_DIR/"
+
+echo "=== Starting Node.js application ==="
 # Start the application
 exec node src/index.js
+
