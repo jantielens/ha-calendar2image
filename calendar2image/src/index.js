@@ -12,14 +12,15 @@ app.use((req, res, next) => {
     next();
 });
 
-// CRC32 checksum endpoint - get CRC32 of image without downloading (must be before /api/:index)
-app.get('/api/:index(\\d+).crc32', handleCRC32Request);
-
-// Main API endpoint - generate calendar image by config index
-app.get('/api/:index', handleImageRequest);
+// API endpoints with file extensions
+// CRC32 checksum endpoint - get CRC32 of image without downloading
+app.get('/api/:index(\\d+).:ext(png|jpg|bmp).crc32', handleCRC32Request);
 
 // Fresh generation endpoint - bypass cache and generate fresh image
-app.get('/api/:index/fresh', handleFreshImageRequest);
+app.get('/api/:index(\\d+)/fresh.:ext(png|jpg|bmp)', handleFreshImageRequest);
+
+// Main API endpoint - generate calendar image by config index
+app.get('/api/:index(\\d+).:ext(png|jpg|bmp)', handleImageRequest);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -32,10 +33,12 @@ app.use((req, res) => {
         error: 'Not Found',
         message: `Route ${req.url} not found`,
         availableEndpoints: [
-            '/api/:index (e.g., /api/0, /api/1) - Returns cached image if available',
-            '/api/:index.crc32 - Returns CRC32 checksum of image',
-            '/api/:index/fresh - Forces fresh generation',
-            '/health'
+            '/api/:index.:ext (e.g., /api/0.png, /api/1.jpg) - Returns cached/fresh image',
+            '/api/:index.:ext.crc32 (e.g., /api/0.png.crc32) - Returns CRC32 checksum',
+            '/api/:index/fresh.:ext (e.g., /api/0/fresh.png) - Forces fresh generation',
+            '/health',
+            '',
+            'Note: Extension (png/jpg/bmp) must match the imageType in the config file'
         ]
     });
 });
@@ -56,10 +59,11 @@ const server = app.listen(PORT, '0.0.0.0', async () => {
     console.log('='.repeat(50));
     console.log(`Server running on port ${PORT}`);
     console.log(`Available endpoints:`);
-    console.log(`  - GET /api/:index        : Get cached image or generate if not cached`);
-    console.log(`  - GET /api/:index.crc32  : Get CRC32 checksum of image`);
-    console.log(`  - GET /api/:index/fresh  : Force fresh generation (bypass cache)`);
-    console.log(`  - GET /health            : Health check`);
+    console.log(`  - GET /api/:index.:ext       : Get cached/fresh image (ext: png, jpg, bmp)`);
+    console.log(`  - GET /api/:index.:ext.crc32 : Get CRC32 checksum (e.g., /api/0.png.crc32)`);
+    console.log(`  - GET /api/:index/fresh.:ext : Force fresh generation`);
+    console.log(`  - GET /health                : Health check`);
+    console.log(`Note: Extension must match imageType in config file`);
     console.log('='.repeat(50));
     
     try {

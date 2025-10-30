@@ -136,8 +136,9 @@ async function generateCalendarImage(index, options = {}) {
 }
 
 /**
- * Express middleware handler for /api/:index endpoint
+ * Express middleware handler for /api/:index.:ext endpoint
  * Returns cached image if available, otherwise generates fresh
+ * Validates that requested extension matches config imageType
  * 
  * @param {Object} req - Express request object
  * @param {Object} res - Express response object
@@ -145,6 +146,7 @@ async function generateCalendarImage(index, options = {}) {
  */
 async function handleImageRequest(req, res, next) {
   const indexParam = req.params.index;
+  const requestedExt = req.params.ext;
   
   // Validate index parameter
   const index = parseInt(indexParam, 10);
@@ -161,6 +163,17 @@ async function handleImageRequest(req, res, next) {
   try {
     // Check if config has preGenerateInterval to determine caching behavior
     const config = await loadConfig(index);
+    
+    // Validate requested extension matches config imageType
+    if (requestedExt !== config.imageType) {
+      console.warn(`[API] Extension mismatch for config ${index}: requested .${requestedExt}, config has ${config.imageType}`);
+      return res.status(404).json({
+        error: 'Not Found',
+        message: `Config ${index} serves ${config.imageType} images, not ${requestedExt}`,
+        details: `Use /api/${index}.${config.imageType} instead`
+      });
+    }
+    
     const useCache = !!config.preGenerateInterval;
     
     if (useCache) {
@@ -216,8 +229,9 @@ async function handleImageRequest(req, res, next) {
 }
 
 /**
- * Express middleware handler for /api/:index/fresh endpoint
+ * Express middleware handler for /api/:index/fresh.:ext endpoint
  * Always generates a fresh image, bypassing cache
+ * Validates that requested extension matches config imageType
  * 
  * @param {Object} req - Express request object
  * @param {Object} res - Express response object
@@ -225,6 +239,7 @@ async function handleImageRequest(req, res, next) {
  */
 async function handleFreshImageRequest(req, res, next) {
   const indexParam = req.params.index;
+  const requestedExt = req.params.ext;
   
   // Validate index parameter
   const index = parseInt(indexParam, 10);
@@ -239,6 +254,19 @@ async function handleFreshImageRequest(req, res, next) {
   }
 
   try {
+    // Load config to validate extension
+    const config = await loadConfig(index);
+    
+    // Validate requested extension matches config imageType
+    if (requestedExt !== config.imageType) {
+      console.warn(`[API] Extension mismatch for config ${index}: requested .${requestedExt}, config has ${config.imageType}`);
+      return res.status(404).json({
+        error: 'Not Found',
+        message: `Config ${index} serves ${config.imageType} images, not ${requestedExt}`,
+        details: `Use /api/${index}/fresh.${config.imageType} instead`
+      });
+    }
+    
     console.log(`[API] Forcing fresh generation for config ${index}...`);
     
     // Generate fresh image and save to cache
@@ -288,8 +316,9 @@ function getErrorName(statusCode) {
 }
 
 /**
- * Express middleware handler for /api/:index.crc32 endpoint
+ * Express middleware handler for /api/:index.:ext.crc32 endpoint
  * Returns CRC32 checksum of the image (cached or generated)
+ * Validates that requested extension matches config imageType
  * 
  * @param {Object} req - Express request object
  * @param {Object} res - Express response object
@@ -297,6 +326,7 @@ function getErrorName(statusCode) {
  */
 async function handleCRC32Request(req, res, next) {
   const indexParam = req.params.index;
+  const requestedExt = req.params.ext;
   
   // Validate index parameter
   const index = parseInt(indexParam, 10);
@@ -307,6 +337,15 @@ async function handleCRC32Request(req, res, next) {
   }
 
   try {
+    // Load config to validate extension
+    const config = await loadConfig(index);
+    
+    // Validate requested extension matches config imageType
+    if (requestedExt !== config.imageType) {
+      console.warn(`[API] Extension mismatch for config ${index}: requested .${requestedExt}, config has ${config.imageType}`);
+      return res.status(404).send(`Config ${index} serves ${config.imageType} images, not ${requestedExt}`);
+    }
+    
     // Try to load cached metadata first
     console.log(`[API] Checking CRC32 for config ${index}...`);
     const metadata = await getCacheMetadata(index);
