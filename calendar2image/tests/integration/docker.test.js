@@ -50,22 +50,29 @@ describe('Docker Integration Tests', () => {
   const makeRequest = (path) => {
     return new Promise((resolve, reject) => {
       http.get(`http://localhost:${HOST_PORT}${path}`, (res) => {
-        let data = '';
-        res.on('data', chunk => data += chunk);
+        const chunks = [];
+        res.on('data', chunk => chunks.push(chunk));
         res.on('end', () => {
-          try {
-            resolve({
-              statusCode: res.statusCode,
-              headers: res.headers,
-              body: JSON.parse(data)
-            });
-          } catch (e) {
-            resolve({
-              statusCode: res.statusCode,
-              headers: res.headers,
-              body: data
-            });
+          const buffer = Buffer.concat(chunks);
+          let body = buffer;
+          
+          // Try to parse as JSON if content-type indicates JSON
+          if (res.headers['content-type']?.includes('application/json')) {
+            try {
+              body = JSON.parse(buffer.toString());
+            } catch (e) {
+              // Keep as buffer if JSON parsing fails
+            }
+          } else if (res.headers['content-type']?.includes('text/plain')) {
+            body = buffer.toString();
           }
+          
+          resolve({
+            statusCode: res.statusCode,
+            headers: res.headers,
+            body: body,
+            buffer: buffer
+          });
         });
       }).on('error', reject);
     });
@@ -105,8 +112,32 @@ describe('Docker Integration Tests', () => {
       path.join(configDir, '0.json'),
       JSON.stringify({
         icsUrl: 'https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics',
-        template: 'week-view'
-      })
+        template: 'week-view',
+        width: 800,
+        height: 600,
+        grayscale: false,
+        bitDepth: 8,
+        imageType: 'png',
+        expandRecurringFrom: -31,
+        expandRecurringTo: 31,
+        preGenerateInterval: '*/5 * * * *'
+      }, null, 2)
+    );
+
+    // Create test config without caching
+    fs.writeFileSync(
+      path.join(configDir, '1.json'),
+      JSON.stringify({
+        icsUrl: 'https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics',
+        template: 'today-view',
+        width: 400,
+        height: 300,
+        grayscale: true,
+        bitDepth: 1,
+        imageType: 'bmp',
+        expandRecurringFrom: -7,
+        expandRecurringTo: 7
+      }, null, 2)
     );
 
     // Start container (mount config to /config as that's what the app expects)
@@ -171,14 +202,133 @@ describe('Docker Integration Tests', () => {
   });
 
   describe('API Endpoints', () => {
-    it('should respond to /api/0 endpoint', async () => {
-      const response = await makeRequest('/api/0');
-      
-      expect(response.statusCode).toBe(200);
-      expect(response.body).toHaveProperty('message');
-      expect(response.body).toHaveProperty('status', 'ok');
-      expect(response.body).toHaveProperty('version');
-      expect(response.body).toHaveProperty('timestamp');
+    describe('Image Generation with File Extensions', () => {
+      it('should generate PNG image for config 0', async () => {
+        const response = await makeRequest('/api/0.png');
+        
+        expect(response.statusCode).toBe(200);
+        expect(response.headers['content-type']).toBe('image/png');
+        expect(response.headers['x-cache']).toMatch(/HIT|MISS/);
+        expect(response.buffer).toBeInstanceOf(Buffer);
+        expect(response.buffer.length).toBeGreaterThan(0);
+      });
+
+      it('should return 404 for wrong file extension', async () => {
+        const response = await makeRequest('/api/0.jpg');
+        
+        expect(response.statusCode).toBe(404);
+        expect(response.body).toHaveProperty('error', 'Not Found');
+        expect(response.body.message).toContain('serves png images');
+      });
+
+      it('should generate BMP image for config 1', async () => {
+        const response = await makeRequest('/api/1.bmp');
+        
+        expect(response.statusCode).toBe(200);
+        expect(response.headers['content-type']).toBe('image/bmp');
+        expect(response.headers['x-cache']).toBe('DISABLED');
+        expect(response.buffer).toBeInstanceOf(Buffer);
+        expect(response.buffer.length).toBeGreaterThan(0);
+      });
+    });
+
+    describe('Cache Behavior', () => {
+      it('should return HIT or MISS for cached config', async () => {
+        const response1 = await makeRequest('/api/0.png');
+        const response2 = await makeRequest('/api/0.png');
+        
+        // First request could be HIT (pre-generated) or MISS
+        expect(['HIT', 'MISS']).toContain(response1.headers['x-cache']);
+        
+        // Second request should always be HIT (from cache)
+        expect(response2.headers['x-cache']).toBe('HIT');
+        
+        // Both should return same CRC32
+        expect(response1.headers['x-crc32']).toBe(response2.headers['x-crc32']);
+      });
+
+      it('should return DISABLED for non-cached config', async () => {
+        const response = await makeRequest('/api/1.bmp');
+        
+        expect(response.headers['x-cache']).toBe('DISABLED');
+        expect(response.headers['x-crc32']).toBeTruthy();
+      });
+
+      it('should include X-Generated-At header for cached images', async () => {
+        const response = await makeRequest('/api/0.png');
+        
+        if (response.headers['x-cache'] === 'HIT') {
+          expect(response.headers['x-generated-at']).toBeTruthy();
+          // Validate it's a valid ISO date
+          expect(new Date(response.headers['x-generated-at']).toISOString()).toBeTruthy();
+        }
+      });
+    });
+
+    describe('Fresh Generation Endpoint', () => {
+      it('should force fresh generation and return BYPASS', async () => {
+        const response = await makeRequest('/api/0/fresh.png');
+        
+        expect(response.statusCode).toBe(200);
+        expect(response.headers['x-cache']).toBe('BYPASS');
+        expect(response.headers['content-type']).toBe('image/png');
+        expect(response.buffer).toBeInstanceOf(Buffer);
+      });
+
+      it('should validate file extension on fresh endpoint', async () => {
+        const response = await makeRequest('/api/0/fresh.jpg');
+        
+        expect(response.statusCode).toBe(404);
+        expect(response.body.message).toContain('serves png images');
+      });
+
+      it('should generate fresh image even for non-cached config', async () => {
+        const response = await makeRequest('/api/1/fresh.bmp');
+        
+        expect(response.statusCode).toBe(200);
+        expect(response.headers['x-cache']).toBe('BYPASS');
+        expect(response.headers['content-type']).toBe('image/bmp');
+      });
+    });
+
+    describe('CRC32 Checksum Endpoint', () => {
+      it('should return CRC32 checksum for PNG image', async () => {
+        const response = await makeRequest('/api/0.png.crc32');
+        
+        expect(response.statusCode).toBe(200);
+        expect(response.headers['content-type']).toBe('text/plain; charset=utf-8');
+        expect(response.body).toMatch(/^[a-f0-9]{8}$/);
+      });
+
+      it('should return CRC32 checksum for BMP image', async () => {
+        const response = await makeRequest('/api/1.bmp.crc32');
+        
+        expect(response.statusCode).toBe(200);
+        expect(response.body).toMatch(/^[a-f0-9]{8}$/);
+      });
+
+      it('should match CRC32 between image and checksum endpoint', async () => {
+        const imageResponse = await makeRequest('/api/0.png');
+        const crc32Response = await makeRequest('/api/0.png.crc32');
+        
+        expect(imageResponse.headers['x-crc32']).toBe(crc32Response.body);
+      });
+
+      it('should validate file extension on CRC32 endpoint', async () => {
+        const response = await makeRequest('/api/0.jpg.crc32');
+        
+        expect(response.statusCode).toBe(404);
+        // Response body is a Buffer when content-type is text/plain
+        const bodyText = response.body.toString ? response.body.toString() : response.body;
+        expect(bodyText).toContain('serves png images');
+      });
+
+      it('should return same CRC32 for identical images', async () => {
+        const crc1 = await makeRequest('/api/0.png.crc32');
+        const crc2 = await makeRequest('/api/0.png.crc32');
+        
+        expect(crc1.body).toBe(crc2.body);
+      });
     });
 
     it('should return 404 for unknown routes', async () => {
@@ -193,6 +343,7 @@ describe('Docker Integration Tests', () => {
       
       expect(response.body).toHaveProperty('availableEndpoints');
       expect(Array.isArray(response.body.availableEndpoints)).toBe(true);
+      expect(response.body.availableEndpoints.some(e => e.includes('.png'))).toBe(true);
     });
   });
 
@@ -205,19 +356,6 @@ describe('Docker Integration Tests', () => {
         expect(response.statusCode).toBe(200);
         expect(response.body.status).toBe('healthy');
       });
-    });
-
-    it('should maintain uptime across requests', async () => {
-      const response1 = await makeRequest('/api/0');
-      const timestamp1 = new Date(response1.body.timestamp);
-      
-      // Wait a bit
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      const response2 = await makeRequest('/api/0');
-      const timestamp2 = new Date(response2.body.timestamp);
-      
-      expect(timestamp2.getTime()).toBeGreaterThan(timestamp1.getTime());
     });
   });
 
