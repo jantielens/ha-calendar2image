@@ -1,4 +1,4 @@
-name: Calendar2Image
+name: HA Calendar2Image
 version: "0.1.0"
 slug: calendar2image
 description: Generate images from calendar data (ICS URLs) using customizable templates
