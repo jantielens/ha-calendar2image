@@ -18,6 +18,11 @@ RUN npm ci --only=production
 # Copy application code
 COPY src ./src
 
+# Create config directory and copy sample files
+RUN mkdir -p /addon_configs/calendar2image
+COPY ../data/calendar2image/sample-0.json /addon_configs/calendar2image/
+COPY ../data/calendar2image/README.md /addon_configs/calendar2image/
+
 # Expose port (will be overridden by config.yaml)
 EXPOSE 3000
 

@@ -12,11 +12,13 @@ This directory contains user-facing documentation for the Calendar2Image Home As
 
 ## Quick Start
 
+**Sample files included**: When you first install the add-on, you'll find `sample-0.json` and `README.md` in `/addon_configs/calendar2image/` to help you get started.
+
 ### 1. Create Configuration Files
 
-Create configuration files in `/config/ha-calendar2image/` (or your mapped data directory):
+Create configuration files in `/addon_configs/calendar2image/`:
 
-**Example: 0.json**
+**Example: 0.json** (based on the included sample)
 ```json
 {
   "icsUrl": "https://example.com/calendar.ics",

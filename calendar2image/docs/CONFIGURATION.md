@@ -8,6 +8,8 @@ Configuration files are stored in: `/addon_configs/calendar2image/`
 
 This follows the Home Assistant standard for add-on configurations.
 
+**Sample files included**: The add-on includes `sample-0.json` and `README.md` in this directory by default. You can copy and rename `sample-0.json` to `0.json` to get started quickly.
+
 ## File Naming Pattern
 
 Configuration files must follow the naming pattern: `0.json`, `1.json`, `2.json`, etc.
