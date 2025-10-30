@@ -11,7 +11,8 @@
     "test:coverage": "jest --coverage --testPathIgnorePatterns=tests/integration",
     "test:integration": "jest --config=jest.integration.config.js tests/integration/api.test.js",
     "test:docker": "jest --config=jest.integration.config.js tests/integration/docker.test.js --runInBand --detectOpenHandles",
-    "test:all": "npm test && npm run test:integration"
+    "test:all": "npm test && npm run test:integration",
+    "test:local": "node test-local.js"
   },
   "keywords": [
     "home-assistant",
@@ -24,7 +25,9 @@
   "dependencies": {
     "express": "^4.18.2",
     "ical.js": "^2.0.1",
-    "ajv": "^8.12.0"
+    "ajv": "^8.12.0",
+    "puppeteer": "^21.0.0",
+    "sharp": "^0.33.0"
   },
   "devDependencies": {
     "jest": "^29.7.0",

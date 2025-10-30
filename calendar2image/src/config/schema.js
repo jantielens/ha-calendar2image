@@ -17,6 +17,18 @@ const configSchema = {
       type: 'string',
       minLength: 1
     },
+    width: {
+      type: 'number',
+      minimum: 100,
+      maximum: 4096,
+      default: 800
+    },
+    height: {
+      type: 'number',
+      minimum: 100,
+      maximum: 4096,
+      default: 600
+    },
     grayscale: {
       type: 'boolean',
       default: false
@@ -68,6 +80,8 @@ function validateConfig(config) {
 function applyDefaults(config) {
   return {
     ...config,
+    width: config.width !== undefined ? config.width : 800,
+    height: config.height !== undefined ? config.height : 600,
     grayscale: config.grayscale !== undefined ? config.grayscale : false,
     bitDepth: config.bitDepth !== undefined ? config.bitDepth : 8,
     imageType: config.imageType || 'png',

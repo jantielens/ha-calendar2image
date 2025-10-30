@@ -1,10 +1,21 @@
 ARG BUILD_FROM
 FROM $BUILD_FROM
 
-# Install Node.js 22 LTS
+# Install Node.js 22 LTS and Chromium for Puppeteer
 RUN apk add --no-cache \
     nodejs \
-    npm
+    npm \
+    chromium \
+    nss \
+    freetype \
+    harfbuzz \
+    ca-certificates \
+    ttf-freefont
+
+# Set Puppeteer environment variables to use installed Chromium
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
+    PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser \
+    CHROMIUM_PATH=/usr/bin/chromium-browser
 
 # Set working directory
 WORKDIR /app

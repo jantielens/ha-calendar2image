@@ -44,6 +44,8 @@ describe('config loader', () => {
       const config = {
         icsUrl: 'https://example.com/calendar.ics',
         template: 'today-view',
+        width: 1024,
+        height: 768,
         grayscale: true,
         bitDepth: 16,
         imageType: 'jpg',

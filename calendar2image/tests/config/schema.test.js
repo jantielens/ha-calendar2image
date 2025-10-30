@@ -185,6 +185,8 @@ describe('config schema', () => {
       expect(result).toEqual({
         icsUrl: 'https://example.com/calendar.ics',
         template: 'week-view',
+        width: 800,
+        height: 600,
         grayscale: false,
         bitDepth: 8,
         imageType: 'png',
@@ -197,6 +199,8 @@ describe('config schema', () => {
       const config = {
         icsUrl: 'https://example.com/calendar.ics',
         template: 'today-view',
+        width: 800,
+        height: 600,
         grayscale: true,
         bitDepth: 16,
         imageType: 'jpg',
@@ -222,6 +226,8 @@ describe('config schema', () => {
       expect(result).toEqual({
         icsUrl: 'https://example.com/calendar.ics',
         template: 'week-view',
+        width: 800,
+        height: 600,
         grayscale: true,
         bitDepth: 8,
         imageType: 'bmp',
