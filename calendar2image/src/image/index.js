@@ -67,7 +67,8 @@ async function generateImage(html, options = {}) {
 
     return {
       buffer: finalBuffer,
-      contentType: getContentType(imageType)
+      contentType: getContentType(imageType),
+      imageType: imageType
     };
 
   } catch (error) {

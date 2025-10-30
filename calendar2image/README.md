@@ -41,9 +41,38 @@ GET http://homeassistant.local:3000/api/{index}
 
 Returns a binary image (PNG, JPG, or BMP) based on the configuration file (`0.json`, `1.json`, etc.).
 
+**Caching:** If pre-generation is configured (`preGenerateInterval` in config), images are served from cache for ultra-fast response times (<100ms). Otherwise, images are generated on-demand.
+
 **Response Headers:**
 - `Content-Type`: `image/png`, `image/jpeg`, or `image/bmp`
 - `Content-Length`: Size of the image in bytes
+- `X-Cache`: Cache status (`HIT` for cached, `MISS` for fresh generation)
+- `X-CRC32`: CRC32 checksum of the image (lowercase hex)
+- `X-Generated-At`: ISO timestamp of when the image was generated
+
+### CRC32 Checksum Endpoint
+```
+GET http://homeassistant.local:3000/api/{index}.crc32
+```
+
+Returns the CRC32 checksum of the image as plain text (lowercase hexadecimal). Perfect for e-ink displays or bandwidth-constrained scenarios where you want to check if the image has changed before downloading.
+
+**Example:**
+```bash
+# Check if image changed
+curl http://homeassistant.local:3000/api/0.crc32
+# Output: 8f8ea89f
+```
+
+### Fresh Generation Endpoint
+```
+GET http://homeassistant.local:3000/api/{index}/fresh
+```
+
+Forces fresh image generation, bypassing the cache. Use this when you need the most up-to-date calendar data immediately.
+
+**Response Headers:**
+- Same as regular image endpoint, plus `X-Cache: BYPASS`
 
 **Error Responses:**
 - `400 Bad Request`: Invalid index parameter
@@ -65,6 +94,11 @@ Returns the health status of the add-on.
 Completed features:
 - ✅ Express API with dynamic `/api/{index}` endpoints
 - ✅ Binary image generation and response
+- ✅ Pre-generation and caching system with cron-style scheduling
+- ✅ CRC32 checksum support for bandwidth-efficient change detection
+- ✅ Multiple endpoint types (cached, fresh, CRC32)
+- ✅ Response headers (X-Cache, X-CRC32, X-Generated-At)
+- ✅ Ultra-fast cached responses (<100ms vs ~8 seconds on-demand)
 - ✅ ICS calendar data fetching and parsing
 - ✅ Configuration system for multiple calendars
 - ✅ Template engine with built-in templates (week-view, today-view)

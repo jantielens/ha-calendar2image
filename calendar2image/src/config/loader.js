@@ -58,7 +58,7 @@ async function loadConfig(index, configDir = CONFIG_DIR) {
 /**
  * Loads all configuration files from the config directory
  * @param {string} [configDir] - Optional custom config directory
- * @returns {Promise<Object>} Object mapping index to configuration
+ * @returns {Promise<Array>} Array of objects with index and config
  * @throws {Error} If config directory doesn't exist or any config is invalid
  */
 async function loadAllConfigs(configDir = CONFIG_DIR) {
@@ -79,13 +79,14 @@ async function loadAllConfigs(configDir = CONFIG_DIR) {
     throw new Error(`No configuration files found in ${configDir}. Expected files like 0.json, 1.json, etc.`);
   }
 
-  const configs = {};
+  const configs = [];
   const errors = [];
 
   for (const file of configFiles) {
     const index = parseInt(path.basename(file, '.json'), 10);
     try {
-      configs[index] = await loadConfig(index, configDir);
+      const config = await loadConfig(index, configDir);
+      configs.push({ index, config });
     } catch (error) {
       errors.push(`Config ${index}: ${error.message}`);
     }
@@ -103,13 +104,13 @@ async function loadAllConfigs(configDir = CONFIG_DIR) {
  * Validates that the configuration directory exists and contains valid configs
  * This should be called at startup to fail fast if configs are invalid
  * @param {string} [configDir] - Optional custom config directory
- * @returns {Promise<Object>} Object mapping index to configuration
+ * @returns {Promise<Array>} Array of objects with index and config
  * @throws {Error} If validation fails
  */
 async function validateConfigs(configDir = CONFIG_DIR) {
   console.log(`Loading configurations from ${configDir}...`);
   const configs = await loadAllConfigs(configDir);
-  const count = Object.keys(configs).length;
+  const count = configs.length;
   console.log(`Successfully loaded ${count} configuration(s)`);
   return configs;
 }

@@ -2,16 +2,22 @@ const { loadConfig } = require('../config');
 const { getCalendarEvents } = require('../calendar');
 const { renderTemplate } = require('../templates');
 const { generateImage } = require('../image');
+const { loadCachedImage, saveCachedImage, getCacheMetadata } = require('../cache');
+const { calculateCRC32 } = require('../utils/crc32');
 
 /**
  * Main API handler for generating calendar images
  * Orchestrates the entire pipeline: config -> fetch -> render -> generate
  * 
  * @param {number} index - Configuration index (0, 1, 2, etc.)
+ * @param {Object} options - Generation options
+ * @param {boolean} options.saveCache - Whether to save the generated image to cache
  * @returns {Promise<Object>} Object with buffer and contentType
  * @throws {Error} With appropriate error details for HTTP response handling
  */
-async function generateCalendarImage(index) {
+async function generateCalendarImage(index, options = {}) {
+  const { saveCache = false } = options;
+  
   console.log(`[API] Starting image generation for config index ${index}`);
   
   try {
@@ -54,6 +60,16 @@ async function generateCalendarImage(index) {
     const imageDuration = Date.now() - startImage;
     console.log(`[API] Image generated: ${result.buffer.length} bytes in ${imageDuration}ms`);
     console.log(`[API] Total processing time: ${fetchDuration + renderDuration + imageDuration}ms`);
+
+    // Step 5: Save to cache if requested
+    if (saveCache) {
+      try {
+        await saveCachedImage(index, result.buffer, result.contentType, config.imageType);
+      } catch (cacheError) {
+        console.warn(`[API] Failed to save to cache: ${cacheError.message}`);
+        // Don't fail the request if caching fails
+      }
+    }
 
     return result;
 
@@ -121,7 +137,7 @@ async function generateCalendarImage(index) {
 
 /**
  * Express middleware handler for /api/:index endpoint
- * Validates input, calls generateCalendarImage, and handles response
+ * Returns cached image if available, otherwise generates fresh
  * 
  * @param {Object} req - Express request object
  * @param {Object} res - Express response object
@@ -143,17 +159,36 @@ async function handleImageRequest(req, res, next) {
   }
 
   try {
-    // Generate the image
-    const result = await generateCalendarImage(index);
+    // Try to load cached image first
+    console.log(`[API] Checking cache for config ${index}...`);
+    const cached = await loadCachedImage(index);
+    
+    if (cached) {
+      // Serve cached image
+      res.set('Content-Type', cached.contentType);
+      res.set('Content-Length', cached.buffer.length);
+      res.set('X-Cache', 'HIT');
+      res.set('X-Generated-At', cached.metadata.generatedAt);
+      res.set('X-CRC32', cached.metadata.crc32 || calculateCRC32(cached.buffer));
+      
+      console.log(`[API] Serving cached image for config ${index} (${cached.buffer.length} bytes)`);
+      return res.send(cached.buffer);
+    }
+    
+    // No cache available, generate fresh image
+    console.log(`[API] No cache available for config ${index}, generating fresh image...`);
+    const result = await generateCalendarImage(index, { saveCache: true });
+
+    // Calculate CRC32 for fresh image
+    const crc32 = calculateCRC32(result.buffer);
 
     // Set response headers
     res.set('Content-Type', result.contentType);
     res.set('Content-Length', result.buffer.length);
+    res.set('X-Cache', 'MISS');
+    res.set('X-CRC32', crc32);
     
-    // TODO: Future optimization - Add cache control headers
-    // res.set('Cache-Control', 'public, max-age=300'); // Cache for 5 minutes
-    
-    console.log(`[API] Successfully returning image for config ${index} (${result.buffer.length} bytes)`);
+    console.log(`[API] Successfully returning fresh image for config ${index} (${result.buffer.length} bytes)`);
     
     // Send binary data
     res.send(result.buffer);
@@ -163,6 +198,63 @@ async function handleImageRequest(req, res, next) {
     const statusCode = error.statusCode || 500;
     
     console.error(`[API] Request failed with status ${statusCode}: ${error.message}`);
+    
+    res.status(statusCode).json({
+      error: getErrorName(statusCode),
+      message: error.message,
+      details: error.details || error.message
+    });
+  }
+}
+
+/**
+ * Express middleware handler for /api/:index/fresh endpoint
+ * Always generates a fresh image, bypassing cache
+ * 
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ * @param {Function} next - Express next middleware function
+ */
+async function handleFreshImageRequest(req, res, next) {
+  const indexParam = req.params.index;
+  
+  // Validate index parameter
+  const index = parseInt(indexParam, 10);
+  
+  if (isNaN(index) || index < 0 || indexParam !== index.toString()) {
+    console.warn(`[API] Invalid index parameter: "${indexParam}"`);
+    return res.status(400).json({
+      error: 'Bad Request',
+      message: 'Invalid index parameter',
+      details: 'Index must be a non-negative integer (0, 1, 2, etc.)'
+    });
+  }
+
+  try {
+    console.log(`[API] Forcing fresh generation for config ${index}...`);
+    
+    // Generate fresh image and save to cache
+    const result = await generateCalendarImage(index, { saveCache: true });
+
+    // Calculate CRC32 for fresh image
+    const crc32 = calculateCRC32(result.buffer);
+
+    // Set response headers
+    res.set('Content-Type', result.contentType);
+    res.set('Content-Length', result.buffer.length);
+    res.set('X-Cache', 'BYPASS');
+    res.set('X-CRC32', crc32);
+    
+    console.log(`[API] Successfully returning fresh image for config ${index} (${result.buffer.length} bytes)`);
+    
+    // Send binary data
+    res.send(result.buffer);
+
+  } catch (error) {
+    // Handle errors with appropriate HTTP status codes
+    const statusCode = error.statusCode || 500;
+    
+    console.error(`[API] Fresh generation failed with status ${statusCode}: ${error.message}`);
     
     res.status(statusCode).json({
       error: getErrorName(statusCode),
@@ -187,7 +279,59 @@ function getErrorName(statusCode) {
   return errorNames[statusCode] || 'Error';
 }
 
+/**
+ * Express middleware handler for /api/:index.crc32 endpoint
+ * Returns CRC32 checksum of the image (cached or generated)
+ * 
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ * @param {Function} next - Express next middleware function
+ */
+async function handleCRC32Request(req, res, next) {
+  const indexParam = req.params.index;
+  
+  // Validate index parameter
+  const index = parseInt(indexParam, 10);
+  
+  if (isNaN(index) || index < 0 || indexParam !== index.toString()) {
+    console.warn(`[API] Invalid index parameter: "${indexParam}"`);
+    return res.status(400).send('Invalid index parameter');
+  }
+
+  try {
+    // Try to load cached metadata first
+    console.log(`[API] Checking CRC32 for config ${index}...`);
+    const metadata = await getCacheMetadata(index);
+    
+    if (metadata && metadata.crc32) {
+      // Return cached CRC32
+      console.log(`[API] Returning cached CRC32 for config ${index}: ${metadata.crc32}`);
+      return res.type('text/plain').send(metadata.crc32);
+    }
+    
+    // No cache or no CRC32 in metadata, generate fresh image
+    console.log(`[API] No cached CRC32 for config ${index}, generating fresh image...`);
+    const result = await generateCalendarImage(index, { saveCache: true });
+    
+    // Calculate CRC32
+    const crc32 = calculateCRC32(result.buffer);
+    
+    console.log(`[API] Returning fresh CRC32 for config ${index}: ${crc32}`);
+    res.type('text/plain').send(crc32);
+
+  } catch (error) {
+    // Handle errors with appropriate HTTP status codes
+    const statusCode = error.statusCode || 500;
+    
+    console.error(`[API] CRC32 request failed with status ${statusCode}: ${error.message}`);
+    
+    res.status(statusCode).send(error.message);
+  }
+}
+
 module.exports = {
   generateCalendarImage,
-  handleImageRequest
+  handleImageRequest,
+  handleFreshImageRequest,
+  handleCRC32Request
 };

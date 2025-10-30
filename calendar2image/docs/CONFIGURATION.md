@@ -42,6 +42,12 @@ Each configuration file should contain:
 - **imageType** (string, default: `"png"`): Output image format. Options: `"jpg"`, `"png"`, `"bmp"`
 - **expandRecurringFrom** (number, default: `-31`): Days from today to start expanding recurring events (negative for past)
 - **expandRecurringTo** (number, default: `31`): Days from today to stop expanding recurring events
+- **preGenerateInterval** (string, optional): Cron expression for automatic image pre-generation. When set, images are generated in the background on this schedule and served from cache for ultra-fast responses. Examples:
+  - `"*/5 * * * *"` - Every 5 minutes (recommended)
+  - `"*/1 * * * *"` - Every 1 minute (very frequent)
+  - `"*/15 * * * *"` - Every 15 minutes
+  - `"0 * * * *"` - Every hour at :00
+  - If not set, images are generated on-demand only
 
 ## Example Configurations
 
@@ -62,13 +68,50 @@ Each configuration file should contain:
   "bitDepth": 1,
   "imageType": "bmp",
   "expandRecurringFrom": -60,
-  "expandRecurringTo": 60
+  "expandRecurringTo": 60,
+  "preGenerateInterval": "*/5 * * * *"
 }
 ```
+
+### Configuration with Pre-generation (Recommended for E-ink Displays)
+```json
+{
+  "icsUrl": "https://example.com/calendar.ics",
+  "template": "week-view",
+  "grayscale": true,
+  "bitDepth": 2,
+  "imageType": "png",
+  "preGenerateInterval": "*/5 * * * *"
+}
+```
+With pre-generation enabled, images are regenerated every 5 minutes in the background. API requests return cached images in <100ms instead of ~8 seconds for on-demand generation.
 
 ## API Endpoints
 
 Once configured, each calendar can be accessed via:
-- `/api/0` - First configuration (0.json)
-- `/api/1` - Second configuration (1.json)
-- etc.
+
+**Image Endpoints:**
+- `/api/0` - First configuration (0.json) - Returns cached or generated image
+- `/api/1` - Second configuration (1.json) - Returns cached or generated image
+- `/api/{index}/fresh` - Force fresh generation, bypass cache
+
+**CRC32 Checksum Endpoints:**
+- `/api/0.crc32` - Get CRC32 checksum for first configuration
+- `/api/1.crc32` - Get CRC32 checksum for second configuration
+- `/api/{index}.crc32` - Get CRC32 checksum (plain text, lowercase hex)
+
+**E-ink Display Workflow Example:**
+```python
+import requests
+
+# Check if image changed before downloading
+crc = requests.get('http://homeassistant.local:3000/api/0.crc32').text
+
+if crc != last_known_crc:
+    # Image changed - download it
+    image = requests.get('http://homeassistant.local:3000/api/0').content
+    update_display(image)
+    last_known_crc = crc
+else:
+    print('No update needed - saves bandwidth!')
+```

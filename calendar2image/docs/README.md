@@ -34,15 +34,23 @@ The add-on will validate your configurations on startup. If any configuration is
 
 Once running, access your calendar images via:
 ```
-http://homeassistant.local:3000/api/0
+http://homeassistant.local:3000/api/0         # Get image (cached or fresh)
+http://homeassistant.local:3000/api/0.crc32   # Get CRC32 checksum
+http://homeassistant.local:3000/api/0/fresh   # Force fresh generation
 http://homeassistant.local:3000/api/1
 ```
 
 These endpoints return binary image data (PNG, JPG, or BMP) based on your configuration.
 
+**Performance:** If `preGenerateInterval` is configured, images are served from cache in <100ms. Otherwise, images are generated on-demand (~8 seconds on Raspberry Pi).
+
 **Example using curl:**
 ```bash
+# Download image
 curl http://homeassistant.local:3000/api/0 -o calendar.png
+
+# Check if image changed (for e-ink displays)
+curl http://homeassistant.local:3000/api/0.crc32
 ```
 
 **Example in Home Assistant:**
@@ -76,9 +84,12 @@ See [CONFIGURATION.md](./CONFIGURATION.md) for complete details on all configura
   "bitDepth": 8,
   "imageType": "png",
   "expandRecurringFrom": -31,
-  "expandRecurringTo": 31
+  "expandRecurringTo": 31,
+  "preGenerateInterval": "*/5 * * * *"
 }
 ```
+
+**Performance Tip:** Adding `preGenerateInterval` enables background pre-generation. Images are regenerated on schedule and served from cache, reducing response times from ~8 seconds to <100ms.
 
 ## Troubleshooting
 

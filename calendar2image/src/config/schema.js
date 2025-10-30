@@ -51,6 +51,11 @@ const configSchema = {
     expandRecurringTo: {
       type: 'number',
       default: 31
+    },
+    preGenerateInterval: {
+      type: 'string',
+      description: 'Cron expression for pre-generation scheduling (e.g., "*/5 * * * *" for every 5 minutes)',
+      pattern: '^\\S+\\s+\\S+\\s+\\S+\\s+\\S+\\s+\\S+(\\s+\\S+)?$'
     }
   },
   required: ['icsUrl', 'template'],

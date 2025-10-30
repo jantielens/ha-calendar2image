@@ -3,6 +3,27 @@
 ## [0.1.0] - 2025-10-29
 
 ### Added
+- **Pre-generation and Caching System**
+  - Configurable pre-generation with cron-style scheduling (`preGenerateInterval`)
+  - Automatic image caching for ultra-fast responses (<100ms vs ~8 seconds)
+  - Cache directory with metadata storage (CRC32, timestamps, size)
+  - Background scheduler using node-cron for scheduled regeneration
+  - Graceful fallback to on-demand generation when cache unavailable
+  - Startup cache population for immediate availability
+
+- **CRC32 Checksum Support**
+  - New `/api/:index.crc32` endpoint for bandwidth-efficient change detection
+  - CRC32 checksums automatically calculated and cached during pre-generation
+  - `X-CRC32` header included in all image responses
+  - Perfect for e-ink displays and bandwidth-constrained scenarios
+  - Plain text response format (lowercase hexadecimal)
+
+- **Enhanced API Endpoints**
+  - `GET /api/:index` - Returns cached image if available, generates fresh otherwise
+  - `GET /api/:index.crc32` - Returns CRC32 checksum (plain text)
+  - `GET /api/:index/fresh` - Forces fresh generation, bypassing cache
+  - Response headers: `X-Cache` (HIT/MISS/BYPASS), `X-CRC32`, `X-Generated-At`
+
 - Initial release with basic add-on skeleton
 - Express web server with configurable port (default: 3000)
 - `/health` endpoint for health checks

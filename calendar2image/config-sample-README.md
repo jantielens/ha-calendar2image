@@ -37,6 +37,7 @@ Configuration files must be named with numeric IDs:
 | `imageType` | string | `"png"` | `"png"`, `"jpg"`, `"jpeg"`, `"bmp"`, `"gif"` | Output image format |
 | `expandRecurringFrom` | integer | `-31` | Any negative integer | Number of days in the past to expand recurring events |
 | `expandRecurringTo` | integer | `31` | Any positive integer | Number of days in the future to expand recurring events |
+| `preGenerateInterval` | string | (none) | Cron expression | Schedule for automatic pre-generation (e.g., `"*/5 * * * *"` for every 5 minutes) |
 
 ## Examples
 
@@ -91,6 +92,19 @@ Configuration files must be named with numeric IDs:
 }
 ```
 
+### Pre-generated for E-ink Display (Recommended)
+```json
+{
+  "icsUrl": "https://example.com/calendar.ics",
+  "template": "default",
+  "grayscale": true,
+  "bitDepth": 2,
+  "imageType": "png",
+  "preGenerateInterval": "*/5 * * * *"
+}
+```
+With `preGenerateInterval` set, images are regenerated every 5 minutes in the background. API responses are <100ms (from cache) instead of ~8 seconds (on-demand generation). Use the `/api/{index}.crc32` endpoint to check if the image changed before downloading.
+
 ## Calendar Source Examples
 
 ### Google Calendar
@@ -127,7 +141,10 @@ You can create multiple configuration files to generate different calendar image
 ```
 
 Each configuration will be accessible via its respective API endpoint:
-- `/api/0` → Uses `0.json`
-- `/api/1` → Uses `1.json`
-- `/api/2` → Uses `2.json`
-- `/api/3` → Uses `3.json`
+- `/api/0` → Uses `0.json` (returns image)
+- `/api/0.crc32` → CRC32 checksum for `0.json`
+- `/api/0/fresh` → Force fresh generation for `0.json`
+- `/api/1` → Uses `1.json` (returns image)
+- `/api/1.crc32` → CRC32 checksum for `1.json`
+- `/api/2` → Uses `2.json` (returns image)
+- `/api/3` → Uses `3.json` (returns image)
