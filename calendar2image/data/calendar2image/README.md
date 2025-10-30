@@ -14,8 +14,10 @@ During local development, use this `data/calendar2image/` folder.
 ## File Naming
 
 Configuration files must be named with numeric IDs:
-- `0.json` - First configuration (accessible via `/api/0`)
-- `1.json` - Second configuration (accessible via `/api/1`)
+- `0.json` - First configuration (accessible via `/api/0.png` or other extension)
+- `1.json` - Second configuration (accessible via `/api/1.png` or other extension)
+
+**Note:** The API endpoint extension must match the `imageType` in the config file.
 - `2.json` - Third configuration (accessible via `/api/2`)
 - etc.
 
@@ -103,7 +105,7 @@ Configuration files must be named with numeric IDs:
   "preGenerateInterval": "*/5 * * * *"
 }
 ```
-With `preGenerateInterval` set, images are regenerated every 5 minutes in the background. API responses are <100ms (from cache) instead of ~8 seconds (on-demand generation). Use the `/api/{index}.crc32` endpoint to check if the image changed before downloading.
+With `preGenerateInterval` set, images are regenerated every 5 minutes in the background. API responses are <100ms (from cache) instead of ~8 seconds (on-demand generation). Use the `/api/{index}.{ext}.crc32` endpoint (e.g., `/api/0.png.crc32`) to check if the image changed before downloading.
 
 ## Calendar Source Examples
 

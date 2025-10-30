@@ -34,11 +34,13 @@ The add-on will validate your configurations on startup. If any configuration is
 
 Once running, access your calendar images via:
 ```
-http://homeassistant.local:3000/api/0         # Get image (cached or fresh)
-http://homeassistant.local:3000/api/0.crc32   # Get CRC32 checksum
-http://homeassistant.local:3000/api/0/fresh   # Force fresh generation
-http://homeassistant.local:3000/api/1
+http://homeassistant.local:3000/api/0.png           # Get image (cached or fresh)
+http://homeassistant.local:3000/api/0.png.crc32     # Get CRC32 checksum
+http://homeassistant.local:3000/api/0/fresh.png     # Force fresh generation
+http://homeassistant.local:3000/api/1.png           # Second calendar image
 ```
+
+**Note:** The file extension (`.png`, `.jpg`, or `.bmp`) must match the `imageType` configured in your JSON file.
 
 These endpoints return binary image data (PNG, JPG, or BMP) based on your configuration.
 
@@ -47,10 +49,10 @@ These endpoints return binary image data (PNG, JPG, or BMP) based on your config
 **Example using curl:**
 ```bash
 # Download image
-curl http://homeassistant.local:3000/api/0 -o calendar.png
+curl http://homeassistant.local:3000/api/0.png -o calendar.png
 
 # Check if image changed (for e-ink displays)
-curl http://homeassistant.local:3000/api/0.crc32
+curl http://homeassistant.local:3000/api/0.png.crc32
 ```
 
 **Example in Home Assistant:**
@@ -58,7 +60,7 @@ curl http://homeassistant.local:3000/api/0.crc32
 camera:
   - platform: generic
     name: "Calendar Image"
-    still_image_url: "http://homeassistant.local:3000/api/0"
+    still_image_url: "http://homeassistant.local:3000/api/0.png"
 ```
 
 ## Configuration Options

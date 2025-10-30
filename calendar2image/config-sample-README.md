@@ -103,7 +103,7 @@ Configuration files must be named with numeric IDs:
   "preGenerateInterval": "*/5 * * * *"
 }
 ```
-With `preGenerateInterval` set, images are regenerated every 5 minutes in the background. API responses are <100ms (from cache) instead of ~8 seconds (on-demand generation). Use the `/api/{index}.crc32` endpoint to check if the image changed before downloading.
+With `preGenerateInterval` set, images are regenerated every 5 minutes in the background. API responses are <100ms (from cache) instead of ~8 seconds (on-demand generation). Use the `/api/{index}.{ext}.crc32` endpoint (e.g., `/api/0.png.crc32`) to check if the image changed before downloading.
 
 ## Calendar Source Examples
 
@@ -141,10 +141,12 @@ You can create multiple configuration files to generate different calendar image
 ```
 
 Each configuration will be accessible via its respective API endpoint:
-- `/api/0` → Uses `0.json` (returns image)
-- `/api/0.crc32` → CRC32 checksum for `0.json`
-- `/api/0/fresh` → Force fresh generation for `0.json`
-- `/api/1` → Uses `1.json` (returns image)
-- `/api/1.crc32` → CRC32 checksum for `1.json`
+- `/api/0.png` → Uses `0.json` (returns image)
+- `/api/0.png.crc32` → CRC32 checksum for `0.json`
+- `/api/0/fresh.png` → Force fresh generation for `0.json`
+- `/api/1.png` → Uses `1.json` (returns image)
+- `/api/1.png.crc32` → CRC32 checksum for `1.json`
+
+**Note:** Extension (`.png`, `.jpg`, or `.bmp`) must match the `imageType` in the config file.
 - `/api/2` → Uses `2.json` (returns image)
 - `/api/3` → Uses `3.json` (returns image)

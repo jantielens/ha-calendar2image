@@ -102,25 +102,27 @@ Without `preGenerateInterval`, images are **always generated fresh** on each req
 Once configured, each calendar can be accessed via:
 
 **Image Endpoints:**
-- `/api/0` - First configuration (0.json) - Returns cached or generated image
-- `/api/1` - Second configuration (1.json) - Returns cached or generated image
-- `/api/{index}/fresh` - Force fresh generation, bypass cache
+- `/api/0.png` - First configuration (0.json) - Returns cached or generated image
+- `/api/1.png` - Second configuration (1.json) - Returns cached or generated image
+- `/api/{index}/fresh.png` - Force fresh generation, bypass cache
+
+**Note:** Replace `.png` with `.jpg` or `.bmp` to match the `imageType` in your config file.
 
 **CRC32 Checksum Endpoints:**
-- `/api/0.crc32` - Get CRC32 checksum for first configuration
-- `/api/1.crc32` - Get CRC32 checksum for second configuration
-- `/api/{index}.crc32` - Get CRC32 checksum (plain text, lowercase hex)
+- `/api/0.png.crc32` - Get CRC32 checksum for first configuration
+- `/api/1.png.crc32` - Get CRC32 checksum for second configuration
+- `/api/{index}.{ext}.crc32` - Get CRC32 checksum (plain text, lowercase hex)
 
 **E-ink Display Workflow Example:**
 ```python
 import requests
 
 # Check if image changed before downloading
-crc = requests.get('http://homeassistant.local:3000/api/0.crc32').text
+crc = requests.get('http://homeassistant.local:3000/api/0.png.crc32').text
 
 if crc != last_known_crc:
     # Image changed - download it
-    image = requests.get('http://homeassistant.local:3000/api/0').content
+    image = requests.get('http://homeassistant.local:3000/api/0.png').content
     update_display(image)
     last_known_crc = crc
 else:

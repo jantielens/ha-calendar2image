@@ -34,12 +34,17 @@ Once the add-on is running, you can access the API endpoints:
 
 ### Calendar Image Endpoints
 ```
-GET http://homeassistant.local:3000/api/0
-GET http://homeassistant.local:3000/api/1
-GET http://homeassistant.local:3000/api/{index}
+GET http://homeassistant.local:3000/api/{index}.{ext}
+
+Examples:
+  http://homeassistant.local:3000/api/0.png
+  http://homeassistant.local:3000/api/1.jpg
+  http://homeassistant.local:3000/api/2.bmp
 ```
 
 Returns a binary image (PNG, JPG, or BMP) based on the configuration file (`0.json`, `1.json`, etc.).
+
+**Important:** The file extension (`.png`, `.jpg`, or `.bmp`) must match the `imageType` configured in the corresponding JSON file. Requesting a mismatched extension will result in a 404 error.
 
 **Caching Behavior:**
 - **With `preGenerateInterval` configured:** Images are pre-generated on schedule and served from cache for ultra-fast response times (<100ms)
@@ -57,24 +62,36 @@ Returns a binary image (PNG, JPG, or BMP) based on the configuration file (`0.js
 
 ### CRC32 Checksum Endpoint
 ```
-GET http://homeassistant.local:3000/api/{index}.crc32
+GET http://homeassistant.local:3000/api/{index}.{ext}.crc32
+
+Examples:
+  http://homeassistant.local:3000/api/0.png.crc32
+  http://homeassistant.local:3000/api/1.jpg.crc32
 ```
 
 Returns the CRC32 checksum of the image as plain text (lowercase hexadecimal). Perfect for e-ink displays or bandwidth-constrained scenarios where you want to check if the image has changed before downloading.
 
+**Important:** The extension must match the `imageType` in your config file.
+
 **Example:**
 ```bash
 # Check if image changed
-curl http://homeassistant.local:3000/api/0.crc32
+curl http://homeassistant.local:3000/api/0.png.crc32
 # Output: 8f8ea89f
 ```
 
 ### Fresh Generation Endpoint
 ```
-GET http://homeassistant.local:3000/api/{index}/fresh
+GET http://homeassistant.local:3000/api/{index}/fresh.{ext}
+
+Examples:
+  http://homeassistant.local:3000/api/0/fresh.png
+  http://homeassistant.local:3000/api/1/fresh.jpg
 ```
 
 Forces fresh image generation, bypassing the cache. Use this when you need the most up-to-date calendar data immediately.
+
+**Important:** The extension must match the `imageType` in your config file.
 
 **Response Headers:**
 - Same as regular image endpoint, plus `X-Cache: BYPASS`
