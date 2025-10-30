@@ -25,7 +25,7 @@ async function generateCalendarImage(index, options = {}) {
     console.log(`[API] Loading configuration ${index}...`);
     const config = await loadConfig(index);
     console.log(`[API] Configuration loaded: template="${config.template}", icsUrl="${config.icsUrl}"`);
-    console.log(`[API] Image settings: ${config.width}x${config.height}, ${config.imageType}, grayscale=${config.grayscale}, bitDepth=${config.bitDepth}`);
+    console.log(`[API] Image settings: ${config.width}x${config.height}, ${config.imageType}, grayscale=${config.grayscale}, bitDepth=${config.bitDepth}, rotate=${config.rotate}°`);
 
     // Step 2: Fetch calendar events
     console.log(`[API] Fetching calendar events from ICS URL...`);
@@ -55,7 +55,8 @@ async function generateCalendarImage(index, options = {}) {
       height: config.height,
       imageType: config.imageType,
       grayscale: config.grayscale,
-      bitDepth: config.bitDepth
+      bitDepth: config.bitDepth,
+      rotate: config.rotate
     });
     const imageDuration = Date.now() - startImage;
     console.log(`[API] Image generated: ${result.buffer.length} bytes in ${imageDuration}ms`);

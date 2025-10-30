@@ -95,6 +95,98 @@ describe('Image Converter', () => {
         imageType: 'png'
       })).rejects.toThrow();
     });
+
+    test('should rotate image 90 degrees', async () => {
+      // Create a rectangular image to verify rotation
+      const rectangleBuffer = await sharp({
+        create: {
+          width: 200,
+          height: 100,
+          channels: 4,
+          background: { r: 255, g: 0, b: 0, alpha: 1 }
+        }
+      })
+      .png()
+      .toBuffer();
+
+      const result = await convertImage(rectangleBuffer, {
+        imageType: 'png',
+        rotate: 90
+      });
+
+      const metadata = await sharp(result).metadata();
+      // After 90° rotation, width and height should be swapped
+      expect(metadata.width).toBe(100);
+      expect(metadata.height).toBe(200);
+    });
+
+    test('should rotate image 180 degrees', async () => {
+      const testBuffer = await sharp({
+        create: {
+          width: 200,
+          height: 100,
+          channels: 4,
+          background: { r: 255, g: 0, b: 0, alpha: 1 }
+        }
+      })
+      .png()
+      .toBuffer();
+
+      const result = await convertImage(testBuffer, {
+        imageType: 'png',
+        rotate: 180
+      });
+
+      const metadata = await sharp(result).metadata();
+      // After 180° rotation, dimensions should remain the same
+      expect(metadata.width).toBe(200);
+      expect(metadata.height).toBe(100);
+    });
+
+    test('should rotate image 270 degrees', async () => {
+      const rectangleBuffer = await sharp({
+        create: {
+          width: 200,
+          height: 100,
+          channels: 4,
+          background: { r: 255, g: 0, b: 0, alpha: 1 }
+        }
+      })
+      .png()
+      .toBuffer();
+
+      const result = await convertImage(rectangleBuffer, {
+        imageType: 'png',
+        rotate: 270
+      });
+
+      const metadata = await sharp(result).metadata();
+      // After 270° rotation, width and height should be swapped
+      expect(metadata.width).toBe(100);
+      expect(metadata.height).toBe(200);
+    });
+
+    test('should handle 0 degree rotation (no rotation)', async () => {
+      const testBuffer = await sharp({
+        create: {
+          width: 200,
+          height: 100,
+          channels: 4,
+          background: { r: 255, g: 0, b: 0, alpha: 1 }
+        }
+      })
+      .png()
+      .toBuffer();
+
+      const result = await convertImage(testBuffer, {
+        imageType: 'png',
+        rotate: 0
+      });
+
+      const metadata = await sharp(result).metadata();
+      expect(metadata.width).toBe(200);
+      expect(metadata.height).toBe(100);
+    });
   });
 
   describe('getContentType', () => {

@@ -50,7 +50,8 @@ describe('config loader', () => {
         bitDepth: 16,
         imageType: 'jpg',
         expandRecurringFrom: -60,
-        expandRecurringTo: 60
+        expandRecurringTo: 60,
+        rotate: 0
       };
 
       await fs.writeFile(
@@ -132,11 +133,13 @@ describe('config loader', () => {
     it('should load all configuration files', async () => {
       const config0 = {
         icsUrl: 'https://example.com/cal0.ics',
-        template: 'week-view'
+        template: 'week-view',
+        rotate: 0
       };
       const config1 = {
         icsUrl: 'https://example.com/cal1.ics',
-        template: 'today-view'
+        template: 'today-view',
+        rotate: 0
       };
 
       await fs.writeFile(path.join(tempDir, '0.json'), JSON.stringify(config0));
@@ -144,19 +147,21 @@ describe('config loader', () => {
 
       const result = await loadAllConfigs(tempDir);
       
-      expect(Object.keys(result)).toHaveLength(2);
-      expect(result[0]).toMatchObject(config0);
-      expect(result[1]).toMatchObject(config1);
+      expect(result).toHaveLength(2);
+      expect(result[0].config).toMatchObject(config0);
+      expect(result[1].config).toMatchObject(config1);
     });
 
     it('should load configs with non-sequential indices', async () => {
       const config0 = {
         icsUrl: 'https://example.com/cal0.ics',
-        template: 'week-view'
+        template: 'week-view',
+        rotate: 0
       };
       const config5 = {
         icsUrl: 'https://example.com/cal5.ics',
-        template: 'today-view'
+        template: 'today-view',
+        rotate: 0
       };
 
       await fs.writeFile(path.join(tempDir, '0.json'), JSON.stringify(config0));
@@ -164,15 +169,18 @@ describe('config loader', () => {
 
       const result = await loadAllConfigs(tempDir);
       
-      expect(Object.keys(result)).toHaveLength(2);
-      expect(result[0]).toMatchObject(config0);
-      expect(result[5]).toMatchObject(config5);
+      expect(result).toHaveLength(2);
+      expect(result[0].config).toMatchObject(config0);
+      expect(result[1].config).toMatchObject(config5);
+      expect(result[0].index).toBe(0);
+      expect(result[1].index).toBe(5);
     });
 
     it('should ignore non-JSON files', async () => {
       const config0 = {
         icsUrl: 'https://example.com/cal0.ics',
-        template: 'week-view'
+        template: 'week-view',
+        rotate: 0
       };
 
       await fs.writeFile(path.join(tempDir, '0.json'), JSON.stringify(config0));
@@ -181,8 +189,8 @@ describe('config loader', () => {
 
       const result = await loadAllConfigs(tempDir);
       
-      expect(Object.keys(result)).toHaveLength(1);
-      expect(result[0]).toMatchObject(config0);
+      expect(result).toHaveLength(1);
+      expect(result[0].config).toMatchObject(config0);
     });
 
     it('should throw error if no config files found', async () => {
@@ -230,7 +238,8 @@ describe('config loader', () => {
     it('should validate and return all configs', async () => {
       const config0 = {
         icsUrl: 'https://example.com/cal0.ics',
-        template: 'week-view'
+        template: 'week-view',
+        rotate: 0
       };
 
       await fs.writeFile(path.join(tempDir, '0.json'), JSON.stringify(config0));
@@ -239,7 +248,7 @@ describe('config loader', () => {
 
       const result = await validateConfigs(tempDir);
       
-      expect(result[0]).toMatchObject(config0);
+      expect(result[0].config).toMatchObject(config0);
       expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Loading configurations'));
       expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Successfully loaded 1'));
 

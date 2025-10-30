@@ -1,3 +1,7 @@
+/**
+ * Jest configuration for container/CI environment
+ * Includes all tests including those requiring Puppeteer/Chrome
+ */
 module.exports = {
   testEnvironment: 'node',
   collectCoverageFrom: [
@@ -8,10 +12,7 @@ module.exports = {
   coverageReporters: ['text', 'lcov', 'html'],
   testMatch: ['**/tests/**/*.test.js'],
   testPathIgnorePatterns: [
-    'tests/integration',
-    'tests/image/browser.test.js',  // Requires Puppeteer/Chrome
-    'tests/image/index.test.js',     // Requires Puppeteer/Chrome
-    'tests/api/handler.test.js'      // Mocks are affected by missing browser
+    'tests/integration'  // Only ignore integration tests, run all unit tests
   ],
   coverageThreshold: {
     global: {
@@ -21,5 +22,5 @@ module.exports = {
       statements: 80
     }
   },
-  testTimeout: 10000 // 10 seconds for integration tests
+  testTimeout: 30000 // 30 seconds for Puppeteer tests
 };

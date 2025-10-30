@@ -1,0 +1,9 @@
+{
+  "icsUrl": "https://calendar.google.com/calendar/ical/your-calendar-id/public/basic.ics",
+  "template": "default",
+  "grayscale": false,
+  "bitDepth": 8,
+  "imageType": "png",
+  "expandRecurringFrom": -31,
+  "expandRecurringTo": 31
+}

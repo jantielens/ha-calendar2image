@@ -171,6 +171,36 @@ describe('config schema', () => {
       
       expect(result.valid).toBe(true);
     });
+
+    it('should accept valid rotate values', () => {
+      const validAngles = [0, 90, 180, 270];
+      
+      validAngles.forEach(angle => {
+        const config = {
+          icsUrl: 'https://example.com/calendar.ics',
+          template: 'week-view',
+          rotate: angle
+        };
+
+        const result = validateConfig(config);
+        expect(result.valid).toBe(true);
+      });
+    });
+
+    it('should reject invalid rotate values', () => {
+      const invalidAngles = [45, 135, 225, 315, -90, 360];
+      
+      invalidAngles.forEach(angle => {
+        const config = {
+          icsUrl: 'https://example.com/calendar.ics',
+          template: 'week-view',
+          rotate: angle
+        };
+
+        const result = validateConfig(config);
+        expect(result.valid).toBe(false);
+      });
+    });
   });
 
   describe('applyDefaults', () => {
@@ -190,6 +220,7 @@ describe('config schema', () => {
         grayscale: false,
         bitDepth: 8,
         imageType: 'png',
+        rotate: 0,
         expandRecurringFrom: -31,
         expandRecurringTo: 31
       });
@@ -205,7 +236,8 @@ describe('config schema', () => {
         bitDepth: 16,
         imageType: 'jpg',
         expandRecurringFrom: -60,
-        expandRecurringTo: 60
+        expandRecurringTo: 60,
+        rotate: 0
       };
 
       const result = applyDefaults(config);
@@ -231,6 +263,7 @@ describe('config schema', () => {
         grayscale: true,
         bitDepth: 8,
         imageType: 'bmp',
+        rotate: 0,
         expandRecurringFrom: -31,
         expandRecurringTo: 31
       });

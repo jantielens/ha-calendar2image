@@ -8,13 +8,15 @@ const sharp = require('sharp');
  * @param {string} options.imageType - Output format ('png', 'jpg', 'bmp')
  * @param {boolean} options.grayscale - Convert to grayscale
  * @param {number} options.bitDepth - Bit depth (1-32)
+ * @param {number} options.rotate - Rotation angle in degrees (0, 90, 180, 270)
  * @returns {Promise<Buffer>} Converted image buffer
  */
 async function convertImage(imageBuffer, options = {}) {
   const {
     imageType = 'png',
     grayscale = false,
-    bitDepth = 8
+    bitDepth = 8,
+    rotate = 0
   } = options;
 
   try {
@@ -23,6 +25,11 @@ async function convertImage(imageBuffer, options = {}) {
     // Apply grayscale if requested
     if (grayscale) {
       pipeline = pipeline.grayscale();
+    }
+
+    // Apply rotation if requested
+    if (rotate && rotate !== 0) {
+      pipeline = pipeline.rotate(rotate);
     }
 
     // Convert to requested format

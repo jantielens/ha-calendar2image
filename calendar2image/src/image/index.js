@@ -16,6 +16,7 @@ const { convertImage, getContentType } = require('./converter');
  * @param {string} options.imageType - Output format ('png', 'jpg', 'bmp')
  * @param {boolean} options.grayscale - Convert to grayscale
  * @param {number} options.bitDepth - Bit depth (1-32)
+ * @param {number} options.rotate - Rotation angle in degrees (0, 90, 180, 270)
  * @returns {Promise<Object>} Object with buffer and contentType
  */
 async function generateImage(html, options = {}) {
@@ -24,7 +25,8 @@ async function generateImage(html, options = {}) {
     height = 600,
     imageType = 'png',
     grayscale = false,
-    bitDepth = 8
+    bitDepth = 8,
+    rotate = 0
   } = options;
 
   let page = null;
@@ -62,7 +64,8 @@ async function generateImage(html, options = {}) {
     const finalBuffer = await convertImage(screenshotBuffer, {
       imageType,
       grayscale,
-      bitDepth
+      bitDepth,
+      rotate
     });
 
     return {

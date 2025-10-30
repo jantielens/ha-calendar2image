@@ -6,13 +6,10 @@
   "scripts": {
     "start": "node src/index.js",
     "dev": "node src/index.js",
-    "test": "jest --testPathIgnorePatterns=tests/integration",
-    "test:watch": "jest --watch --testPathIgnorePatterns=tests/integration",
-    "test:coverage": "jest --coverage --testPathIgnorePatterns=tests/integration",
-    "test:integration": "jest --config=jest.integration.config.js tests/integration/api.test.js",
-    "test:docker": "jest --config=jest.integration.config.js tests/integration/docker.test.js --runInBand --detectOpenHandles",
-    "test:all": "npm test && npm run test:integration",
-    "test:local": "node test-local.js"
+    "test:local": "jest",
+    "test:coverage": "jest --coverage",
+    "test:ci": "jest --config=jest.integration.config.js",
+    "test:all": "npm run test:local && npm run test:coverage && npm run test:ci"
   },
   "keywords": [
     "home-assistant",

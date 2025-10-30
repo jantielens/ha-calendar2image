@@ -44,6 +44,11 @@ const configSchema = {
       enum: ['jpg', 'png', 'bmp'],
       default: 'png'
     },
+    rotate: {
+      type: 'number',
+      enum: [0, 90, 180, 270],
+      default: 0
+    },
     expandRecurringFrom: {
       type: 'number',
       default: -31
@@ -90,6 +95,7 @@ function applyDefaults(config) {
     grayscale: config.grayscale !== undefined ? config.grayscale : false,
     bitDepth: config.bitDepth !== undefined ? config.bitDepth : 8,
     imageType: config.imageType || 'png',
+    rotate: config.rotate !== undefined ? config.rotate : 0,
     expandRecurringFrom: config.expandRecurringFrom !== undefined ? config.expandRecurringFrom : -31,
     expandRecurringTo: config.expandRecurringTo !== undefined ? config.expandRecurringTo : 31
   };
