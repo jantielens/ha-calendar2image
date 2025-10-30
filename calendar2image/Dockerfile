@@ -24,7 +24,7 @@ COPY config-sample-README.md ./config-sample-README.md
 
 # Copy s6-overlay service files
 COPY rootfs /
-RUN chmod a+x /etc/services.d/calendar2image/run
+RUN chmod a+x /etc/services.d/calendar2image/run /etc/services.d/calendar2image/finish
 
 # Expose port (will be overridden by config.yaml)
 EXPOSE 3000
