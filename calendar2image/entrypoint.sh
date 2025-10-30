@@ -53,12 +53,12 @@ fi
 echo "Files in /app:"
 ls -la /app/
 
-if [ ! -f "$CONFIG_DIR/sample-0.json" ]; then
-    echo "Copying sample-0.json to $CONFIG_DIR..."
-    cp /app/sample-0.json "$CONFIG_DIR/sample-0.json"
-    echo "Copy completed"
+if [ ! -f "$CONFIG_DIR/0.json" ]; then
+    echo "Copying default configuration to $CONFIG_DIR/0.json..."
+    cp /app/sample-0.json "$CONFIG_DIR/0.json"
+    echo "Copy completed - default configuration ready at 0.json"
 else
-    echo "sample-0.json already exists"
+    echo "0.json already exists"
 fi
 
 if [ ! -f "$CONFIG_DIR/README.md" ]; then
@@ -67,6 +67,20 @@ if [ ! -f "$CONFIG_DIR/README.md" ]; then
     echo "Copy completed"
 else
     echo "README.md already exists"
+fi
+
+# Create templates directory and copy sample template
+if [ ! -d "$CONFIG_DIR/templates" ]; then
+    echo "Creating templates directory..."
+    mkdir -p "$CONFIG_DIR/templates"
+fi
+
+if [ ! -f "$CONFIG_DIR/templates/custom-week-view.js" ]; then
+    echo "Copying sample custom template (custom-week-view.js)..."
+    cp /app/custom-week-view.js "$CONFIG_DIR/templates/custom-week-view.js"
+    echo "Sample template ready - you can customize it!"
+else
+    echo "custom-week-view.js already exists"
 fi
 
 echo "Final config directory contents:"

@@ -12,7 +12,9 @@ This directory contains user-facing documentation for the Calendar2Image Home As
 
 ## Quick Start
 
-**Sample files included**: When you first start the add-on, it automatically creates `sample-0.json` and `README.md` in `/addon_configs/17f877f5_calendar2image/` to help you get started.
+**Default configuration**: When you first start the add-on, it automatically creates `0.json` (a working configuration) and `README.md` in `/addon_configs/17f877f5_calendar2image/` to help you get started. Simply update the `icsUrl` in `0.json` to point to your calendar!
+
+**Sample custom template**: A customizable template example (`templates/custom-week-view.js`) is also created automatically. It's not used by default - to use it, change the `template` value in your config from `"week-view"` to `"custom-week-view"`.
 
 ### 1. Create Configuration Files
 
@@ -107,7 +109,7 @@ See [CONFIGURATION.md](./CONFIGURATION.md) for complete details on all configura
 - Ensure files are named `0.json`, `1.json`, etc.
 - Check the file location matches your folder mapping
 - Default location: `/addon_configs/17f877f5_calendar2image/`
-- The add-on creates `sample-0.json` automatically on first run - check if this file exists
+- The add-on creates `0.json` automatically on first run - check if this file exists and has a valid `icsUrl`
 
 ### Invalid ICS URL
 

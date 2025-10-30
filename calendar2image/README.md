@@ -24,7 +24,9 @@ port: 3000
 
 Calendar configurations are stored in `/addon_configs/17f877f5_calendar2image/` on your Home Assistant host.
 
-**Sample files**: The add-on automatically creates `sample-0.json` and `README.md` in this directory on first startup to help you get started. Copy `sample-0.json` to `0.json` and customize it for your calendar.
+**Default configuration**: The add-on automatically creates `0.json` (a working configuration file) and `README.md` in this directory on first startup. The configuration is ready to use out-of-the-box - just update the `icsUrl` in `0.json` to point to your calendar!
+
+**Sample custom template**: A sample template (`templates/custom-week-view.js`) is also created automatically. It's not used by default - to use it, change the `template` value in your config from `"week-view"` to `"custom-week-view"`. You can then modify it or create your own templates in the `templates/` folder.
 
 See [Configuration Guide](./docs/CONFIGURATION.md) for details.
 

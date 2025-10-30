@@ -8,7 +8,9 @@ Configuration files are stored in: `/addon_configs/17f877f5_calendar2image/`
 
 This follows the Home Assistant standard for add-on configurations. The folder name includes the add-on ID (17f877f5_calendar2image).
 
-**Sample files included**: When you first start the add-on, it automatically creates `sample-0.json` and `README.md` in this directory. You can copy and rename `sample-0.json` to `0.json` to get started quickly.
+**Default configuration**: When you first start the add-on, it automatically creates `0.json` and `README.md` in this directory. The `0.json` file is a fully working configuration with all available parameters set to sensible defaults - just update the `icsUrl` to point to your calendar and you're ready to go!
+
+**Sample custom template**: A sample template (`templates/custom-week-view.js`) is also created for you to customize. To use it instead of the built-in template, change `"template": "week-view"` to `"template": "custom-week-view"` in your config file.
 
 ## File Naming Pattern
 

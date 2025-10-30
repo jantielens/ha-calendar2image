@@ -1,6 +1,10 @@
 # Configuration Files
 
-This folder contains sample configuration files for the Calendar2Image add-on.
+This folder contains configuration files for the Calendar2Image add-on.
+
+## Quick Start
+
+On first startup, the add-on automatically creates `0.json` with a **complete working configuration** including all available parameters. Simply update the `icsUrl` to point to your calendar and you're ready to go!
 
 ## Location
 
@@ -32,12 +36,17 @@ Configuration files must be named with numeric IDs:
 
 | Field | Type | Default | Valid Values | Description |
 |-------|------|---------|--------------|-------------|
+| `width` | integer | `800` | `100-4096` | Width of the output image in pixels |
+| `height` | integer | `600` | `100-4096` | Height of the output image in pixels |
 | `grayscale` | boolean | `false` | `true`, `false` | Convert output image to grayscale |
-| `bitDepth` | integer | `8` | `1`, `4`, `8`, `16`, `24` | Bit depth for the output image |
-| `imageType` | string | `"png"` | `"png"`, `"jpg"`, `"jpeg"`, `"bmp"`, `"gif"` | Output image format |
+| `bitDepth` | integer | `8` | `1-32` | Bit depth for the output image |
+| `imageType` | string | `"png"` | `"png"`, `"jpg"`, `"bmp"` | Output image format |
+| `rotate` | integer | `0` | `0`, `90`, `180`, `270` | Rotate the output image (in degrees) |
 | `expandRecurringFrom` | integer | `-31` | Any negative integer | Number of days in the past to expand recurring events |
 | `expandRecurringTo` | integer | `31` | Any positive integer | Number of days in the future to expand recurring events |
 | `preGenerateInterval` | string | (none) | Cron expression | Schedule for automatic pre-generation (e.g., `"*/5 * * * *"` for every 5 minutes) |
+| `locale` | string | `"en-US"` | BCP 47 locale code | Locale for date/time formatting (e.g., `"de-DE"`, `"fr-FR"`) |
+| `timezone` | string | (none) | IANA timezone name | Timezone to convert event times (e.g., `"Europe/Berlin"`, `"America/New_York"`) |
 
 ## Examples
 
@@ -54,13 +63,20 @@ Configuration files must be named with numeric IDs:
 {
   "icsUrl": "https://calendar.google.com/calendar/ical/your-id/public/basic.ics",
   "template": "default",
+  "width": 800,
+  "height": 600,
   "grayscale": false,
   "bitDepth": 8,
   "imageType": "png",
+  "rotate": 0,
   "expandRecurringFrom": -31,
-  "expandRecurringTo": 31
+  "expandRecurringTo": 31,
+  "preGenerateInterval": "*/5 * * * *",
+  "locale": "en-US",
+  "timezone": "UTC"
 }
 ```
+This is what the default `0.json` file contains - a complete configuration with all available parameters!
 
 ### Grayscale PNG
 ```json

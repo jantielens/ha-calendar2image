@@ -20,3 +20,4 @@ IMPLEMENTATION.md
 # Keep sample config files for Docker image
 !sample-0.json
 !config-sample-README.md
+!custom-week-view.js

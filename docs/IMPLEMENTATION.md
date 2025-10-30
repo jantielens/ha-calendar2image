@@ -60,7 +60,7 @@ This document describes the implementation of Steps 2-5: ICS Calendar Data Fetch
 
 **Configuration Location**: `/addon_configs/17f877f5_calendar2image/` (on host), `/config` (inside container)
 - Files must be named: `0.json`, `1.json`, `2.json`, etc.
-- Sample files (`sample-0.json` and `README.md`) are automatically created on first startup
+- Default configuration (`0.json` and `README.md`) are automatically created on first startup with all parameters configured
 
 ### Step 4: Template Engine Setup ✅
 
@@ -319,7 +319,7 @@ See [tests/integration/README.md](../calendar2image/tests/integration/README.md)
 
 ## Sample Configurations
 
-A sample configuration file is provided in `calendar2image/sample-0.json` and is automatically copied to `/addon_configs/17f877f5_calendar2image/` on first startup.
+A comprehensive default configuration file is provided in `calendar2image/sample-0.json` with all available parameters. This file is automatically copied to `/addon_configs/17f877f5_calendar2image/0.json` on first startup, providing an out-of-the-box working configuration.
 
 Additional sample configurations for testing are in `data/ha-calendar2image/`:
 - `0.json` - Week view with default settings
@@ -328,13 +328,15 @@ Additional sample configurations for testing are in `data/ha-calendar2image/`:
 ## Container Structure
 
 **s6-overlay Integration**: The add-on uses s6-overlay for proper service lifecycle management:
-- Init script (`/etc/cont-init.d/00-calendar2image.sh`) copies sample files to `/config` on first startup
+- Init script (`/etc/cont-init.d/00-calendar2image.sh`) creates default configuration (`0.json`) and `README.md` on first startup
 - Service script (`/etc/services.d/calendar2image/run`) starts the Node.js application
 - Finish script (`/etc/services.d/calendar2image/finish`) handles cleanup on shutdown
 
-**Sample Files**: `sample-0.json` and `config-sample-README.md` are:
+**Default Configuration**: `sample-0.json` and `config-sample-README.md` are:
 - Built into the Docker image at `/app/`
-- Automatically copied to `/config/` on first container startup
+- `sample-0.json` is automatically copied to `/config/0.json` on first container startup (provides working configuration)
+- `config-sample-README.md` is copied to `/config/README.md`
+- `custom-week-view.js` is copied to `/config/templates/custom-week-view.js` (sample custom template)
 - Only copied if they don't already exist (won't overwrite user files)
 
 **Volume Mounting**: Home Assistant mounts the config directory:

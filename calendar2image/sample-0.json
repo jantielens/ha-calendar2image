@@ -1,9 +1,15 @@
 {
   "icsUrl": "https://calendar.google.com/calendar/ical/your-calendar-id/public/basic.ics",
-  "template": "default",
+  "template": "week-view",
+  "width": 800,
+  "height": 600,
   "grayscale": false,
   "bitDepth": 8,
   "imageType": "png",
+  "rotate": 0,
   "expandRecurringFrom": -31,
-  "expandRecurringTo": 31
+  "expandRecurringTo": 31,
+  "preGenerateInterval": "*/5 * * * *",
+  "locale": "en-US",
+  "timezone": "UTC"
 }
