@@ -2,8 +2,10 @@ const fs = require('fs').promises;
 const path = require('path');
 const { validateConfig, applyDefaults } = require('./schema');
 
-// Configuration directory - Home Assistant mounts /config
-const CONFIG_DIR = process.env.CONFIG_DIR || '/config/calendar2image';
+// Configuration directory
+// Home Assistant mounts addon_config at /config inside the container
+// On the host: /addon_configs/17f877f5_calendar2image/
+const CONFIG_DIR = process.env.CONFIG_DIR || '/config';
 
 console.log(`Configuration directory: ${CONFIG_DIR}`);
 

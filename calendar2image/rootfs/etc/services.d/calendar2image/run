@@ -5,11 +5,10 @@
 
 bashio::log.info "Starting Calendar2Image..."
 
-# Home Assistant mounts /config as the main configuration directory
-# Use a subdirectory for this add-on's configs
-CONFIG_DIR="/config/calendar2image"
+# Home Assistant mounts addon_config at /config inside the container
+# On the host it's at /addon_configs/17f877f5_calendar2image/
+CONFIG_DIR="/config"
 
-mkdir -p "$CONFIG_DIR"
 bashio::log.info "Using config directory: $CONFIG_DIR"
 
 # Copy sample files if they don't exist
