@@ -40,7 +40,7 @@ This repository follows the Home Assistant add-on repository structure. Each add
 
 ### Developer Docs
 
-- [Implementation Details](/docs/IMPLEMENTATION.md) - Steps 2 & 3 implementation documentation
+- [Implementation Details](/docs/IMPLEMENTATION.md) - Steps 2-5 implementation documentation
 
 ## Support
 

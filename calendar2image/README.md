@@ -48,24 +48,27 @@ Returns the health status of the add-on.
 
 ## Development Status
 
-**Current Version:** 0.1.0 (Steps 1-3 Complete)
+**Current Version:** 0.1.0 (Steps 1-5 Complete)
 
 Completed features:
 - ✅ Basic web server functionality
-- ✅ ICS calendar data fetching
+- ✅ ICS calendar data fetching and parsing
 - ✅ Configuration system for multiple calendars
-- ✅ Comprehensive unit and integration tests
+- ✅ Template engine with built-in templates (week-view, today-view)
+- ✅ Image generation with Puppeteer
+- ✅ Image format options (PNG, JPG, BMP)
+- ✅ Grayscale conversion and bit depth control
+- ✅ Comprehensive unit and integration tests (104 tests, 88.96% coverage)
 
 Upcoming features:
-- Template engine with built-in templates
-- Image generation with Puppeteer
+- Express API integration (/api/{index} endpoint)
 - Localization support
 
 ## Testing
 
 The add-on includes comprehensive testing at multiple levels:
 
-**Unit Tests (62 tests):**
+**Unit Tests (104 tests):**
 ```bash
 npm test
 npm run test:coverage  # With coverage report

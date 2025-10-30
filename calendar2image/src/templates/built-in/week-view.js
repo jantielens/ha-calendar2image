@@ -23,11 +23,11 @@ const CONFIG = {
   
   // Font sizes (adjust all typography here)
   fontSize: {
-    dayName: '24px',
-    dayNumber: '48px',
-    eventTitle: '20px',
-    eventTime: '20px',
-    noEvents: '20px'
+    dayName: '40px',
+    dayNumber: '50px',
+    eventTitle: '30px',
+    eventTime: '30px',
+    noEvents: '30px'
   },
   
   // Colors

@@ -4,9 +4,11 @@ This directory contains technical documentation for developers working on the Ca
 
 ## Contents
 
-- [**IMPLEMENTATION.md**](./IMPLEMENTATION.md) - Steps 2 & 3 implementation details, including:
+- [**IMPLEMENTATION.md**](./IMPLEMENTATION.md) - Steps 2-5 implementation details, including:
   - ICS Calendar Data Fetching module
   - Configuration System module
+  - Template Engine with built-in templates
+  - Image Generation with Puppeteer and Sharp
   - Test coverage and examples
   - Integration guidelines
 
