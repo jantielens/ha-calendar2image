@@ -5,44 +5,9 @@
 
 bashio::log.info "Starting Calendar2Image..."
 
-# Debug: Show directory structure
-bashio::log.info "=== Checking directories ==="
-bashio::log.info "Root directories:"
-ls -la / | tail -20
-bashio::log.info ""
-bashio::log.info "/data contents:"
-ls -laR /data 2>/dev/null | head -50
-bashio::log.info ""
-bashio::log.info "Checking for config-related directories..."
-find / -maxdepth 3 -type d -name "*config*" 2>/dev/null | head -20
-
-# Based on HA docs, addon_config should be accessible somewhere
-# Let's try multiple possible locations
-CONFIG_DIR=""
-
-# Option 1: /data/addon_configs (newer HA versions)
-if [ -d "/data/addon_configs" ]; then
-    bashio::log.info "Found /data/addon_configs"
-    CONFIG_DIR=$(find /data/addon_configs -maxdepth 1 -type d -name "*calendar2image*" 2>/dev/null | head -n 1)
-fi
-
-# Option 2: Direct mount at /addon_config (without 's')
-if [ -z "$CONFIG_DIR" ] && [ -d "/addon_config" ]; then
-    bashio::log.info "Found /addon_config (singular)"
-    CONFIG_DIR="/addon_config"
-fi
-
-# Option 3: /config (shared config)
-if [ -z "$CONFIG_DIR" ] && [ -d "/config" ]; then
-    bashio::log.info "Using /config"
-    CONFIG_DIR="/config/calendar2image"
-fi
-
-# Fallback
-if [ -z "$CONFIG_DIR" ]; then
-    bashio::log.warning "No mounted config found, using /data fallback"
-    CONFIG_DIR="/data/calendar2image"
-fi
+# Home Assistant mounts /config as the main configuration directory
+# Use a subdirectory for this add-on's configs
+CONFIG_DIR="/config/calendar2image"
 
 mkdir -p "$CONFIG_DIR"
 bashio::log.info "Using config directory: $CONFIG_DIR"

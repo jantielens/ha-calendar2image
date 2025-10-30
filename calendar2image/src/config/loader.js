@@ -2,26 +2,8 @@ const fs = require('fs').promises;
 const path = require('path');
 const { validateConfig, applyDefaults } = require('./schema');
 
-// Default configuration directory (Home Assistant standard location)
-// When using map: addon_config, HA mounts at /addon_configs/<repo>_<slug>
-// We'll detect this dynamically or use environment variable
-let CONFIG_DIR = process.env.CONFIG_DIR;
-
-if (!CONFIG_DIR) {
-  // Try to auto-detect the directory
-  try {
-    const fsSync = require('fs');
-    if (fsSync.existsSync('/addon_configs')) {
-      const dirs = fsSync.readdirSync('/addon_configs');
-      const calendarDir = dirs.find(d => d.endsWith('_calendar2image') || d === 'calendar2image');
-      CONFIG_DIR = calendarDir ? `/addon_configs/${calendarDir}` : '/addon_configs/calendar2image';
-    } else {
-      CONFIG_DIR = '/addon_configs/calendar2image';
-    }
-  } catch (err) {
-    CONFIG_DIR = '/addon_configs/calendar2image';
-  }
-}
+// Configuration directory - Home Assistant mounts /config
+const CONFIG_DIR = process.env.CONFIG_DIR || '/config/calendar2image';
 
 console.log(`Configuration directory: ${CONFIG_DIR}`);
 
