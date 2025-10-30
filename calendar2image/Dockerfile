@@ -22,12 +22,11 @@ COPY src ./src
 COPY sample-0.json ./sample-0.json
 COPY config-sample-README.md ./config-sample-README.md
 
-# Copy entrypoint script
-COPY entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
+# Copy s6-overlay service files
+COPY rootfs /
+RUN chmod a+x /etc/services.d/calendar2image/run
 
 # Expose port (will be overridden by config.yaml)
 EXPOSE 3000
 
-# Start the application via entrypoint
-CMD ["/entrypoint.sh"]
+# Start via s6-overlay (no explicit CMD needed)

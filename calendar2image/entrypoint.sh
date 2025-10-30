@@ -3,24 +3,37 @@ set -e
 
 echo "=== Calendar2Image Entrypoint Starting ==="
 
+# Wait for /addon_configs to be mounted (up to 10 seconds)
+WAIT_COUNT=0
+while [ ! -d "/addon_configs" ] && [ $WAIT_COUNT -lt 20 ]; do
+    echo "Waiting for /addon_configs to be mounted... ($WAIT_COUNT)"
+    sleep 0.5
+    WAIT_COUNT=$((WAIT_COUNT + 1))
+done
+
 # Home Assistant mounts addon_config with repository prefix
 # Find the directory that matches *_calendar2image pattern
 if [ -d "/addon_configs" ]; then
-    echo "Searching for config directory in /addon_configs..."
+    echo "Found /addon_configs directory"
+    echo "Contents:"
     ls -la /addon_configs/
     
     CONFIG_DIR=$(find /addon_configs -maxdepth 1 -type d -name "*_calendar2image" 2>/dev/null | head -n 1)
     
     if [ -z "$CONFIG_DIR" ]; then
-        echo "Warning: Could not find *_calendar2image directory"
+        echo "Could not find *_calendar2image directory, creating default"
         CONFIG_DIR="/addon_configs/calendar2image"
+        mkdir -p "$CONFIG_DIR"
     fi
 else
-    echo "ERROR: /addon_configs not found!"
-    exit 1
+    echo "WARNING: /addon_configs still not found after waiting"
+    echo "Will create config directory anyway"
+    CONFIG_DIR="/addon_configs/calendar2image"
+    mkdir -p "$CONFIG_DIR" || true
 fi
 
 echo "Using config directory: $CONFIG_DIR"
+
 
 # Create directory if it doesn't exist (though HA should create it)
 if [ ! -d "$CONFIG_DIR" ]; then

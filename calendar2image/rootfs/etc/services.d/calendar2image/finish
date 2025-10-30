@@ -1,0 +1,6 @@
+#!/usr/bin/execlineb -S0
+# ==============================================================================
+# Take down the calendar2image service
+# ==============================================================================
+
+foreground { s6-svc -wD -d -T 5000 /run/service/calendar2image }
