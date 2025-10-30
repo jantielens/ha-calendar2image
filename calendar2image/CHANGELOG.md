@@ -1,5 +1,15 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+- **Dynamic Configuration Detection**
+  - File system watcher automatically detects new configuration files added while container is running
+  - New configs are immediately scheduled and pre-generated if they have `preGenerateInterval`
+  - Deleted config files are automatically removed from scheduler
+  - Modified config files trigger schedule updates and immediate image regeneration
+  - Eliminates need to restart container when adding or modifying configurations
+
 ## [0.1.0] - 2025-10-29
 
 ### Added

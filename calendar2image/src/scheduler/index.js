@@ -1,9 +1,14 @@
 const cron = require('node-cron');
-const { loadAllConfigs } = require('../config/loader');
+const fs = require('fs');
+const path = require('path');
+const { loadAllConfigs, loadConfig, CONFIG_DIR } = require('../config/loader');
 const { preGenerateImage, setPreGenerateFunction, saveCachedImage } = require('../cache');
 
 // Store active cron jobs
 const activeJobs = new Map();
+
+// Store file system watcher
+let configWatcher = null;
 
 /**
  * Internal function to generate and cache an image
@@ -93,6 +98,43 @@ function stopPreGeneration(index) {
 }
 
 /**
+ * Schedule or update a configuration based on its settings
+ * @param {number} index - Configuration index
+ * @param {boolean} preGenerateNow - Whether to pre-generate image immediately (default: true)
+ * @returns {Promise<boolean>} True if scheduled, false otherwise
+ */
+async function scheduleConfigIfNeeded(index, preGenerateNow = true) {
+  try {
+    const config = await loadConfig(index);
+    
+    if (config.preGenerateInterval) {
+      const success = schedulePreGeneration(index, config.preGenerateInterval);
+      if (success) {
+        console.log(`[Scheduler] Config ${index} scheduled successfully`);
+        
+        // Pre-generate immediately if requested
+        if (preGenerateNow) {
+          console.log(`[Scheduler] Pre-generating image for config ${index}...`);
+          await preGenerateImage(index);
+        }
+      }
+      return success;
+    } else {
+      // Config exists but has no preGenerateInterval - stop any existing schedule
+      const wasScheduled = activeJobs.has(index);
+      stopPreGeneration(index);
+      if (wasScheduled) {
+        console.log(`[Scheduler] Config ${index} has no preGenerateInterval, scheduling stopped`);
+      }
+      return false;
+    }
+  } catch (error) {
+    console.error(`[Scheduler] Failed to schedule config ${index}: ${error.message}`);
+    return false;
+  }
+}
+
+/**
  * Initialize scheduler for all configurations
  * Load all configs and schedule pre-generation for those with preGenerateInterval
  */
@@ -117,6 +159,10 @@ async function initializeScheduler() {
     }
 
     console.log(`[Scheduler] Initialization complete: ${scheduledCount}/${configs.length} config(s) scheduled`);
+    
+    // Start watching for config file changes
+    startConfigWatcher();
+    
     return scheduledCount;
   } catch (error) {
     console.error(`[Scheduler] Failed to initialize scheduler: ${error.message}`);
@@ -160,10 +206,80 @@ async function generateAllImagesNow() {
 }
 
 /**
+ * Start watching the config directory for changes
+ */
+function startConfigWatcher() {
+  if (configWatcher) {
+    console.log('[Scheduler] Config watcher already running');
+    return;
+  }
+
+  console.log(`[Scheduler] Starting config file watcher on ${CONFIG_DIR}...`);
+  
+  try {
+    configWatcher = fs.watch(CONFIG_DIR, { persistent: true }, async (eventType, filename) => {
+      if (!filename || !filename.match(/^\d+\.json$/)) {
+        // Ignore non-config files
+        return;
+      }
+
+      const index = parseInt(path.basename(filename, '.json'), 10);
+      console.log(`[Scheduler] Config file change detected: ${filename} (${eventType})`);
+
+      // Debounce: wait a bit to ensure file write is complete
+      setTimeout(async () => {
+        try {
+          // Check if file still exists
+          const configPath = path.join(CONFIG_DIR, filename);
+          const exists = await fs.promises.access(configPath).then(() => true).catch(() => false);
+
+          if (exists) {
+            // File added or modified - schedule and pre-generate immediately
+            console.log(`[Scheduler] Config ${index} added/modified, updating schedule and generating image...`);
+            await scheduleConfigIfNeeded(index, true); // true = pre-generate immediately
+          } else {
+            // File deleted - stop scheduling
+            console.log(`[Scheduler] Config ${index} deleted, removing from schedule...`);
+            stopPreGeneration(index);
+          }
+        } catch (error) {
+          console.error(`[Scheduler] Error handling config change for ${filename}: ${error.message}`);
+        }
+      }, 100); // 100ms debounce
+    });
+
+    configWatcher.on('error', (error) => {
+      console.error(`[Scheduler] Config watcher error: ${error.message}`);
+    });
+
+    console.log('[Scheduler] Config file watcher started');
+  } catch (error) {
+    console.error(`[Scheduler] Failed to start config watcher: ${error.message}`);
+  }
+}
+
+/**
+ * Stop watching the config directory
+ */
+function stopConfigWatcher() {
+  if (configWatcher) {
+    console.log('[Scheduler] Stopping config file watcher...');
+    configWatcher.close();
+    configWatcher = null;
+    console.log('[Scheduler] Config file watcher stopped');
+  }
+}
+
+/**
  * Stop all scheduled jobs
  */
 function stopAllSchedules() {
   console.log('[Scheduler] Stopping all scheduled jobs...');
+  
+  // Stop config watcher
+  stopConfigWatcher();
+  
+  // Stop all cron jobs
   for (const [index, job] of activeJobs.entries()) {
     job.task.stop();
     console.log(`[Scheduler] Stopped job for config ${index}`);
@@ -196,5 +312,8 @@ module.exports = {
   initializeScheduler,
   generateAllImagesNow,
   stopAllSchedules,
-  getScheduleStatus
+  getScheduleStatus,
+  startConfigWatcher,
+  stopConfigWatcher,
+  scheduleConfigIfNeeded
 };
