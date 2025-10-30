@@ -16,3 +16,7 @@ jest.config.js
 test-data
 docs
 IMPLEMENTATION.md
+
+# Keep sample config files for Docker image
+!sample-0.json
+!config-sample-README.md

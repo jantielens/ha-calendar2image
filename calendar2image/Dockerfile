@@ -20,8 +20,8 @@ COPY src ./src
 
 # Create config directory and copy sample files
 RUN mkdir -p /addon_configs/calendar2image
-COPY ../data/calendar2image/sample-0.json /addon_configs/calendar2image/
-COPY ../data/calendar2image/README.md /addon_configs/calendar2image/
+COPY sample-0.json /addon_configs/calendar2image/
+COPY config-sample-README.md /addon_configs/calendar2image/README.md
 
 # Expose port (will be overridden by config.yaml)
 EXPOSE 3000
