@@ -47,21 +47,21 @@ describe('Template System', () => {
   describe('renderTemplate', () => {
     const sampleEvents = [
       {
-        title: 'Meeting',
+        summary: 'Meeting',
         start: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(), // 2 hours from now
         end: new Date(Date.now() + 3 * 60 * 60 * 1000).toISOString(),
         description: 'Team sync',
         allDay: false
       },
       {
-        title: 'All Day Event',
+        summary: 'All Day Event',
         start: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // Tomorrow
         end: new Date(Date.now() + 25 * 60 * 60 * 1000).toISOString(),
         description: 'Holiday',
         allDay: true
       },
       {
-        title: 'Future Event',
+        summary: 'Future Event',
         start: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString(), // 10 days from now
         end: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000 + 60 * 60 * 1000).toISOString(),
         description: 'Should not appear in week view',
@@ -95,7 +95,7 @@ describe('Template System', () => {
     test('should render today-view template with sample data', async () => {
       const todayEvents = [
         {
-          title: 'Today Meeting',
+          summary: 'Today Meeting',
           start: new Date().toISOString(),
           end: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
           description: 'Happening today',
@@ -257,7 +257,7 @@ describe('Template System', () => {
     // Skipping these tests as they require module-level TEMPLATES_DIR configuration
     // See custom-templates.test.js for comprehensive integration tests
     test.skip('should load custom template from TEMPLATES_DIR', () => {});
-    test.skip('should prioritize custom templates over built-in templates', () => {});
+    test.skip('should prioritize custom templates over built-in templates', () => {
       // Create a custom template with the same name as built-in
       const customTemplate = `
         module.exports = function(data) {
@@ -305,7 +305,7 @@ describe('Template System', () => {
               <body>
                 <h1>Custom Calendar</h1>
                 <div class="event-count">Events: \${events.length}</div>
-                \${events.map(e => \`<div class="event">\${e.title}</div>\`).join('')}
+                \${events.map(e => \`<div class="event">\${e.summary}</div>\`).join('')}
               </body>
             </html>
           \`;
@@ -314,8 +314,8 @@ describe('Template System', () => {
       fs.writeFileSync(path.join(testTemplatesDir, 'custom-render.js'), customTemplate);
 
       const events = [
-        { title: 'Event 1', start: new Date().toISOString(), end: new Date().toISOString() },
-        { title: 'Event 2', start: new Date().toISOString(), end: new Date().toISOString() }
+        { summary: 'Event 1', start: new Date().toISOString(), end: new Date().toISOString() },
+        { summary: 'Event 2', start: new Date().toISOString(), end: new Date().toISOString() }
       ];
 
       const html = await templateModule.renderTemplate('custom-render', { events, config: {} });
@@ -421,4 +421,3 @@ describe('Template System', () => {
     });
   });
 });
-

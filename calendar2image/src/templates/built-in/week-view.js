@@ -64,15 +64,15 @@ const getDayStart = (timestamp) => {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
 };
 
-const formatTime = (dateString) => {
-  return new Date(dateString).toLocaleTimeString('en-US', {
+const formatTime = (dateString, locale = 'en-US') => {
+  return new Date(dateString).toLocaleTimeString(locale, {
     hour: '2-digit',
     minute: '2-digit',
     hour12: false
   });
 };
 
-const getDisplayTimes = (event, day) => {
+const getDisplayTimes = (event, day, locale = 'en-US') => {
   const eventStart = new Date(event.start).getTime();
   const eventEnd = new Date(event.end).getTime();
   const startDay = getDayStart(event.start);
@@ -80,22 +80,22 @@ const getDisplayTimes = (event, day) => {
   const isMultiDay = endDay > startDay;
   
   if (!isMultiDay) {
-    return { start: formatTime(event.start), end: formatTime(event.end) };
+    return { start: formatTime(event.start, locale), end: formatTime(event.end, locale) };
   }
   
   return {
-    start: day.dayStart > startDay ? CONFIG.timeFormat.multiDayStart : formatTime(event.start),
-    end: eventEnd > day.dayEnd ? CONFIG.timeFormat.multiDayEnd : formatTime(event.end)
+    start: day.dayStart > startDay ? CONFIG.timeFormat.multiDayStart : formatTime(event.start, locale),
+    end: eventEnd > day.dayEnd ? CONFIG.timeFormat.multiDayEnd : formatTime(event.end, locale)
   };
 };
 
-const createDaysArray = (startTimestamp, daysCount) => {
+const createDaysArray = (startTimestamp, daysCount, locale = 'en-US') => {
   const days = [];
   for (let i = 0; i < daysCount; i++) {
     const dayStart = startTimestamp + (i * MS_PER_DAY);
     const dayEnd = dayStart + MS_PER_DAY - 1;
     const date = new Date(dayStart);
-    const dayKey = date.toLocaleDateString('en-US', {
+    const dayKey = date.toLocaleDateString(locale, {
       weekday: 'short',
       month: 'numeric',
       day: 'numeric'
@@ -131,10 +131,10 @@ const groupEventsByDay = (events, days) => {
 // ============================================================================
 // HTML RENDERING
 // ============================================================================
-const renderEvent = (event, day) => {
-  const times = getDisplayTimes(event, day);
+const renderEvent = (event, day, locale = 'en-US') => {
+  const times = getDisplayTimes(event, day, locale);
   const isAllDay = event.allDay || false;
-  const title = event.title || 'Untitled Event';
+  const title = event.summary || 'Untitled Event';
   const timeDisplay = isAllDay ? CONFIG.symbols.allDay : `${times.start} - ${times.end}`;
   const timeClass = isAllDay ? 'all-day-badge' : '';
   
@@ -145,8 +145,8 @@ const renderEvent = (event, day) => {
         </div>`;
 };
 
-const renderDay = (day, events) => {
-  const dayOfWeek = day.date.toLocaleDateString(undefined, { weekday: 'short' });
+const renderDay = (day, events, locale = 'en-US') => {
+  const dayOfWeek = day.date.toLocaleDateString(locale, { weekday: 'short' });
   const dayOfMonth = day.date.getDate();
   const hasEvents = events.length > 0;
   
@@ -157,7 +157,7 @@ const renderDay = (day, events) => {
         <div class="day-number">${dayOfMonth}</div>
       </div>
       <div class="events-container">
-        ${hasEvents ? events.map(e => renderEvent(e, day)).join('') : `
+        ${hasEvents ? events.map(e => renderEvent(e, day, locale)).join('') : `
         <div class="no-events">${CONFIG.symbols.noEvents}</div>`}
       </div>
     </div>`;
@@ -262,9 +262,9 @@ const generateStyles = () => `
 // MAIN TEMPLATE FUNCTION
 // ============================================================================
 module.exports = function weekView(data) {
-  const { events, now } = data;
+  const { events, now, locale = 'en-US' } = data;
   const todayStart = getDayStart(now);
-  const days = createDaysArray(todayStart, CONFIG.daysToShow);
+  const days = createDaysArray(todayStart, CONFIG.daysToShow, locale);
   const eventsByDay = groupEventsByDay(events, days);
   
   return `
@@ -277,7 +277,7 @@ module.exports = function weekView(data) {
 <body>
   <div class="calendar">
     <div class="calendar-title">Week View</div>
-  ${days.map(day => renderDay(day, eventsByDay[day.dayKey])).join('')}
+  ${days.map(day => renderDay(day, eventsByDay[day.dayKey], locale)).join('')}
   </div>
 </body>
 </html>

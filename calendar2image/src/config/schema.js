@@ -61,6 +61,16 @@ const configSchema = {
       type: 'string',
       description: 'Cron expression for pre-generation scheduling (e.g., "*/5 * * * *" for every 5 minutes)',
       pattern: '^\\S+\\s+\\S+\\s+\\S+\\s+\\S+\\s+\\S+(\\s+\\S+)?$'
+    },
+    locale: {
+      type: 'string',
+      description: 'BCP 47 locale code for date/time formatting (e.g., "en-US", "de-DE", "fr-FR")',
+      pattern: '^[a-z]{2,3}(-[A-Z]{2})?$',
+      default: 'en-US'
+    },
+    timezone: {
+      type: 'string',
+      description: 'IANA timezone name to convert event times (e.g., "Europe/Berlin", "America/New_York")'
     }
   },
   required: ['icsUrl', 'template'],
@@ -97,7 +107,8 @@ function applyDefaults(config) {
     imageType: config.imageType || 'png',
     rotate: config.rotate !== undefined ? config.rotate : 0,
     expandRecurringFrom: config.expandRecurringFrom !== undefined ? config.expandRecurringFrom : -31,
-    expandRecurringTo: config.expandRecurringTo !== undefined ? config.expandRecurringTo : 31
+    expandRecurringTo: config.expandRecurringTo !== undefined ? config.expandRecurringTo : 31,
+    locale: config.locale || 'en-US'
   };
 }
 

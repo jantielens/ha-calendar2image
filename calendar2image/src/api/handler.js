@@ -32,7 +32,8 @@ async function generateCalendarImage(index, options = {}) {
     const startFetch = Date.now();
     const events = await getCalendarEvents(config.icsUrl, {
       expandRecurringFrom: config.expandRecurringFrom,
-      expandRecurringTo: config.expandRecurringTo
+      expandRecurringTo: config.expandRecurringTo,
+      timezone: config.timezone
     });
     const fetchDuration = Date.now() - startFetch;
     console.log(`[API] Fetched ${events.length} events in ${fetchDuration}ms`);

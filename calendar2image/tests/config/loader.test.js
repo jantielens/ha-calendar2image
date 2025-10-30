@@ -51,7 +51,8 @@ describe('config loader', () => {
         imageType: 'jpg',
         expandRecurringFrom: -60,
         expandRecurringTo: 60,
-        rotate: 0
+        rotate: 0,
+        locale: 'en-US'
       };
 
       await fs.writeFile(

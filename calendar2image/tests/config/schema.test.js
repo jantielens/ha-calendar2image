@@ -201,6 +201,57 @@ describe('config schema', () => {
         expect(result.valid).toBe(false);
       });
     });
+
+    it('should accept valid locale values', () => {
+      const validLocales = ['en-US', 'de-DE', 'fr-FR', 'ja-JP', 'en', 'de', 'fr'];
+      
+      validLocales.forEach(locale => {
+        const config = {
+          icsUrl: 'https://example.com/calendar.ics',
+          template: 'week-view',
+          locale
+        };
+
+        const result = validateConfig(config);
+        expect(result.valid).toBe(true);
+      });
+    });
+
+    it('should reject invalid locale values', () => {
+      const invalidLocales = ['EN-US', 'en_US', 'english', '123', 'en-us-extra'];
+      
+      invalidLocales.forEach(locale => {
+        const config = {
+          icsUrl: 'https://example.com/calendar.ics',
+          template: 'week-view',
+          locale
+        };
+
+        const result = validateConfig(config);
+        expect(result.valid).toBe(false);
+      });
+    });
+
+    it('should accept valid timezone values', () => {
+      const config = {
+        icsUrl: 'https://example.com/calendar.ics',
+        template: 'week-view',
+        timezone: 'Europe/Berlin'
+      };
+
+      const result = validateConfig(config);
+      expect(result.valid).toBe(true);
+    });
+
+    it('should accept configuration without timezone (optional)', () => {
+      const config = {
+        icsUrl: 'https://example.com/calendar.ics',
+        template: 'week-view'
+      };
+
+      const result = validateConfig(config);
+      expect(result.valid).toBe(true);
+    });
   });
 
   describe('applyDefaults', () => {
@@ -222,7 +273,8 @@ describe('config schema', () => {
         imageType: 'png',
         rotate: 0,
         expandRecurringFrom: -31,
-        expandRecurringTo: 31
+        expandRecurringTo: 31,
+        locale: 'en-US'
       });
     });
 
@@ -237,7 +289,8 @@ describe('config schema', () => {
         imageType: 'jpg',
         expandRecurringFrom: -60,
         expandRecurringTo: 60,
-        rotate: 0
+        rotate: 0,
+        locale: 'de-DE'
       };
 
       const result = applyDefaults(config);
@@ -265,7 +318,8 @@ describe('config schema', () => {
         imageType: 'bmp',
         rotate: 0,
         expandRecurringFrom: -31,
-        expandRecurringTo: 31
+        expandRecurringTo: 31,
+        locale: 'en-US'
       });
     });
 
@@ -293,6 +347,41 @@ describe('config schema', () => {
       
       expect(result.expandRecurringFrom).toBe(0);
       expect(result.expandRecurringTo).toBe(0);
+    });
+
+    it('should apply default locale when not provided', () => {
+      const config = {
+        icsUrl: 'https://example.com/calendar.ics',
+        template: 'week-view'
+      };
+
+      const result = applyDefaults(config);
+      
+      expect(result.locale).toBe('en-US');
+    });
+
+    it('should not override provided locale', () => {
+      const config = {
+        icsUrl: 'https://example.com/calendar.ics',
+        template: 'week-view',
+        locale: 'de-DE'
+      };
+
+      const result = applyDefaults(config);
+      
+      expect(result.locale).toBe('de-DE');
+    });
+
+    it('should preserve timezone when provided', () => {
+      const config = {
+        icsUrl: 'https://example.com/calendar.ics',
+        template: 'week-view',
+        timezone: 'Europe/Berlin'
+      };
+
+      const result = applyDefaults(config);
+      
+      expect(result.timezone).toBe('Europe/Berlin');
     });
   });
 });

@@ -83,7 +83,9 @@ async function renderTemplate(templateName, data) {
     const templateData = {
       events: data.events || [],
       config: data.config || {},
-      now: Date.now()
+      now: Date.now(),
+      locale: data.config?.locale || 'en-US',
+      timezone: data.config?.timezone || null
     };
 
     // Execute template and get HTML

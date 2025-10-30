@@ -9,7 +9,7 @@
  * @returns {string} HTML string
  */
 module.exports = function todayView(data) {
-  const { events, now } = data;
+  const { events, now, locale = 'en-US' } = data;
   
   // Get today's date boundaries
   const today = new Date(now);
@@ -45,7 +45,7 @@ module.exports = function todayView(data) {
   // Format time
   const formatTime = (dateString) => {
     const date = new Date(dateString);
-    return date.toLocaleTimeString('en-US', {
+    return date.toLocaleTimeString(locale, {
       hour: '2-digit',
       minute: '2-digit',
       hour12: false
@@ -54,7 +54,7 @@ module.exports = function todayView(data) {
 
   // Format today's date
   const formatTodayDate = () => {
-    return today.toLocaleDateString('en-US', {
+    return today.toLocaleDateString(locale, {
       weekday: 'long',
       year: 'numeric',
       month: 'long',
@@ -192,7 +192,7 @@ module.exports = function todayView(data) {
           ⏰ ${formatTime(event.start)}${event.end ? ' - ' + formatTime(event.end) : ''}
         </div>
       `}
-      <div class="event-title">${event.title || 'Untitled Event'}</div>
+      <div class="event-title">${event.summary || 'Untitled Event'}</div>
       ${event.location ? `
         <div class="event-location">📍 ${event.location}</div>
       ` : ''}

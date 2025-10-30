@@ -1,16 +1,51 @@
 const ICAL = require('ical.js');
 
 /**
+ * Converts a date to a specific timezone and returns ISO string
+ * Uses Intl.DateTimeFormat to get the date/time in target timezone
+ * @param {Date} date - The date to convert
+ * @param {string} timezone - IANA timezone name (e.g., 'Europe/Berlin')
+ * @returns {string} ISO string representation in the target timezone
+ */
+function convertToTimezone(date, timezone) {
+  // Get date components in target timezone
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: timezone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false
+  });
+  
+  const parts = formatter.formatToParts(date);
+  const getValue = (type) => parts.find(p => p.type === type)?.value;
+  
+  const year = getValue('year');
+  const month = getValue('month');
+  const day = getValue('day');
+  const hour = getValue('hour');
+  const minute = getValue('minute');
+  const second = getValue('second');
+  
+  // Construct ISO string (without timezone offset, representing local time in target timezone)
+  return `${year}-${month}-${day}T${hour}:${minute}:${second}.000Z`;
+}
+
+/**
  * Parses ICS data and returns structured event objects
  * @param {string} icsData - Raw ICS data
  * @param {Object} options - Parsing options
  * @param {number} options.expandRecurringFrom - Days from today to start expanding recurring events (negative for past)
  * @param {number} options.expandRecurringTo - Days from today to stop expanding recurring events
+ * @param {string} options.timezone - IANA timezone name to convert event times to (e.g., 'Europe/Berlin')
  * @returns {Array<Object>} Array of event objects
  * @throws {Error} If ICS data is malformed
  */
 function parseICS(icsData, options = {}) {
-  const { expandRecurringFrom = -31, expandRecurringTo = 31 } = options;
+  const { expandRecurringFrom = -31, expandRecurringTo = 31, timezone } = options;
 
   if (!icsData || typeof icsData !== 'string') {
     throw new Error('Invalid ICS data: must be a non-empty string');
@@ -63,12 +98,12 @@ function parseICS(icsData, options = {}) {
           }
 
           // Create an occurrence
-          const occurrence = createEventObject(event, next);
+          const occurrence = createEventObject(event, next, timezone);
           events.push(occurrence);
         }
       } else {
         // Non-recurring event
-        events.push(createEventObject(event));
+        events.push(createEventObject(event, null, timezone));
       }
     } catch (error) {
       // Log warning but continue processing other events
@@ -88,23 +123,37 @@ function parseICS(icsData, options = {}) {
  * Creates a standardized event object
  * @param {ICAL.Event} event - The ICAL event
  * @param {ICAL.Time} [occurrenceDate] - For recurring events, the specific occurrence date
+ * @param {string} [timezone] - IANA timezone name to convert event times to
  * @returns {Object} Standardized event object
  */
-function createEventObject(event, occurrenceDate = null) {
+function createEventObject(event, occurrenceDate = null, timezone = null) {
   const startDate = occurrenceDate || event.startDate;
   const duration = event.duration;
   const endDate = startDate.clone();
   endDate.addDuration(duration);
+
+  let startISO = startDate.toJSDate().toISOString();
+  let endISO = endDate.toJSDate().toISOString();
+
+  // Apply timezone conversion if specified
+  if (timezone) {
+    try {
+      startISO = convertToTimezone(startDate.toJSDate(), timezone);
+      endISO = convertToTimezone(endDate.toJSDate(), timezone);
+    } catch (error) {
+      console.warn(`Warning: Failed to convert event times to timezone ${timezone}: ${error.message}`);
+    }
+  }
 
   return {
     uid: event.uid || '',
     summary: event.summary || '',
     description: event.description || '',
     location: event.location || '',
-    start: startDate.toJSDate().toISOString(),
-    end: endDate.toJSDate().toISOString(),
+    start: startISO,
+    end: endISO,
     isRecurring: event.isRecurring(),
-    timezone: startDate.zone ? startDate.zone.tzid : null,
+    timezone: timezone || (startDate.zone ? startDate.zone.tzid : null),
     isAllDay: startDate.isDate || false
   };
 }
