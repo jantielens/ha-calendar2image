@@ -58,8 +58,9 @@ This document describes the implementation of Step 2 (ICS Calendar Data Fetching
 }
 ```
 
-**Configuration Location**: `/addon_configs/calendar2image/`
+**Configuration Location**: `/addon_configs/17f877f5_calendar2image/` (on host), `/config` (inside container)
 - Files must be named: `0.json`, `1.json`, `2.json`, etc.
+- Sample files (`sample-0.json` and `README.md`) are automatically created on first startup
 
 ## Code Coverage
 
@@ -155,7 +156,7 @@ const { getCalendarEvents } = require('./src/calendar');
 
 async function fetchCalendar() {
   // Load configuration
-  const config = await loadConfig(0, '/data/ha-calendar2image');
+  const config = await loadConfig(0, '/config');
   
   // Fetch calendar events
   const events = await getCalendarEvents(config.icsUrl, {
@@ -213,9 +214,28 @@ See [tests/integration/README.md](../calendar2image/tests/integration/README.md)
 
 ## Sample Configurations
 
-Sample configuration files are provided in `data/ha-calendar2image/`:
+A sample configuration file is provided in `calendar2image/sample-0.json` and is automatically copied to `/addon_configs/17f877f5_calendar2image/` on first startup.
+
+Additional sample configurations for testing are in `data/ha-calendar2image/`:
 - `0.json` - Week view with default settings
 - `1.json` - Today view with grayscale, 1-bit depth, BMP format
+
+## Container Structure
+
+**s6-overlay Integration**: The add-on uses s6-overlay for proper service lifecycle management:
+- Init script (`/etc/cont-init.d/00-calendar2image.sh`) copies sample files to `/config` on first startup
+- Service script (`/etc/services.d/calendar2image/run`) starts the Node.js application
+- Finish script (`/etc/services.d/calendar2image/finish`) handles cleanup on shutdown
+
+**Sample Files**: `sample-0.json` and `config-sample-README.md` are:
+- Built into the Docker image at `/app/`
+- Automatically copied to `/config/` on first container startup
+- Only copied if they don't already exist (won't overwrite user files)
+
+**Volume Mounting**: Home Assistant mounts the config directory:
+- Host path: `/addon_configs/17f877f5_calendar2image/`
+- Container path: `/config`
+- Configured via `map: addon_config:rw` in `config.yaml`
 
 ## Integration with Express API
 

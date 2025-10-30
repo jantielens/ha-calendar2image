@@ -20,6 +20,14 @@ port: 3000  # Port number for the web server (default: 3000)
 port: 3000
 ```
 
+### Calendar Configuration Files
+
+Calendar configurations are stored in `/addon_configs/17f877f5_calendar2image/` on your Home Assistant host.
+
+**Sample files**: The add-on automatically creates `sample-0.json` and `README.md` in this directory on first startup to help you get started. Copy `sample-0.json` to `0.json` and customize it for your calendar.
+
+See [Configuration Guide](./docs/CONFIGURATION.md) for details.
+
 ## Usage
 
 Once the add-on is running, you can access the API endpoints:

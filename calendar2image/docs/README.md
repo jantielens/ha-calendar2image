@@ -12,11 +12,11 @@ This directory contains user-facing documentation for the Calendar2Image Home As
 
 ## Quick Start
 
-**Sample files included**: When you first install the add-on, you'll find `sample-0.json` and `README.md` in `/addon_configs/calendar2image/` to help you get started.
+**Sample files included**: When you first start the add-on, it automatically creates `sample-0.json` and `README.md` in `/addon_configs/17f877f5_calendar2image/` to help you get started.
 
 ### 1. Create Configuration Files
 
-Create configuration files in `/addon_configs/calendar2image/`:
+Create configuration files in `/addon_configs/17f877f5_calendar2image/`:
 
 **Example: 0.json** (based on the included sample)
 ```json
@@ -78,7 +78,8 @@ See [CONFIGURATION.md](./CONFIGURATION.md) for complete details on all configura
 
 - Ensure files are named `0.json`, `1.json`, etc.
 - Check the file location matches your folder mapping
-- Default location: `/addon_configs/calendar2image/`
+- Default location: `/addon_configs/17f877f5_calendar2image/`
+- The add-on creates `sample-0.json` automatically on first run - check if this file exists
 
 ### Invalid ICS URL
 
