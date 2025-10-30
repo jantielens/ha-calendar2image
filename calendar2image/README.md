@@ -40,14 +40,50 @@ Returns the health status of the add-on.
 
 ## Development Status
 
-**Current Version:** 0.1.0 (Step 1 - Skeleton Implementation)
+**Current Version:** 0.1.0 (Steps 1-3 Complete)
 
-This is the initial skeleton version with basic web server functionality. Future versions will include:
-- ICS calendar data fetching
-- Configuration system for multiple calendars
+Completed features:
+- ✅ Basic web server functionality
+- ✅ ICS calendar data fetching
+- ✅ Configuration system for multiple calendars
+- ✅ Comprehensive unit and integration tests
+
+Upcoming features:
 - Template engine with built-in templates
 - Image generation with Puppeteer
 - Localization support
+
+## Testing
+
+The add-on includes comprehensive testing at multiple levels:
+
+**Unit Tests (62 tests):**
+```bash
+npm test
+npm run test:coverage  # With coverage report
+```
+
+**Integration Tests:**
+```bash
+# API Integration Tests
+./test-api.sh         # Linux/Mac
+.\test-api.ps1        # Windows
+
+# Docker Integration Tests  
+./test-docker.sh      # Linux/Mac
+.\test-docker.ps1     # Windows
+```
+
+See [tests/integration/README.md](./tests/integration/README.md) for details.
+
+## Documentation
+
+- **User Documentation**: See [docs/](./docs) for configuration guides and usage instructions
+- **Developer Documentation**: See [/docs](/docs) in the repository root for implementation details
+
+### User Docs
+
+- [Configuration Guide](./docs/CONFIGURATION.md) - How to configure calendar settings
 
 ## Support
 

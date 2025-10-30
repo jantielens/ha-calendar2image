@@ -5,3 +5,14 @@ npm-debug.log
 .vscode
 .idea
 plan.md
+coverage
+*.log
+README.md
+tests
+example.js
+jest.config.js
+*.test.js
+.DS_Store
+test-data
+docs
+IMPLEMENTATION.md

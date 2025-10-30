@@ -29,9 +29,18 @@ Generate images from calendar data (ICS URLs) using customizable templates. Perf
 
 For detailed information about the Calendar2Image add-on, including configuration options and usage examples, see the [add-on documentation](./calendar2image/README.md).
 
+## Documentation
+
+- **Developer Documentation**: See [/docs](/docs) for implementation details, development guides, and technical documentation
+- **User Documentation**: See [calendar2image/docs](./calendar2image/docs) for configuration guides and usage instructions
+
 ## Development
 
 This repository follows the Home Assistant add-on repository structure. Each add-on is in its own subdirectory with its own `config.yaml`, `Dockerfile`, and `README.md`.
+
+### Developer Docs
+
+- [Implementation Details](/docs/IMPLEMENTATION.md) - Steps 2 & 3 implementation documentation
 
 ## Support
 
