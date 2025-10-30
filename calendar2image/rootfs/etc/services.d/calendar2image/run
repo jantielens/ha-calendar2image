@@ -5,6 +5,13 @@
 
 bashio::log.info "Starting Calendar2Image..."
 
+# Debug: Show all mount points
+bashio::log.info "=== Mount Points ==="
+mount | grep -i addon || bashio::log.info "No addon mounts found"
+bashio::log.info "=== Directories ==="
+ls -la / | grep -i addon || bashio::log.info "No addon directories found"
+ls -la /data 2>/dev/null || bashio::log.info "No /data directory"
+
 # At this point, volumes should be mounted
 # Find the config directory
 if [ -d "/addon_configs" ]; then
@@ -18,8 +25,19 @@ if [ -d "/addon_configs" ]; then
         mkdir -p "$CONFIG_DIR"
     fi
 else
-    bashio::log.warning "/addon_configs not found, using default"
-    CONFIG_DIR="/addon_configs/calendar2image"
+    bashio::log.warning "/addon_configs not found, checking alternatives"
+    
+    # Check other possible locations
+    if [ -d "/config/addons_config" ]; then
+        bashio::log.info "Found /config/addons_config"
+        CONFIG_DIR="/config/addons_config/calendar2image"
+    elif [ -d "/share" ]; then
+        bashio::log.info "Using /share for config"
+        CONFIG_DIR="/share/calendar2image"
+    else
+        CONFIG_DIR="/addon_configs/calendar2image"
+    fi
+    
     mkdir -p "$CONFIG_DIR" || true
 fi
 
