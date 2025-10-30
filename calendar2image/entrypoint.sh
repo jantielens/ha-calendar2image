@@ -3,9 +3,22 @@ set -e
 
 echo "=== Calendar2Image Entrypoint Starting ==="
 
-# Home Assistant mounts addon_config at /addon_configs/<slug>
-# where <slug> is defined in config.yaml
-CONFIG_DIR="/addon_configs/calendar2image"
+# Home Assistant mounts addon_config with repository prefix
+# Find the directory that matches *_calendar2image pattern
+if [ -d "/addon_configs" ]; then
+    echo "Searching for config directory in /addon_configs..."
+    ls -la /addon_configs/
+    
+    CONFIG_DIR=$(find /addon_configs -maxdepth 1 -type d -name "*_calendar2image" 2>/dev/null | head -n 1)
+    
+    if [ -z "$CONFIG_DIR" ]; then
+        echo "Warning: Could not find *_calendar2image directory"
+        CONFIG_DIR="/addon_configs/calendar2image"
+    fi
+else
+    echo "ERROR: /addon_configs not found!"
+    exit 1
+fi
 
 echo "Using config directory: $CONFIG_DIR"
 
