@@ -5,42 +5,46 @@
 
 bashio::log.info "Starting Calendar2Image..."
 
-# Debug: Show all mount points
-bashio::log.info "=== Mount Points ==="
-mount | grep -i addon || bashio::log.info "No addon mounts found"
-bashio::log.info "=== Directories ==="
-ls -la / | grep -i addon || bashio::log.info "No addon directories found"
-ls -la /data 2>/dev/null || bashio::log.info "No /data directory"
+# Debug: Show directory structure
+bashio::log.info "=== Checking directories ==="
+bashio::log.info "Root directories:"
+ls -la / | tail -20
+bashio::log.info ""
+bashio::log.info "/data contents:"
+ls -laR /data 2>/dev/null | head -50
+bashio::log.info ""
+bashio::log.info "Checking for config-related directories..."
+find / -maxdepth 3 -type d -name "*config*" 2>/dev/null | head -20
 
-# At this point, volumes should be mounted
-# Find the config directory
-if [ -d "/addon_configs" ]; then
-    bashio::log.info "Found /addon_configs directory"
-    
-    CONFIG_DIR=$(find /addon_configs -maxdepth 1 -type d -name "*_calendar2image" 2>/dev/null | head -n 1)
-    
-    if [ -z "$CONFIG_DIR" ]; then
-        bashio::log.warning "Could not find *_calendar2image directory"
-        CONFIG_DIR="/addon_configs/calendar2image"
-        mkdir -p "$CONFIG_DIR"
-    fi
-else
-    bashio::log.warning "/addon_configs not found, checking alternatives"
-    
-    # Check other possible locations
-    if [ -d "/config/addons_config" ]; then
-        bashio::log.info "Found /config/addons_config"
-        CONFIG_DIR="/config/addons_config/calendar2image"
-    elif [ -d "/share" ]; then
-        bashio::log.info "Using /share for config"
-        CONFIG_DIR="/share/calendar2image"
-    else
-        CONFIG_DIR="/addon_configs/calendar2image"
-    fi
-    
-    mkdir -p "$CONFIG_DIR" || true
+# Based on HA docs, addon_config should be accessible somewhere
+# Let's try multiple possible locations
+CONFIG_DIR=""
+
+# Option 1: /data/addon_configs (newer HA versions)
+if [ -d "/data/addon_configs" ]; then
+    bashio::log.info "Found /data/addon_configs"
+    CONFIG_DIR=$(find /data/addon_configs -maxdepth 1 -type d -name "*calendar2image*" 2>/dev/null | head -n 1)
 fi
 
+# Option 2: Direct mount at /addon_config (without 's')
+if [ -z "$CONFIG_DIR" ] && [ -d "/addon_config" ]; then
+    bashio::log.info "Found /addon_config (singular)"
+    CONFIG_DIR="/addon_config"
+fi
+
+# Option 3: /config (shared config)
+if [ -z "$CONFIG_DIR" ] && [ -d "/config" ]; then
+    bashio::log.info "Using /config"
+    CONFIG_DIR="/config/calendar2image"
+fi
+
+# Fallback
+if [ -z "$CONFIG_DIR" ]; then
+    bashio::log.warning "No mounted config found, using /data fallback"
+    CONFIG_DIR="/data/calendar2image"
+fi
+
+mkdir -p "$CONFIG_DIR"
 bashio::log.info "Using config directory: $CONFIG_DIR"
 
 # Copy sample files if they don't exist
