@@ -38,6 +38,21 @@ http://homeassistant.local:3000/api/0
 http://homeassistant.local:3000/api/1
 ```
 
+These endpoints return binary image data (PNG, JPG, or BMP) based on your configuration.
+
+**Example using curl:**
+```bash
+curl http://homeassistant.local:3000/api/0 -o calendar.png
+```
+
+**Example in Home Assistant:**
+```yaml
+camera:
+  - platform: generic
+    name: "Calendar Image"
+    still_image_url: "http://homeassistant.local:3000/api/0"
+```
+
 ## Configuration Options
 
 See [CONFIGURATION.md](./CONFIGURATION.md) for complete details on all configuration options.

@@ -49,7 +49,13 @@ async function getBrowser() {
 async function launchBrowser() {
   console.log('Launching Puppeteer browser...');
 
-  const browser = await puppeteer.launch({
+  const chromiumPath = process.env.CHROMIUM_PATH || process.env.PUPPETEER_EXECUTABLE_PATH;
+  
+  console.log(`CHROMIUM_PATH env: ${process.env.CHROMIUM_PATH}`);
+  console.log(`PUPPETEER_EXECUTABLE_PATH env: ${process.env.PUPPETEER_EXECUTABLE_PATH}`);
+  console.log(`Using executable path: ${chromiumPath}`);
+
+  const launchOptions = {
     headless: true,
     args: [
       '--no-sandbox',
@@ -60,8 +66,12 @@ async function launchBrowser() {
       '--no-zygote',
       '--disable-gpu'
     ],
-    executablePath: process.env.CHROMIUM_PATH || undefined
-  });
+    executablePath: chromiumPath
+  };
+
+  console.log('Launch options:', JSON.stringify(launchOptions, null, 2));
+
+  const browser = await puppeteer.launch(launchOptions);
 
   console.log('Puppeteer browser launched successfully');
 

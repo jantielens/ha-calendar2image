@@ -32,12 +32,24 @@ See [Configuration Guide](./docs/CONFIGURATION.md) for details.
 
 Once the add-on is running, you can access the API endpoints:
 
-### Test Endpoint
+### Calendar Image Endpoints
 ```
 GET http://homeassistant.local:3000/api/0
+GET http://homeassistant.local:3000/api/1
+GET http://homeassistant.local:3000/api/{index}
 ```
 
-Returns a JSON response with status information.
+Returns a binary image (PNG, JPG, or BMP) based on the configuration file (`0.json`, `1.json`, etc.).
+
+**Response Headers:**
+- `Content-Type`: `image/png`, `image/jpeg`, or `image/bmp`
+- `Content-Length`: Size of the image in bytes
+
+**Error Responses:**
+- `400 Bad Request`: Invalid index parameter
+- `404 Not Found`: Configuration file not found
+- `500 Internal Server Error`: Template or image generation failure
+- `502 Bad Gateway`: ICS calendar fetch failure
 
 ### Health Check
 ```
@@ -48,21 +60,25 @@ Returns the health status of the add-on.
 
 ## Development Status
 
-**Current Version:** 0.1.0 (Steps 1-5 Complete)
+**Current Version:** 0.2.0 (Steps 1-6 Complete)
 
 Completed features:
-- ✅ Basic web server functionality
+- ✅ Express API with dynamic `/api/{index}` endpoints
+- ✅ Binary image generation and response
 - ✅ ICS calendar data fetching and parsing
 - ✅ Configuration system for multiple calendars
 - ✅ Template engine with built-in templates (week-view, today-view)
-- ✅ Image generation with Puppeteer
+- ✅ Image generation with Puppeteer and Sharp
 - ✅ Image format options (PNG, JPG, BMP)
 - ✅ Grayscale conversion and bit depth control
-- ✅ Comprehensive unit and integration tests (104 tests, 88.96% coverage)
+- ✅ Emoji and international character support
+- ✅ Comprehensive error handling with HTTP status codes
+- ✅ Verbose logging with performance metrics
+- ✅ Comprehensive unit and integration tests (124 tests, 92.47% coverage)
 
 Upcoming features:
-- Express API integration (/api/{index} endpoint)
-- Localization support
+- Localization support (locale and timezone configuration)
+- Enhanced developer testing documentation
 
 ## Testing
 

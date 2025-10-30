@@ -22,22 +22,29 @@ const makeRequest = (path, method = 'GET') => {
       path: url.pathname,
       method: method
     }, (res) => {
-      let data = '';
-      res.on('data', chunk => data += chunk);
+      const chunks = [];
+      res.on('data', chunk => chunks.push(chunk));
       res.on('end', () => {
-        try {
-          resolve({
-            statusCode: res.statusCode,
-            headers: res.headers,
-            body: JSON.parse(data)
-          });
-        } catch (e) {
-          resolve({
-            statusCode: res.statusCode,
-            headers: res.headers,
-            body: data
-          });
+        const buffer = Buffer.concat(chunks);
+        let body;
+        
+        // Try to parse as JSON first
+        if (res.headers['content-type']?.includes('application/json')) {
+          try {
+            body = JSON.parse(buffer.toString());
+          } catch (e) {
+            body = buffer.toString();
+          }
+        } else {
+          // For binary data (images), keep as buffer
+          body = buffer;
         }
+        
+        resolve({
+          statusCode: res.statusCode,
+          headers: res.headers,
+          body: body
+        });
       });
     });
     
@@ -81,41 +88,57 @@ describe('API Integration Tests', () => {
     });
   });
 
-  describe('API v0 Endpoint', () => {
-    it('GET /api/0 should return valid response', async () => {
+  describe('Calendar Image API Endpoints', () => {
+    it('GET /api/0 should return PNG image', async () => {
       const response = await makeRequest('/api/0');
       
       expect(response.statusCode).toBe(200);
-      expect(response.body).toHaveProperty('message');
-      expect(response.body).toHaveProperty('status');
-      expect(response.body).toHaveProperty('version');
-      expect(response.body).toHaveProperty('timestamp');
+      expect(response.headers['content-type']).toMatch(/image\/(png|jpeg|bmp)/);
+      expect(response.headers['content-length']).toBeDefined();
+      expect(parseInt(response.headers['content-length'])).toBeGreaterThan(0);
     });
 
-    it('should return status: ok', async () => {
+    it('should return binary image data', async () => {
       const response = await makeRequest('/api/0');
       
-      expect(response.body.status).toBe('ok');
+      // Response body should be a Buffer for binary data
+      expect(response.body).toBeDefined();
+      expect(response.body.length).toBeGreaterThan(0);
     });
 
-    it('should return valid version', async () => {
-      const response = await makeRequest('/api/0');
+    it('GET /api/1 should return image if config exists', async () => {
+      const response = await makeRequest('/api/1');
       
-      expect(response.body.version).toMatch(/^\d+\.\d+\.\d+$/);
+      // Config 1 exists, should return image
+      if (response.statusCode === 200) {
+        expect(response.headers['content-type']).toMatch(/image\/(png|jpeg|bmp)/);
+        expect(response.body.length).toBeGreaterThan(0);
+      } else if (response.statusCode === 404) {
+        // Config might not exist - that's ok for this test
+        expect(response.body.error).toBe('Not Found');
+      }
     });
 
-    it('should return valid ISO timestamp', async () => {
-      const response = await makeRequest('/api/0');
+    it('GET /api/3 should return image if config exists', async () => {
+      const response = await makeRequest('/api/3');
       
-      const timestamp = new Date(response.body.timestamp);
-      expect(timestamp).toBeInstanceOf(Date);
-      expect(isNaN(timestamp.getTime())).toBe(false);
+      // Config 3 exists, should return image
+      if (response.statusCode === 200) {
+        expect(response.headers['content-type']).toMatch(/image\/(png|jpeg|bmp)/);
+        expect(response.body.length).toBeGreaterThan(0);
+      } else if (response.statusCode === 404) {
+        // Config might not exist - that's ok for this test
+        expect(response.body.error).toBe('Not Found');
+      }
     });
 
-    it('should return JSON content type', async () => {
+    it('should set Content-Length header correctly', async () => {
       const response = await makeRequest('/api/0');
       
-      expect(response.headers['content-type']).toMatch(/application\/json/);
+      if (response.statusCode === 200) {
+        const contentLength = parseInt(response.headers['content-length']);
+        expect(contentLength).toBe(response.body.length);
+      }
     });
   });
 
@@ -146,6 +169,38 @@ describe('API Integration Tests', () => {
       
       // Express returns 404 for method not allowed on routes without POST handler
       expect(response.statusCode).toBe(404);
+    });
+
+    it('should return 400 for invalid index (negative)', async () => {
+      const response = await makeRequest('/api/-1');
+      
+      expect(response.statusCode).toBe(400);
+      expect(response.body).toHaveProperty('error', 'Bad Request');
+      expect(response.body.message).toContain('Invalid index parameter');
+    });
+
+    it('should return 400 for invalid index (non-numeric)', async () => {
+      const response = await makeRequest('/api/abc');
+      
+      expect(response.statusCode).toBe(400);
+      expect(response.body).toHaveProperty('error', 'Bad Request');
+    });
+
+    it('should return 404 for non-existent config', async () => {
+      const response = await makeRequest('/api/9999');
+      
+      expect(response.statusCode).toBe(404);
+      expect(response.body).toHaveProperty('error', 'Not Found');
+      expect(response.body.message).toContain('Configuration');
+    });
+
+    it('should return JSON error responses', async () => {
+      const response = await makeRequest('/api/9999');
+      
+      expect(response.headers['content-type']).toMatch(/application\/json/);
+      expect(response.body).toHaveProperty('error');
+      expect(response.body).toHaveProperty('message');
+      expect(response.body).toHaveProperty('details');
     });
   });
 

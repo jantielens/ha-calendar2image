@@ -4,6 +4,11 @@ const { convertImage, getContentType } = require('./converter');
 /**
  * Generate an image from HTML content
  * 
+ * NOTE: Current implementation creates and closes a page for each request.
+ * Future optimization: Consider page pooling if concurrent requests become common
+ * - Could maintain a pool of pre-created pages for faster response times
+ * - Trade-off: More memory usage vs faster first-byte-time
+ * 
  * @param {string} html - HTML content to render
  * @param {Object} options - Image generation options
  * @param {number} options.width - Image width in pixels (default: 800)

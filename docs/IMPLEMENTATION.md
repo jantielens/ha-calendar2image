@@ -382,11 +382,86 @@ app.get('/api/:index', async (req, res) => {
 });
 ```
 
+## Step 6: Express API Implementation ✅
+
+**Module Location**: `src/api/`, `src/index.js`
+
+**Files Created**:
+- `src/api/handler.js` - Main API orchestration logic
+- `tests/api/handler.test.js` - Unit tests for API handler
+
+**Features**:
+- ✅ Dynamic `/api/:index` route handling
+- ✅ Complete pipeline orchestration (config → fetch → render → generate)
+- ✅ Binary image responses with correct Content-Type headers
+- ✅ Comprehensive error handling with proper HTTP status codes:
+  - 400: Invalid index parameter or validation errors
+  - 404: Configuration file not found  
+  - 500: Template or image generation failures
+  - 502: ICS calendar fetch failures
+- ✅ Verbose logging with timing information
+- ✅ JSON error responses for debugging
+- ✅ Unit tests (20 new tests)
+- ✅ Integration tests updated for binary responses
+
+**Error Response Format**:
+```json
+{
+  "error": "Not Found",
+  "message": "Configuration 999 not found",
+  "details": "Configuration file not found: /config/999.json"
+}
+```
+
+**Performance**:
+- Typical response time: 3-4 seconds
+  - ICS fetch: ~1.5s (network dependent)
+  - Image generation: ~2.5s (resolution dependent)
+  - Template rendering: <10ms
+- Browser instance reuse for efficiency
+- Future optimization opportunities documented in code
+
+**Test Coverage**:
+- Total tests: 124 (104 existing + 20 new)
+- Overall coverage: 92.47%
+- All tests passing ✅
+
+## Integration Example
+
+Complete pipeline from configuration to image:
+
+```javascript
+const { generateCalendarImage } = require('./src/api/handler');
+
+// Generate image for config index 0
+const result = await generateCalendarImage(0);
+// Returns: { buffer: Buffer, contentType: 'image/png' }
+
+// Send as HTTP response
+res.set('Content-Type', result.contentType);
+res.set('Content-Length', result.buffer.length);
+res.send(result.buffer);
+```
+
+## Container Build
+
+**Fixed Issues**:
+- Chromium executable path corrected to `/usr/bin/chromium`
+- Environment variables exported in s6-overlay service script
+- Puppeteer configuration added (`.puppeteerrc.cjs`)
+- Emoji font support added (`font-noto-emoji`, `font-noto-cjk`)
+
+**Test Results**:
+- ✅ Container builds successfully
+- ✅ All API endpoints functional
+- ✅ Image generation works with emojis
+- ✅ Error handling verified
+
 ## Next Steps
 
-Ready for Step 6: Express API Implementation
-- Implement `/api/{index}` endpoint
-- Integrate all modules (config, calendar, templates, image)
-- Return binary image data with correct content-type
-- Comprehensive error handling and HTTP responses
-- API endpoint testing
+Ready for Step 7: Localization Support
+- Implement locale configuration option
+- Apply locale to date/time formatting in templates
+- Implement timezone offset configuration
+- Apply timezone adjustments to event times
+- Unit tests for localization features

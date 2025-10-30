@@ -1,4 +1,5 @@
 const express = require('express');
+const { handleImageRequest } = require('./api/handler');
 
 const app = express();
 const PORT = 3000; // Fixed internal port (HA handles external port mapping)
@@ -9,15 +10,8 @@ app.use((req, res, next) => {
     next();
 });
 
-// Hello World endpoint following the final API pattern
-app.get('/api/0', (req, res) => {
-    res.json({
-        message: 'Hello World from Calendar2Image Add-on',
-        status: 'ok',
-        version: '0.1.0',
-        timestamp: new Date().toISOString()
-    });
-});
+// Main API endpoint - generate calendar image by config index
+app.get('/api/:index', handleImageRequest);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -29,7 +23,7 @@ app.use((req, res) => {
     res.status(404).json({
         error: 'Not Found',
         message: `Route ${req.url} not found`,
-        availableEndpoints: ['/api/0', '/health']
+        availableEndpoints: ['/api/:index (e.g., /api/0, /api/1)', '/health']
     });
 });
 
@@ -49,8 +43,8 @@ const server = app.listen(PORT, '0.0.0.0', () => {
     console.log('='.repeat(50));
     console.log(`Server running on port ${PORT}`);
     console.log(`Available endpoints:`);
-    console.log(`  - GET /api/0    : Test endpoint`);
-    console.log(`  - GET /health   : Health check`);
+    console.log(`  - GET /api/:index : Generate calendar image (e.g., /api/0, /api/1)`);
+    console.log(`  - GET /health     : Health check`);
     console.log('='.repeat(50));
 });
 

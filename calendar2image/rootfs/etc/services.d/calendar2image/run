@@ -5,5 +5,10 @@
 
 echo "[INFO] Starting Calendar2Image on port 3000..."
 
+# Export Puppeteer environment variables
+export PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
+export PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
+export CHROMIUM_PATH=/usr/bin/chromium
+
 cd /app
 exec node src/index.js

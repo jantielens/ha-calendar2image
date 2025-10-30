@@ -10,18 +10,21 @@ RUN apk add --no-cache \
     freetype \
     harfbuzz \
     ca-certificates \
-    ttf-freefont
+    ttf-freefont \
+    font-noto-emoji \
+    font-noto-cjk
 
 # Set Puppeteer environment variables to use installed Chromium
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
-    PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser \
-    CHROMIUM_PATH=/usr/bin/chromium-browser
+    PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium \
+    CHROMIUM_PATH=/usr/bin/chromium
 
 # Set working directory
 WORKDIR /app
 
 # Copy package files
 COPY package*.json ./
+COPY .puppeteerrc.cjs ./
 
 # Install dependencies
 RUN npm ci --only=production

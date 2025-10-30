@@ -9,9 +9,12 @@ This directory contains integration tests that validate the Calendar2Image add-o
 Tests the API endpoints against a running instance of the application.
 
 **What it tests:**
-- Health check endpoint
-- API endpoints response format
-- Error handling (404s, invalid methods)
+- Health check endpoint returns JSON
+- Calendar image endpoints return binary data
+- Correct Content-Type headers (image/png, image/jpeg, image/bmp)
+- Content-Length headers match actual image size
+- Error handling (400 for invalid index, 404 for missing config)
+- JSON error response format
 - Response performance
 - Multiple concurrent requests
 
