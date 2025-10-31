@@ -1,5 +1,6 @@
 const express = require('express');
 const { handleImageRequest, handleFreshImageRequest, handleCRC32Request } = require('./api/handler');
+const { handleHomePage, handleConfigListAPI, handleConfigAPI } = require('./api/homeHandler');
 const { ensureCacheDir } = require('./cache');
 const { initializeScheduler, generateAllImagesNow, stopAllSchedules } = require('./scheduler');
 
@@ -11,6 +12,13 @@ app.use((req, res, next) => {
     console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
     next();
 });
+
+// Home page - Configuration dashboard
+app.get('/', handleHomePage);
+
+// Configuration API endpoints
+app.get('/api/configs', handleConfigListAPI);
+app.get('/api/config/:index(\\d+)', handleConfigAPI);
 
 // API endpoints with file extensions
 // CRC32 checksum endpoint - get CRC32 of image without downloading
@@ -56,6 +64,9 @@ app.use((req, res) => {
         error: 'Not Found',
         message: `Route ${req.url} not found`,
         availableEndpoints: [
+            '/ - Home page with configuration dashboard',
+            '/api/configs - List all configurations (JSON)',
+            '/api/config/:index - Get specific configuration (JSON)',
             '/api/:index.:ext (e.g., /api/0.png, /api/1.jpg) - Returns cached/fresh image',
             '/api/:index.:ext.crc32 (e.g., /api/0.png.crc32) - Returns CRC32 checksum',
             '/api/:index/fresh.:ext (e.g., /api/0/fresh.png) - Forces fresh generation',
@@ -82,6 +93,9 @@ const server = app.listen(PORT, '0.0.0.0', async () => {
     console.log('='.repeat(50));
     console.log(`Server running on port ${PORT}`);
     console.log(`Available endpoints:`);
+    console.log(`  - GET /                      : Home page with configuration dashboard`);
+    console.log(`  - GET /api/configs           : List all configurations (JSON)`);
+    console.log(`  - GET /api/config/:index     : Get specific configuration (JSON)`);
     console.log(`  - GET /api/:index.:ext       : Get cached/fresh image (ext: png, jpg, bmp)`);
     console.log(`  - GET /api/:index.:ext.crc32 : Get CRC32 checksum (e.g., /api/0.png.crc32)`);
     console.log(`  - GET /api/:index/fresh.:ext : Force fresh generation`);
