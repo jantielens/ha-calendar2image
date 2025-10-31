@@ -18,21 +18,30 @@ const fileStats = new Map();
  * Internal function to generate and cache an image
  * This is passed to the cache module to avoid circular dependencies
  * @param {number} index - Configuration index
+ * @param {string} trigger - Trigger type for history tracking
  * @returns {Promise<boolean>} Success status
  */
-async function generateAndCache(index) {
-  console.log(`[Scheduler] Pre-generating image for config ${index}...`);
+async function generateAndCache(index, trigger = 'scheduled') {
+  console.log(`[Scheduler] Pre-generating image for config ${index} (trigger: ${trigger})...`);
   const startTime = Date.now();
   
   try {
     // Import here to avoid circular dependency at module load time
     const { generateCalendarImage } = require('../api/handler');
     
-    const result = await generateCalendarImage(index);
-    await saveCachedImage(index, result.buffer, result.contentType, result.imageType || 'png');
+    const result = await generateCalendarImage(index, { 
+      saveCache: false,  // We'll save manually to pass trigger
+      trigger: 'unknown' // Placeholder, will be overridden below
+    });
     
-    const duration = Date.now() - startTime;
-    console.log(`[Scheduler] Successfully pre-generated image for config ${index} in ${duration}ms`);
+    const generationDuration = Date.now() - startTime;
+    
+    await saveCachedImage(index, result.buffer, result.contentType, result.imageType || 'png', {
+      trigger,
+      generationDuration
+    });
+    
+    console.log(`[Scheduler] Successfully pre-generated image for config ${index} in ${generationDuration}ms`);
     return true;
   } catch (error) {
     const duration = Date.now() - startTime;
@@ -72,7 +81,7 @@ function schedulePreGeneration(index, cronExpression) {
 
   const task = cron.schedule(cronExpression, async () => {
     console.log(`[Scheduler] Triggered scheduled generation for config ${index}`);
-    await preGenerateImage(index);
+    await generateAndCache(index, 'scheduled');
   }, {
     scheduled: true,
     timezone: "UTC" // Use UTC for consistency
@@ -119,7 +128,7 @@ async function scheduleConfigIfNeeded(index, preGenerateNow = true) {
         // Pre-generate immediately if requested
         if (preGenerateNow) {
           console.log(`[Scheduler] Pre-generating image for config ${index}...`);
-          await preGenerateImage(index);
+          await generateAndCache(index, 'config_change');
         }
       }
       return success;
@@ -195,7 +204,7 @@ async function generateAllImagesNow() {
     }
 
     const results = await Promise.allSettled(
-      configsToGenerate.map(({ index }) => preGenerateImage(index))
+      configsToGenerate.map(({ index }) => generateAndCache(index, 'startup'))
     );
 
     const successful = results.filter(r => r.status === 'fulfilled' && r.value === true).length;
@@ -249,7 +258,7 @@ function startConfigWatcher() {
       
       try {
         console.log(`[Scheduler] Config ${index} added, updating schedule and generating image...`);
-        await scheduleConfigIfNeeded(index, true); // true = pre-generate immediately
+        await scheduleConfigIfNeeded(index, true); // true = pre-generate immediately (uses 'config_change' trigger)
       } catch (error) {
         console.error(`[Scheduler] Error handling config addition for ${filename}: ${error.message}`);
       }
@@ -266,7 +275,7 @@ function startConfigWatcher() {
       
       try {
         console.log(`[Scheduler] Config ${index} modified, updating schedule and generating image...`);
-        await scheduleConfigIfNeeded(index, true); // true = pre-generate immediately
+        await scheduleConfigIfNeeded(index, true); // true = pre-generate immediately (uses 'config_change' trigger)
       } catch (error) {
         console.error(`[Scheduler] Error handling config change for ${filename}: ${error.message}`);
       }
@@ -373,7 +382,7 @@ function startManualPolling() {
             });
             
             console.log(`[Scheduler] Config ${index} added, updating schedule and generating image...`);
-            await scheduleConfigIfNeeded(index, true);
+            await scheduleConfigIfNeeded(index, true); // uses 'config_change' trigger
           } else if (stats.mtimeMs !== oldStats.mtime || stats.size !== oldStats.size) {
             // Modified file
             console.log(`[Scheduler] Manual poll detected change in ${filename} (mtime: ${oldStats.mtime} -> ${stats.mtimeMs})`);
@@ -384,7 +393,7 @@ function startManualPolling() {
             });
             
             console.log(`[Scheduler] Config ${index} modified, updating schedule and generating image...`);
-            await scheduleConfigIfNeeded(index, true);
+            await scheduleConfigIfNeeded(index, true); // uses 'config_change' trigger
           }
         } catch (error) {
           // File might have been deleted during stat

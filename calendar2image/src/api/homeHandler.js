@@ -132,6 +132,7 @@ function generateHomePageHTML(configs, baseUrl) {
     const freshUrl = `${baseUrl}/api/${index}/fresh.${ext}`;
     const crc32Url = `${baseUrl}/api/${index}.${ext}.crc32`;
     const configUrl = `${baseUrl}/api/config/${index}`;
+    const historyUrl = `${baseUrl}/crc32-history/${index}`;
     
     const hasSchedule = config.preGenerateInterval ? `Yes (${config.preGenerateInterval})` : 'No';
     
@@ -146,6 +147,7 @@ function generateHomePageHTML(configs, baseUrl) {
           <a href="${imageUrl}" target="_blank" class="link-btn" title="Get image (cached if available)">Image</a>
           <a href="${freshUrl}" target="_blank" class="link-btn" title="Force fresh generation">Fresh</a>
           <a href="${crc32Url}" target="_blank" class="link-btn crc32-btn" data-crc32-url="${crc32Url}" title="Get CRC32 checksum">CRC32: Loading...</a>
+          <a href="${historyUrl}" class="link-btn crc32-history-btn" style="background:linear-gradient(135deg,#ff9800 0%,#ff5722 100%);color:white;" title="View CRC32 history">CRC32 history</a>
           <a href="${configUrl}" target="_blank" class="link-btn" title="View configuration JSON">Config</a>
         </td>
       </tr>`;

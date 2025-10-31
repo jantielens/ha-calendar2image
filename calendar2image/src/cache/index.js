@@ -1,6 +1,7 @@
 const fs = require('fs').promises;
 const path = require('path');
 const { calculateCRC32 } = require('../utils/crc32');
+const { addHistoryEntry } = require('./crc32History');
 
 const CACHE_DIR = path.join(process.cwd(), '..', 'data', 'cache');
 
@@ -58,8 +59,11 @@ async function getCacheMetadata(index) {
  * @param {Buffer} buffer - Image buffer
  * @param {string} contentType - Content type
  * @param {string} imageType - Image type
+ * @param {Object} options - Additional options
+ * @param {string} options.trigger - Trigger type for history tracking
+ * @param {number} options.generationDuration - Generation duration in ms
  */
-async function saveCachedImage(index, buffer, contentType, imageType) {
+async function saveCachedImage(index, buffer, contentType, imageType, options = {}) {
   try {
     const cachePath = getCacheFilePath(index, imageType);
     const metadataPath = getMetadataFilePath(index);
@@ -84,6 +88,17 @@ async function saveCachedImage(index, buffer, contentType, imageType) {
     ]);
 
     console.log(`[Cache] Saved cached image for config ${index}: ${buffer.length} bytes`);
+    
+    // Record in CRC32 history (non-blocking)
+    const { trigger = 'unknown', generationDuration = null } = options;
+    addHistoryEntry(index, crc32, {
+      trigger,
+      generationDuration,
+      imageSize: buffer.length
+    }).catch(err => {
+      console.warn(`[Cache] Failed to record CRC32 history: ${err.message}`);
+    });
+    
     return metadata;
   } catch (error) {
     console.error(`[Cache] Failed to save cached image for config ${index}: ${error.message}`);
@@ -176,5 +191,7 @@ module.exports = {
   saveCachedImage,
   preGenerateImage,
   setPreGenerateFunction,
-  deleteCachedImage
+  deleteCachedImage,
+  // Re-export CRC32 history functions
+  ...require('./crc32History')
 };

@@ -17,9 +17,10 @@ const { fetchExtraData } = require('../extraData');
  * @throws {Error} With appropriate error details for HTTP response handling
  */
 async function generateCalendarImage(index, options = {}) {
-  const { saveCache = false } = options;
+  const { saveCache = false, trigger = 'unknown' } = options;
   
   console.log(`[API] Starting image generation for config index ${index}`);
+  const generationStart = Date.now();
   
   try {
     // Step 1: Load configuration
@@ -81,7 +82,11 @@ async function generateCalendarImage(index, options = {}) {
     // Step 5: Save to cache if requested
     if (saveCache) {
       try {
-        await saveCachedImage(index, result.buffer, result.contentType, config.imageType);
+        const generationDuration = Date.now() - generationStart;
+        await saveCachedImage(index, result.buffer, result.contentType, config.imageType, {
+          trigger,
+          generationDuration
+        });
       } catch (cacheError) {
         console.warn(`[API] Failed to save to cache: ${cacheError.message}`);
         // Don't fail the request if caching fails
@@ -236,7 +241,10 @@ async function handleImageRequest(req, res, next) {
     
     // No cache available or no preGenerateInterval, generate fresh image
     console.log(`[API] Generating fresh image for config ${index}...`);
-    const result = await generateCalendarImage(index, { saveCache: useCache });
+    const result = await generateCalendarImage(index, { 
+      saveCache: useCache,
+      trigger: useCache ? 'cache_miss' : 'on_demand'
+    });
 
     // Calculate CRC32 for fresh image
     const crc32 = calculateCRC32(result.buffer);
@@ -329,7 +337,10 @@ async function handleFreshImageRequest(req, res, next) {
     console.log(`[API] Forcing fresh generation for config ${index}...`);
     
     // Generate fresh image and save to cache
-    const result = await generateCalendarImage(index, { saveCache: true });
+    const result = await generateCalendarImage(index, { 
+      saveCache: true,
+      trigger: 'fresh'
+    });
 
     // Calculate CRC32 for fresh image
     const crc32 = calculateCRC32(result.buffer);
@@ -417,7 +428,10 @@ async function handleCRC32Request(req, res, next) {
     
     // No cache or no CRC32 in metadata, generate fresh image
     console.log(`[API] No cached CRC32 for config ${index}, generating fresh image...`);
-    const result = await generateCalendarImage(index, { saveCache: true });
+    const result = await generateCalendarImage(index, { 
+      saveCache: true,
+      trigger: 'crc32_check'
+    });
     
     // Calculate CRC32
     const crc32 = calculateCRC32(result.buffer);

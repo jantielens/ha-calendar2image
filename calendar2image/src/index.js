@@ -1,6 +1,7 @@
 const express = require('express');
 const { handleImageRequest, handleFreshImageRequest, handleCRC32Request } = require('./api/handler');
 const { handleHomePage, handleConfigListAPI, handleConfigAPI } = require('./api/homeHandler');
+const { handleCRC32HistoryAPI, handleCRC32HistoryPage } = require('./api/crc32HistoryHandler');
 const { ensureCacheDir } = require('./cache');
 const { initializeScheduler, generateAllImagesNow, stopAllSchedules } = require('./scheduler');
 
@@ -16,9 +17,15 @@ app.use((req, res, next) => {
 // Home page - Configuration dashboard
 app.get('/', handleHomePage);
 
+// CRC32 History page
+app.get('/crc32-history/:index(\\d+)', handleCRC32HistoryPage);
+
 // Configuration API endpoints
 app.get('/api/configs', handleConfigListAPI);
 app.get('/api/config/:index(\\d+)', handleConfigAPI);
+
+// CRC32 History API endpoint
+app.get('/api/:index(\\d+)/crc32-history', handleCRC32HistoryAPI);
 
 // API endpoints with file extensions
 // CRC32 checksum endpoint - get CRC32 of image without downloading
@@ -65,8 +72,10 @@ app.use((req, res) => {
         message: `Route ${req.url} not found`,
         availableEndpoints: [
             '/ - Home page with configuration dashboard',
+            '/crc32-history/:index - CRC32 history visualization page',
             '/api/configs - List all configurations (JSON)',
             '/api/config/:index - Get specific configuration (JSON)',
+            '/api/:index/crc32-history - Get CRC32 history (JSON)',
             '/api/:index.:ext (e.g., /api/0.png, /api/1.jpg) - Returns cached/fresh image',
             '/api/:index.:ext.crc32 (e.g., /api/0.png.crc32) - Returns CRC32 checksum',
             '/api/:index/fresh.:ext (e.g., /api/0/fresh.png) - Forces fresh generation',
@@ -94,8 +103,10 @@ const server = app.listen(PORT, '0.0.0.0', async () => {
     console.log(`Server running on port ${PORT}`);
     console.log(`Available endpoints:`);
     console.log(`  - GET /                      : Home page with configuration dashboard`);
+    console.log(`  - GET /crc32-history/:index  : CRC32 history visualization page`);
     console.log(`  - GET /api/configs           : List all configurations (JSON)`);
     console.log(`  - GET /api/config/:index     : Get specific configuration (JSON)`);
+    console.log(`  - GET /api/:index/crc32-history : Get CRC32 history (JSON)`);
     console.log(`  - GET /api/:index.:ext       : Get cached/fresh image (ext: png, jpg, bmp)`);
     console.log(`  - GET /api/:index.:ext.crc32 : Get CRC32 checksum (e.g., /api/0.png.crc32)`);
     console.log(`  - GET /api/:index/fresh.:ext : Force fresh generation`);
