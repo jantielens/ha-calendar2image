@@ -53,7 +53,7 @@ Configuration files must be named with numeric IDs:
 ### Basic Configuration
 ```json
 {
-  "icsUrl": "https://calendar.google.com/calendar/ical/your-id/public/basic.ics",
+  "icsUrl": "https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics",
   "template": "default"
 }
 ```
@@ -61,7 +61,7 @@ Configuration files must be named with numeric IDs:
 ### Full Configuration with All Options
 ```json
 {
-  "icsUrl": "https://calendar.google.com/calendar/ical/your-id/public/basic.ics",
+  "icsUrl": "https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics",
   "template": "default",
   "width": 800,
   "height": 600,
@@ -81,7 +81,7 @@ This is what the default `0.json` file contains - a complete configuration with 
 ### Grayscale PNG
 ```json
 {
-  "icsUrl": "https://example.com/calendar.ics",
+  "icsUrl": "https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics",
   "template": "compact",
   "grayscale": true,
   "bitDepth": 8,
@@ -92,7 +92,7 @@ This is what the default `0.json` file contains - a complete configuration with 
 ### JPEG Output
 ```json
 {
-  "icsUrl": "https://example.com/calendar.ics",
+  "icsUrl": "https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics",
   "template": "weekly",
   "imageType": "jpg"
 }
@@ -101,7 +101,7 @@ This is what the default `0.json` file contains - a complete configuration with 
 ### Extended Time Range
 ```json
 {
-  "icsUrl": "https://example.com/calendar.ics",
+  "icsUrl": "https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics",
   "template": "default",
   "expandRecurringFrom": -90,
   "expandRecurringTo": 90
@@ -111,7 +111,7 @@ This is what the default `0.json` file contains - a complete configuration with 
 ### Pre-generated for E-ink Display (Recommended)
 ```json
 {
-  "icsUrl": "https://example.com/calendar.ics",
+  "icsUrl": "https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics",
   "template": "default",
   "grayscale": true,
   "bitDepth": 2,
@@ -166,3 +166,4 @@ Each configuration will be accessible via its respective API endpoint:
 **Note:** Extension (`.png`, `.jpg`, or `.bmp`) must match the `imageType` in the config file.
 - `/api/2` → Uses `2.json` (returns image)
 - `/api/3` → Uses `3.json` (returns image)
+

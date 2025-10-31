@@ -46,7 +46,7 @@ Configuration files must be named with numeric IDs:
 ### Basic Configuration
 ```json
 {
-  "icsUrl": "https://calendar.google.com/calendar/ical/your-id/public/basic.ics",
+  "icsUrl": "https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics",
   "template": "default"
 }
 ```
@@ -54,7 +54,7 @@ Configuration files must be named with numeric IDs:
 ### Full Configuration with All Options
 ```json
 {
-  "icsUrl": "https://calendar.google.com/calendar/ical/your-id/public/basic.ics",
+  "icsUrl": "https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics",
   "template": "default",
   "grayscale": false,
   "bitDepth": 8,
@@ -67,7 +67,7 @@ Configuration files must be named with numeric IDs:
 ### Grayscale PNG
 ```json
 {
-  "icsUrl": "https://example.com/calendar.ics",
+  "icsUrl": "https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics",
   "template": "compact",
   "grayscale": true,
   "bitDepth": 8,
@@ -78,7 +78,7 @@ Configuration files must be named with numeric IDs:
 ### JPEG Output
 ```json
 {
-  "icsUrl": "https://example.com/calendar.ics",
+  "icsUrl": "https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics",
   "template": "weekly",
   "imageType": "jpg"
 }
@@ -87,7 +87,7 @@ Configuration files must be named with numeric IDs:
 ### Extended Time Range
 ```json
 {
-  "icsUrl": "https://example.com/calendar.ics",
+  "icsUrl": "https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics",
   "template": "default",
   "expandRecurringFrom": -90,
   "expandRecurringTo": 90
@@ -97,7 +97,7 @@ Configuration files must be named with numeric IDs:
 ### Pre-generated for E-ink Display (Recommended)
 ```json
 {
-  "icsUrl": "https://example.com/calendar.ics",
+  "icsUrl": "https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics",
   "template": "default",
   "grayscale": true,
   "bitDepth": 2,
@@ -150,3 +150,4 @@ Each configuration will be accessible via its respective API endpoint:
 - `/api/1.crc32` → CRC32 checksum for `1.json`
 - `/api/2` → Uses `2.json` (returns image)
 - `/api/3` → Uses `3.json` (returns image)
+

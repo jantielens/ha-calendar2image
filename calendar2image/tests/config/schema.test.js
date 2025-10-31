@@ -4,7 +4,7 @@ describe('config schema', () => {
   describe('validateConfig', () => {
     it('should validate a valid minimal configuration', () => {
       const config = {
-        icsUrl: 'https://example.com/calendar.ics',
+        icsUrl: 'https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics',
         template: 'week-view'
       };
 
@@ -16,7 +16,7 @@ describe('config schema', () => {
 
     it('should validate a full configuration with all fields', () => {
       const config = {
-        icsUrl: 'https://example.com/calendar.ics',
+        icsUrl: 'https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics',
         template: 'week-view',
         grayscale: true,
         bitDepth: 16,
@@ -44,7 +44,7 @@ describe('config schema', () => {
 
     it('should reject configuration missing template', () => {
       const config = {
-        icsUrl: 'https://example.com/calendar.ics'
+        icsUrl: 'https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics'
       };
 
       const result = validateConfig(config);
@@ -77,7 +77,7 @@ describe('config schema', () => {
 
     it('should reject empty template', () => {
       const config = {
-        icsUrl: 'https://example.com/calendar.ics',
+        icsUrl: 'https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics',
         template: ''
       };
 
@@ -88,7 +88,7 @@ describe('config schema', () => {
 
     it('should reject invalid imageType', () => {
       const config = {
-        icsUrl: 'https://example.com/calendar.ics',
+        icsUrl: 'https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics',
         template: 'week-view',
         imageType: 'gif'
       };
@@ -103,7 +103,7 @@ describe('config schema', () => {
       
       validTypes.forEach(type => {
         const config = {
-          icsUrl: 'https://example.com/calendar.ics',
+          icsUrl: 'https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics',
           template: 'week-view',
           imageType: type
         };
@@ -115,7 +115,7 @@ describe('config schema', () => {
 
     it('should reject bitDepth below minimum', () => {
       const config = {
-        icsUrl: 'https://example.com/calendar.ics',
+        icsUrl: 'https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics',
         template: 'week-view',
         bitDepth: 0
       };
@@ -127,7 +127,7 @@ describe('config schema', () => {
 
     it('should reject bitDepth above maximum', () => {
       const config = {
-        icsUrl: 'https://example.com/calendar.ics',
+        icsUrl: 'https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics',
         template: 'week-view',
         bitDepth: 33
       };
@@ -139,7 +139,7 @@ describe('config schema', () => {
 
     it('should reject non-boolean grayscale', () => {
       const config = {
-        icsUrl: 'https://example.com/calendar.ics',
+        icsUrl: 'https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics',
         template: 'week-view',
         grayscale: 'yes'
       };
@@ -151,7 +151,7 @@ describe('config schema', () => {
 
     it('should reject additional unknown properties', () => {
       const config = {
-        icsUrl: 'https://example.com/calendar.ics',
+        icsUrl: 'https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics',
         template: 'week-view',
         unknownField: 'value'
       };
@@ -163,7 +163,7 @@ describe('config schema', () => {
 
     it('should accept http URLs', () => {
       const config = {
-        icsUrl: 'http://example.com/calendar.ics',
+        icsUrl: 'https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics',
         template: 'week-view'
       };
 
@@ -177,7 +177,7 @@ describe('config schema', () => {
       
       validAngles.forEach(angle => {
         const config = {
-          icsUrl: 'https://example.com/calendar.ics',
+          icsUrl: 'https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics',
           template: 'week-view',
           rotate: angle
         };
@@ -192,7 +192,7 @@ describe('config schema', () => {
       
       invalidAngles.forEach(angle => {
         const config = {
-          icsUrl: 'https://example.com/calendar.ics',
+          icsUrl: 'https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics',
           template: 'week-view',
           rotate: angle
         };
@@ -207,7 +207,7 @@ describe('config schema', () => {
       
       validLocales.forEach(locale => {
         const config = {
-          icsUrl: 'https://example.com/calendar.ics',
+          icsUrl: 'https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics',
           template: 'week-view',
           locale
         };
@@ -222,7 +222,7 @@ describe('config schema', () => {
       
       invalidLocales.forEach(locale => {
         const config = {
-          icsUrl: 'https://example.com/calendar.ics',
+          icsUrl: 'https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics',
           template: 'week-view',
           locale
         };
@@ -234,7 +234,7 @@ describe('config schema', () => {
 
     it('should accept valid timezone values', () => {
       const config = {
-        icsUrl: 'https://example.com/calendar.ics',
+        icsUrl: 'https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics',
         template: 'week-view',
         timezone: 'Europe/Berlin'
       };
@@ -245,7 +245,7 @@ describe('config schema', () => {
 
     it('should accept configuration without timezone (optional)', () => {
       const config = {
-        icsUrl: 'https://example.com/calendar.ics',
+        icsUrl: 'https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics',
         template: 'week-view'
       };
 
@@ -257,14 +257,14 @@ describe('config schema', () => {
   describe('applyDefaults', () => {
     it('should apply all default values to minimal config', () => {
       const config = {
-        icsUrl: 'https://example.com/calendar.ics',
+        icsUrl: 'https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics',
         template: 'week-view'
       };
 
       const result = applyDefaults(config);
       
       expect(result).toEqual({
-        icsUrl: 'https://example.com/calendar.ics',
+        icsUrl: 'https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics',
         template: 'week-view',
         width: 800,
         height: 600,
@@ -281,7 +281,7 @@ describe('config schema', () => {
 
     it('should not override provided values', () => {
       const config = {
-        icsUrl: 'https://example.com/calendar.ics',
+        icsUrl: 'https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics',
         template: 'today-view',
         width: 800,
         height: 600,
@@ -302,7 +302,7 @@ describe('config schema', () => {
 
     it('should handle partial defaults', () => {
       const config = {
-        icsUrl: 'https://example.com/calendar.ics',
+        icsUrl: 'https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics',
         template: 'week-view',
         grayscale: true,
         imageType: 'bmp'
@@ -311,7 +311,7 @@ describe('config schema', () => {
       const result = applyDefaults(config);
       
       expect(result).toEqual({
-        icsUrl: 'https://example.com/calendar.ics',
+        icsUrl: 'https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics',
         template: 'week-view',
         width: 800,
         height: 600,
@@ -328,7 +328,7 @@ describe('config schema', () => {
 
     it('should handle grayscale: false explicitly', () => {
       const config = {
-        icsUrl: 'https://example.com/calendar.ics',
+        icsUrl: 'https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics',
         template: 'week-view',
         grayscale: false
       };
@@ -340,7 +340,7 @@ describe('config schema', () => {
 
     it('should handle zero values for expandRecurring fields', () => {
       const config = {
-        icsUrl: 'https://example.com/calendar.ics',
+        icsUrl: 'https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics',
         template: 'week-view',
         expandRecurringFrom: 0,
         expandRecurringTo: 0
@@ -354,7 +354,7 @@ describe('config schema', () => {
 
     it('should apply default locale when not provided', () => {
       const config = {
-        icsUrl: 'https://example.com/calendar.ics',
+        icsUrl: 'https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics',
         template: 'week-view'
       };
 
@@ -365,7 +365,7 @@ describe('config schema', () => {
 
     it('should not override provided locale', () => {
       const config = {
-        icsUrl: 'https://example.com/calendar.ics',
+        icsUrl: 'https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics',
         template: 'week-view',
         locale: 'de-DE'
       };
@@ -377,7 +377,7 @@ describe('config schema', () => {
 
     it('should preserve timezone when provided', () => {
       const config = {
-        icsUrl: 'https://example.com/calendar.ics',
+        icsUrl: 'https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics',
         template: 'week-view',
         timezone: 'Europe/Berlin'
       };
@@ -388,3 +388,4 @@ describe('config schema', () => {
     });
   });
 });
+

@@ -14,7 +14,7 @@ describe('icsClient', () => {
         .get('/calendar.ics')
         .reply(200, testData);
 
-      const result = await fetchICS('https://example.com/calendar.ics');
+      const result = await fetchICS('https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics');
       expect(result).toBe(testData);
     });
 
@@ -25,7 +25,7 @@ describe('icsClient', () => {
         .get('/calendar.ics')
         .reply(200, testData);
 
-      const result = await fetchICS('http://example.com/calendar.ics');
+      const result = await fetchICS('https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics');
       expect(result).toBe(testData);
     });
 
@@ -50,7 +50,7 @@ describe('icsClient', () => {
         .get('/calendar.ics')
         .reply(404, 'Not Found');
 
-      await expect(fetchICS('https://example.com/calendar.ics')).rejects.toThrow('HTTP Error: 404');
+      await expect(fetchICS('https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics')).rejects.toThrow('HTTP Error: 404');
     });
 
     it('should handle 500 errors', async () => {
@@ -58,7 +58,7 @@ describe('icsClient', () => {
         .get('/calendar.ics')
         .reply(500, 'Internal Server Error');
 
-      await expect(fetchICS('https://example.com/calendar.ics')).rejects.toThrow('HTTP Error: 500');
+      await expect(fetchICS('https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics')).rejects.toThrow('HTTP Error: 500');
     });
 
     it('should follow redirects', async () => {
@@ -66,13 +66,13 @@ describe('icsClient', () => {
       
       nock('https://example.com')
         .get('/old-calendar.ics')
-        .reply(301, undefined, { location: 'https://example.com/new-calendar.ics' });
+        .reply(301, undefined, { location: 'https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics' });
 
       nock('https://example.com')
         .get('/new-calendar.ics')
         .reply(200, testData);
 
-      const result = await fetchICS('https://example.com/old-calendar.ics');
+      const result = await fetchICS('https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics');
       expect(result).toBe(testData);
     });
 
@@ -81,7 +81,7 @@ describe('icsClient', () => {
         .get('/calendar.ics')
         .replyWithError('Network error');
 
-      await expect(fetchICS('https://example.com/calendar.ics')).rejects.toThrow('Network error');
+      await expect(fetchICS('https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics')).rejects.toThrow('Network error');
     });
 
     it('should handle empty response', async () => {
@@ -89,7 +89,7 @@ describe('icsClient', () => {
         .get('/calendar.ics')
         .reply(200, '');
 
-      await expect(fetchICS('https://example.com/calendar.ics')).rejects.toThrow('Empty response');
+      await expect(fetchICS('https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics')).rejects.toThrow('Empty response');
     });
 
     it('should handle timeout', async () => {
@@ -98,7 +98,8 @@ describe('icsClient', () => {
         .delay(35000) // Longer than 30s timeout
         .reply(200, 'data');
 
-      await expect(fetchICS('https://example.com/calendar.ics')).rejects.toThrow('timeout');
+      await expect(fetchICS('https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics')).rejects.toThrow('timeout');
     }, 35000);
   });
 });
+

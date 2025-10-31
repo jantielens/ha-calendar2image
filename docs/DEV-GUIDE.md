@@ -198,7 +198,7 @@ Create a JSON config file in `../data/calendar2image/`:
 
 ```json
 {
-  "icsUrl": "https://example.com/calendar.ics",
+  "icsUrl": "https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics",
   "template": "my-template",
   "width": 800,
   "height": 600,

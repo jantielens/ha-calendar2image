@@ -23,7 +23,7 @@ describe('config loader', () => {
   describe('loadConfig', () => {
     it('should load a valid configuration file', async () => {
       const config = {
-        icsUrl: 'https://example.com/calendar.ics',
+        icsUrl: 'https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics',
         template: 'week-view'
       };
 
@@ -42,7 +42,7 @@ describe('config loader', () => {
 
     it('should load configuration with all fields', async () => {
       const config = {
-        icsUrl: 'https://example.com/calendar.ics',
+        icsUrl: 'https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics',
         template: 'today-view',
         width: 1024,
         height: 768,
@@ -109,7 +109,7 @@ describe('config loader', () => {
 
     it('should throw error for invalid imageType', async () => {
       const config = {
-        icsUrl: 'https://example.com/calendar.ics',
+        icsUrl: 'https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics',
         template: 'week-view',
         imageType: 'gif'
       };
@@ -134,12 +134,12 @@ describe('config loader', () => {
   describe('loadAllConfigs', () => {
     it('should load all configuration files', async () => {
       const config0 = {
-        icsUrl: 'https://example.com/cal0.ics',
+        icsUrl: 'https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics',
         template: 'week-view',
         rotate: 0
       };
       const config1 = {
-        icsUrl: 'https://example.com/cal1.ics',
+        icsUrl: 'https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics',
         template: 'today-view',
         rotate: 0
       };
@@ -156,12 +156,12 @@ describe('config loader', () => {
 
     it('should load configs with non-sequential indices', async () => {
       const config0 = {
-        icsUrl: 'https://example.com/cal0.ics',
+        icsUrl: 'https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics',
         template: 'week-view',
         rotate: 0
       };
       const config5 = {
-        icsUrl: 'https://example.com/cal5.ics',
+        icsUrl: 'https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics',
         template: 'today-view',
         rotate: 0
       };
@@ -180,7 +180,7 @@ describe('config loader', () => {
 
     it('should ignore non-JSON files', async () => {
       const config0 = {
-        icsUrl: 'https://example.com/cal0.ics',
+        icsUrl: 'https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics',
         template: 'week-view',
         rotate: 0
       };
@@ -205,7 +205,7 @@ describe('config loader', () => {
 
     it('should throw error if any config is invalid', async () => {
       const config0 = {
-        icsUrl: 'https://example.com/cal0.ics',
+        icsUrl: 'https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics',
         template: 'week-view'
       };
       const invalidConfig = {
@@ -221,7 +221,7 @@ describe('config loader', () => {
 
     it('should report all invalid configs in error message', async () => {
       const invalidConfig1 = { template: 'week-view' }; // Missing icsUrl
-      const invalidConfig2 = { icsUrl: 'https://example.com/cal.ics' }; // Missing template
+      const invalidConfig2 = { icsUrl: 'https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics' }; // Missing template
 
       await fs.writeFile(path.join(tempDir, '0.json'), JSON.stringify(invalidConfig1));
       await fs.writeFile(path.join(tempDir, '1.json'), JSON.stringify(invalidConfig2));
@@ -239,7 +239,7 @@ describe('config loader', () => {
   describe('validateConfigs', () => {
     it('should validate and return all configs', async () => {
       const config0 = {
-        icsUrl: 'https://example.com/cal0.ics',
+        icsUrl: 'https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics',
         template: 'week-view',
         rotate: 0
       };
@@ -269,3 +269,5 @@ describe('config loader', () => {
     });
   });
 });
+
+

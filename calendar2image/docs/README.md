@@ -23,7 +23,7 @@ Create configuration files in `/addon_configs/17f877f5_calendar2image/`:
 **Example: 0.json** (based on the included sample)
 ```json
 {
-  "icsUrl": "https://example.com/calendar.ics",
+  "icsUrl": "https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics",
   "template": "week-view"
 }
 ```
@@ -73,7 +73,7 @@ See [CONFIGURATION.md](./CONFIGURATION.md) for complete details on all configura
 
 ```json
 {
-  "icsUrl": "https://example.com/calendar.ics",
+  "icsUrl": "https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics",
   "template": "week-view"
 }
 ```
@@ -82,7 +82,7 @@ See [CONFIGURATION.md](./CONFIGURATION.md) for complete details on all configura
 
 ```json
 {
-  "icsUrl": "https://example.com/calendar.ics",
+  "icsUrl": "https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics",
   "template": "week-view",
   "grayscale": false,
   "bitDepth": 8,

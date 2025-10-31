@@ -22,7 +22,7 @@ Each configuration file should contain:
 
 ```json
 {
-  "icsUrl": "https://example.com/calendar.ics",
+  "icsUrl": "https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics",
   "template": "week-view",
   "grayscale": false,
   "bitDepth": 8,
@@ -56,7 +56,7 @@ Each configuration file should contain:
 ### Minimal Configuration
 ```json
 {
-  "icsUrl": "https://example.com/calendar.ics",
+  "icsUrl": "https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics",
   "template": "week-view"
 }
 ```
@@ -64,7 +64,7 @@ Each configuration file should contain:
 ### Full Configuration
 ```json
 {
-  "icsUrl": "https://calendar.google.com/calendar/ical/example/public/basic.ics",
+  "icsUrl": "https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics",
   "template": "today-view",
   "grayscale": true,
   "bitDepth": 1,
@@ -78,7 +78,7 @@ Each configuration file should contain:
 ### Configuration with Pre-generation (Recommended for E-ink Displays)
 ```json
 {
-  "icsUrl": "https://example.com/calendar.ics",
+  "icsUrl": "https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics",
   "template": "week-view",
   "grayscale": true,
   "bitDepth": 2,
@@ -91,7 +91,7 @@ With pre-generation enabled, images are regenerated every 5 minutes in the backg
 ### Configuration without Pre-generation (Always Fresh)
 ```json
 {
-  "icsUrl": "https://example.com/calendar.ics",
+  "icsUrl": "https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics",
   "template": "week-view",
   "grayscale": false,
   "imageType": "png"
@@ -130,3 +130,4 @@ if crc != last_known_crc:
 else:
     print('No update needed - saves bandwidth!')
 ```
+

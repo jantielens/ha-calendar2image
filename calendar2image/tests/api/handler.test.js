@@ -13,7 +13,7 @@ jest.mock('../../src/image');
 describe('API Handler', () => {
   // Sample test data
   const mockConfig = {
-    icsUrl: 'https://example.com/calendar.ics',
+    icsUrl: 'https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics',
     template: 'week-view',
     width: 800,
     height: 600,
@@ -113,7 +113,7 @@ describe('API Handler', () => {
 
     it('should throw 502 error when ICS fetch fails', async () => {
       loadConfig.mockResolvedValue(mockConfig);
-      getCalendarEvents.mockRejectedValue(new Error('Failed to fetch ICS from https://example.com/calendar.ics'));
+      getCalendarEvents.mockRejectedValue(new Error('Failed to fetch ICS from https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics'));
 
       await expect(generateCalendarImage(0)).rejects.toMatchObject({
         message: 'Failed to fetch calendar data from ICS URL',
@@ -285,7 +285,7 @@ describe('API Handler', () => {
       mockReq.params.index = '0';
       
       loadConfig.mockResolvedValue(mockConfig);
-      getCalendarEvents.mockRejectedValue(new Error('Failed to fetch ICS from https://example.com/calendar.ics'));
+      getCalendarEvents.mockRejectedValue(new Error('Failed to fetch ICS from https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics'));
 
       await handleImageRequest(mockReq, mockRes, mockNext);
 
@@ -350,3 +350,4 @@ describe('API Handler', () => {
     });
   });
 });
+

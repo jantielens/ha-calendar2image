@@ -48,7 +48,7 @@ This document describes the implementation of Steps 2-5: ICS Calendar Data Fetch
 **Configuration Schema**:
 ```json
 {
-  "icsUrl": "https://example.com/calendar.ics",     // Required
+  "icsUrl": "https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics",     // Required
   "template": "week-view",                          // Required
   "grayscale": false,                               // Optional, default: false
   "bitDepth": 8,                                    // Optional, default: 8 (range: 1-32)

@@ -67,7 +67,7 @@ describe('Scheduler Config Watcher', () => {
   test('should detect and schedule newly added config file', async () => {
     // Create initial config
     const config0 = {
-      icsUrl: 'https://example.com/cal.ics',
+      icsUrl: 'https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics',
       template: 'week',
       width: 800,
       height: 480,
@@ -93,7 +93,7 @@ describe('Scheduler Config Watcher', () => {
 
     // Create new config file (simulating adding 1.json while container is running)
     const config1 = {
-      icsUrl: 'https://example.com/cal2.ics',
+      icsUrl: 'https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics',
       template: 'month',
       width: 800,
       height: 480,
@@ -121,7 +121,7 @@ describe('Scheduler Config Watcher', () => {
   test('should remove schedule when config file is deleted', async () => {
     // Create two configs
     const config0 = {
-      icsUrl: 'https://example.com/cal.ics',
+      icsUrl: 'https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics',
       template: 'week',
       width: 800,
       height: 480,
@@ -130,7 +130,7 @@ describe('Scheduler Config Watcher', () => {
     };
     
     const config1 = {
-      icsUrl: 'https://example.com/cal2.ics',
+      icsUrl: 'https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics',
       template: 'month',
       width: 800,
       height: 480,
@@ -173,7 +173,7 @@ describe('Scheduler Config Watcher', () => {
   test('should update schedule when config file is modified', async () => {
     // Create config with preGenerateInterval
     const config0 = {
-      icsUrl: 'https://example.com/cal.ics',
+      icsUrl: 'https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics',
       template: 'week',
       width: 800,
       height: 480,
@@ -220,7 +220,7 @@ describe('Scheduler Config Watcher', () => {
   test('should remove schedule when preGenerateInterval is removed from config', async () => {
     // Create config with preGenerateInterval
     const config0 = {
-      icsUrl: 'https://example.com/cal.ics',
+      icsUrl: 'https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics',
       template: 'week',
       width: 800,
       height: 480,
@@ -245,7 +245,7 @@ describe('Scheduler Config Watcher', () => {
 
     // Modify config to remove preGenerateInterval
     const modifiedConfig = {
-      icsUrl: 'https://example.com/cal.ics',
+      icsUrl: 'https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics',
       template: 'week',
       width: 800,
       height: 480,
