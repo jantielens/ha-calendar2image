@@ -1,12 +1,51 @@
-# Calendar2Image
+# Calendar2Image for Home Assistant
 
-Generate images from calendar data (ICS URLs) using customizable templates.
+Generate calendar images from ICS feeds with customizable templates. Perfect for e-ink displays, dashboards, or any scenario where you need calendar data as an image.
 
-## About
+> **⚠️ Network Access:** Generated images are served via the built-in web server (default port 3000) and will be accessible to any device or user on your internal network.
 
-The Calendar2Image add-on creates images from calendar events fetched from ICS URLs. It provides a REST API to generate images on-demand with highly customizable templates. Perfect for e-ink displays, dashboards, or any scenario where you need calendar data as an image.
+## ✨ Features
 
-## Configuration
+- **Generate images from calendar data** - Fetch events from any ICS URL and render as PNG/JPG/BMP
+- **REST API** - Simple HTTP endpoints for on-demand or cached image generation
+- **Customizable templates** - Use built-in templates or create your own with JavaScript
+- **Pre-generation & caching** - Ultra-fast responses (<100ms) with scheduled background generation
+- **CRC32 checksums** - Bandwidth-efficient change detection for e-ink displays
+- **Extra data integration** - Fetch weather, tasks, or other JSON data for enhanced templates
+- **Grayscale & bit depth control** - Optimize images for e-ink displays
+- **Multiple calendars** - Configure as many calendars as needed
+
+## 🚀 Quick Start
+
+1. **Start the add-on** and check the logs for:
+   ```
+   Startup complete - ready to serve requests
+   ```
+
+2. **Open the configuration dashboard**:
+   ```
+   http://homeassistant.local:3000/
+   ```
+   This shows all your configurations, API endpoints, and interactive documentation.
+
+3. **Test the default configuration**:
+   ```
+   http://homeassistant.local:3000/api/0.png
+   ```
+
+### First Steps
+
+The add-on automatically creates configuration files in `/addon_configs/17f877f5_calendar2image/`:
+- `0.json` - Working configuration with sample calendar
+- `templates/custom-week-view.js` - Sample custom template
+- `README.md` - Configuration documentation
+
+**Edit the configuration:**
+1. Open `0.json` in File Editor
+2. Replace `icsUrl` with your calendar's public ICS URL
+3. Save and view the updated image at `http://homeassistant.local:3000/api/0.png`
+
+## ⚙️ Add-on Configuration
 
 ### Add-on Options
 
@@ -14,178 +53,77 @@ The Calendar2Image add-on creates images from calendar events fetched from ICS U
 port: 3000  # Port number for the web server (default: 3000)
 ```
 
-### Example Configuration
+### Calendar Configuration
 
-```yaml
-port: 3000
+Create JSON files in `/addon_configs/17f877f5_calendar2image/`:
+
+```json
+{
+  "icsUrl": "https://calendar.google.com/calendar/ical/.../public/basic.ics",
+  "template": "week-view",
+  "width": 600,
+  "height": 900,
+  "imageType": "png",
+  "grayscale": false,
+  "preGenerateInterval": "*/5 * * * *"
+}
 ```
 
-### Calendar Configuration Files
+**Key Parameters:**
+- `icsUrl` - Your calendar's ICS feed URL (required)
+- `template` - Template name: `week-view`, `today-view`, or custom (required)
+- `width` / `height` - Image dimensions in pixels
+- `imageType` - Output format: `png`, `jpg`, or `bmp`
+- `preGenerateInterval` - Cron expression for scheduled generation (optional)
 
-Calendar configurations are stored in `/addon_configs/17f877f5_calendar2image/` on your Home Assistant host.
+**Multiple Calendars:**
+- `0.json` → `/api/0.png`
+- `1.json` → `/api/1.png`
+- `2.json` → `/api/2.png`
 
-**Default configuration**: The add-on automatically creates `0.json` (a working configuration file) and `README.md` in this directory on first startup. The configuration is ready to use out-of-the-box - just update the `icsUrl` in `0.json` to point to your calendar!
+## 🔌 API Endpoints
 
-**Sample custom template**: A sample template (`templates/custom-week-view.js`) is also created automatically. It's not used by default - to use it, change the `template` value in your config from `"week-view"` to `"custom-week-view"`. You can then modify it or create your own templates in the `templates/` folder.
+### Image Endpoints
 
-See [Configuration Guide](./docs/CONFIGURATION.md) for details.
-
-## Usage
-
-Once the add-on is running, you can access the API endpoints:
-
-### Calendar Image Endpoints
-```
-GET http://homeassistant.local:3000/api/{index}.{ext}
-
-Examples:
-  http://homeassistant.local:3000/api/0.png
-  http://homeassistant.local:3000/api/1.jpg
-  http://homeassistant.local:3000/api/2.bmp
-```
-
-Returns a binary image (PNG, JPG, or BMP) based on the configuration file (`0.json`, `1.json`, etc.).
-
-**Important:** The file extension (`.png`, `.jpg`, or `.bmp`) must match the `imageType` configured in the corresponding JSON file. Requesting a mismatched extension will result in a 404 error.
-
-**Caching Behavior:**
-- **With `preGenerateInterval` configured:** Images are pre-generated on schedule and served from cache for ultra-fast response times (<100ms)
-- **Without `preGenerateInterval`:** Images are generated fresh on every request (~8 seconds on Raspberry Pi) to ensure always up-to-date calendar data
-
-**Response Headers:**
-- `Content-Type`: `image/png`, `image/jpeg`, or `image/bmp`
-- `Content-Length`: Size of the image in bytes
-- `X-Cache`: Cache status
-  - `HIT` - Served from cache (only when `preGenerateInterval` is configured)
-  - `DISABLED` - Fresh generation (when `preGenerateInterval` is not configured)
-  - `MISS` - Cache miss, generated fresh (rare, only if cache was deleted)
-- `X-CRC32`: CRC32 checksum of the image (lowercase hex)
-- `X-Generated-At`: ISO timestamp of when the image was generated
-
-### CRC32 Checksum Endpoint
-```
-GET http://homeassistant.local:3000/api/{index}.{ext}.crc32
-
-Examples:
-  http://homeassistant.local:3000/api/0.png.crc32
-  http://homeassistant.local:3000/api/1.jpg.crc32
-```
-
-Returns the CRC32 checksum of the image as plain text (lowercase hexadecimal). Perfect for e-ink displays or bandwidth-constrained scenarios where you want to check if the image has changed before downloading.
-
-**Important:** The extension must match the `imageType` in your config file.
-
-**Example:**
 ```bash
-# Check if image changed
-curl http://homeassistant.local:3000/api/0.png.crc32
-# Output: 8f8ea89f
+# Get calendar image (cached or fresh)
+GET /api/:index.:ext
+# Example: http://homeassistant.local:3000/api/0.png
+
+# Force fresh generation (bypass cache)
+GET /api/:index/fresh.:ext
+
+# Get CRC32 checksum (without downloading image)
+GET /api/:index.:ext.crc32
 ```
 
-### Fresh Generation Endpoint
-```
-GET http://homeassistant.local:3000/api/{index}/fresh.{ext}
+**Note:** Extension must match the `imageType` in your config file.
 
-Examples:
-  http://homeassistant.local:3000/api/0/fresh.png
-  http://homeassistant.local:3000/api/1/fresh.jpg
-```
+### Response Headers
 
-Forces fresh image generation, bypassing the cache. Use this when you need the most up-to-date calendar data immediately.
+- `X-Cache` - Cache status: `HIT`, `MISS`, `DISABLED`, or `BYPASS`
+- `X-CRC32` - Image checksum (lowercase hex)
+- `X-Generated-At` - ISO timestamp of generation
 
-**Important:** The extension must match the `imageType` in your config file.
+## 📚 Complete Documentation
 
-**Response Headers:**
-- Same as regular image endpoint, plus `X-Cache: BYPASS`
+For comprehensive documentation, see the main repository README:
 
-**Error Responses:**
-- `400 Bad Request`: Invalid index parameter
-- `404 Not Found`: Configuration file not found
-- `500 Internal Server Error`: Template or image generation failure
-- `502 Bad Gateway`: ICS calendar fetch failure
+**👉 [Full Documentation & Guides](https://github.com/jantielens/ha-calendar2image#readme)**
 
-### Health Check
-```
-GET http://homeassistant.local:3000/health
-```
+Including:
+- **[Installation Guide](https://github.com/jantielens/ha-calendar2image/blob/main/calendar2image/docs-user/INSTALLATION.md)** - Detailed setup instructions
+- **[Configuration Guide](https://github.com/jantielens/ha-calendar2image/blob/main/calendar2image/docs-user/CONFIGURATION.md)** - All configuration options
+- **[API Reference](https://github.com/jantielens/ha-calendar2image/blob/main/calendar2image/docs-user/API-REFERENCE.md)** - Complete API documentation
+- **[Template Development](https://github.com/jantielens/ha-calendar2image/blob/main/calendar2image/docs-user/TEMPLATE-DEVELOPMENT.md)** - Creating custom templates
+- **[Extra Data Guide](https://github.com/jantielens/ha-calendar2image/blob/main/calendar2image/docs-user/EXTRA-DATA.md)** - Using external data in templates
+- **[Troubleshooting](https://github.com/jantielens/ha-calendar2image/blob/main/calendar2image/docs-user/TROUBLESHOOTING.md)** - Common issues and solutions
 
-Returns the health status of the add-on.
+## 💬 Support
 
-## Development Status
+- **Issues & Feature Requests:** [GitHub Issues](https://github.com/jantielens/ha-calendar2image/issues)
+- **Discussions:** [GitHub Discussions](https://github.com/jantielens/ha-calendar2image/discussions)
 
-**Current Version:** 0.2.0 (Steps 1-6 Complete)
+## 📄 License
 
-Completed features:
-- ✅ Express API with dynamic `/api/{index}` endpoints
-- ✅ Binary image generation and response
-- ✅ Pre-generation and caching system with cron-style scheduling
-- ✅ CRC32 checksum support for bandwidth-efficient change detection
-- ✅ Multiple endpoint types (cached, fresh, CRC32)
-- ✅ Response headers (X-Cache, X-CRC32, X-Generated-At)
-- ✅ Ultra-fast cached responses (<100ms vs ~8 seconds on-demand)
-- ✅ ICS calendar data fetching and parsing
-- ✅ Configuration system for multiple calendars
-- ✅ Template engine with built-in templates (week-view, today-view)
-- ✅ Image generation with Puppeteer and Sharp
-- ✅ Image format options (PNG, JPG, BMP)
-- ✅ Grayscale conversion and bit depth control
-- ✅ Emoji and international character support
-- ✅ Comprehensive error handling with HTTP status codes
-- ✅ Verbose logging with performance metrics
-- ✅ Comprehensive unit and integration tests (124 tests, 92.47% coverage)
-
-Upcoming features:
-- Localization support (locale and timezone configuration)
-- Enhanced developer testing documentation
-
-## Testing
-
-The add-on includes comprehensive testing at multiple levels:
-
-**Unit Tests (104 tests):**
-```bash
-npm test
-npm run test:coverage  # With coverage report
-```
-
-**Integration Tests:**
-```bash
-# API Integration Tests
-./test-api.sh         # Linux/Mac
-.\test-api.ps1        # Windows
-
-# Docker Integration Tests  
-./test-docker.sh      # Linux/Mac
-.\test-docker.ps1     # Windows
-```
-
-See [tests/integration/README.md](./tests/integration/README.md) for details.
-
-## Documentation
-
-- **User Documentation**: See [docs/](./docs) for configuration guides and usage instructions
-- **Developer Documentation**: See [/docs](/docs) in the repository root for implementation details
-
-### User Docs
-
-- [Configuration Guide](./docs/CONFIGURATION.md) - How to configure calendar settings
-
-### Developer Docs
-
-- **[Template Development Guide](/docs/DEV-GUIDE.md)** - Complete guide for developing custom templates with live reload
-
-**Quick Start:**
-```powershell
-# Terminal 1: Start container
-docker compose up
-
-# Terminal 2: Create & watch template
-node dev-setup.js my-template
-npm run watch 99
-```
-
-- [Testing Guide](./TESTING.md) - How to run tests
-
-## Support
-
-For issues and feature requests, please use the [GitHub issue tracker](https://github.com/jantielens/ha-calendar2image/issues).
+MIT License - see LICENSE file for details.

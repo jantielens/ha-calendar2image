@@ -2,6 +2,10 @@
 
 A Home Assistant add-on that generates calendar images from ICS feeds with customizable templates. Perfect for e-ink displays, dashboards, or any scenario where you need calendar data as an image.
 
+> **⚠️ Network Access:** Generated images are served via the built-in web server (default port 3000) and will be accessible to any device or user on your internal network.
+
+
+
 ## ✨ Features
 
 - **Generate images from calendar data** - Fetch events from any ICS URL and render as PNG/JPG/BMP
@@ -30,7 +34,13 @@ A Home Assistant add-on that generates calendar images from ICS feeds with custo
    Startup complete - ready to serve requests
    ```
 
-4. **Test** the default configuration:
+4. **Open** the configuration dashboard in your browser:
+   ```
+   http://homeassistant.local:3000/
+   ```
+   This shows all your configurations, API endpoints, and interactive documentation.
+
+5. **Test** the default configuration directly:
    ```
    http://homeassistant.local:3000/api/0.png
    ```
