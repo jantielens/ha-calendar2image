@@ -274,7 +274,8 @@ describe('config schema', () => {
         rotate: 0,
         expandRecurringFrom: -31,
         expandRecurringTo: 31,
-        locale: 'en-US'
+        locale: 'en-US',
+        extraDataCacheTtl: 300
       });
     });
 
@@ -290,7 +291,8 @@ describe('config schema', () => {
         expandRecurringFrom: -60,
         expandRecurringTo: 60,
         rotate: 0,
-        locale: 'de-DE'
+        locale: 'de-DE',
+        extraDataCacheTtl: 300
       };
 
       const result = applyDefaults(config);
@@ -319,7 +321,8 @@ describe('config schema', () => {
         rotate: 0,
         expandRecurringFrom: -31,
         expandRecurringTo: 31,
-        locale: 'en-US'
+        locale: 'en-US',
+        extraDataCacheTtl: 300
       });
     });
 

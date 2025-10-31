@@ -4,6 +4,7 @@ const { renderTemplate } = require('../templates');
 const { generateImage } = require('../image');
 const { loadCachedImage, saveCachedImage, getCacheMetadata } = require('../cache');
 const { calculateCRC32 } = require('../utils/crc32');
+const { fetchExtraData } = require('../extraData');
 
 /**
  * Main API handler for generating calendar images
@@ -27,23 +28,37 @@ async function generateCalendarImage(index, options = {}) {
     console.log(`[API] Configuration loaded: template="${config.template}", icsUrl="${config.icsUrl}"`);
     console.log(`[API] Image settings: ${config.width}x${config.height}, ${config.imageType}, grayscale=${config.grayscale}, bitDepth=${config.bitDepth}, rotate=${config.rotate}°`);
 
-    // Step 2: Fetch calendar events
+    // Step 2: Fetch calendar events and extra data in parallel
     console.log(`[API] Fetching calendar events from ICS URL...`);
     const startFetch = Date.now();
-    const events = await getCalendarEvents(config.icsUrl, {
-      expandRecurringFrom: config.expandRecurringFrom,
-      expandRecurringTo: config.expandRecurringTo,
-      timezone: config.timezone
-    });
+    
+    const [events, extraData] = await Promise.all([
+      getCalendarEvents(config.icsUrl, {
+        expandRecurringFrom: config.expandRecurringFrom,
+        expandRecurringTo: config.expandRecurringTo,
+        timezone: config.timezone
+      }),
+      config.extraDataUrl
+        ? fetchExtraData(config.extraDataUrl, {
+            cacheTtl: config.extraDataCacheTtl,
+            headers: config.extraDataHeaders || {}
+          })
+        : Promise.resolve({})
+    ]);
+    
     const fetchDuration = Date.now() - startFetch;
     console.log(`[API] Fetched ${events.length} events in ${fetchDuration}ms`);
+    if (config.extraDataUrl) {
+      console.log(`[API] Extra data keys: ${Object.keys(extraData).join(', ') || 'none'}`);
+    }
 
     // Step 3: Render template
     console.log(`[API] Rendering template "${config.template}"...`);
     const startRender = Date.now();
     const html = await renderTemplate(config.template, {
       events,
-      config
+      config,
+      extraData
     });
     const renderDuration = Date.now() - startRender;
     console.log(`[API] Template rendered: ${html.length} characters in ${renderDuration}ms`);

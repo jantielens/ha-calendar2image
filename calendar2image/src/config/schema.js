@@ -71,6 +71,22 @@ const configSchema = {
     timezone: {
       type: 'string',
       description: 'IANA timezone name to convert event times (e.g., "Europe/Berlin", "America/New_York")'
+    },
+    extraDataUrl: {
+      type: 'string',
+      description: 'URL to fetch additional JSON data for templates (e.g., weather, holidays)',
+      pattern: '^https?://'
+    },
+    extraDataCacheTtl: {
+      type: 'number',
+      description: 'Cache TTL in seconds for extra data (default: 300)',
+      minimum: 0,
+      default: 300
+    },
+    extraDataHeaders: {
+      type: 'object',
+      description: 'HTTP headers for extra data request (e.g., Authorization for Home Assistant)',
+      additionalProperties: { type: 'string' }
     }
   },
   required: ['icsUrl', 'template'],
@@ -108,7 +124,8 @@ function applyDefaults(config) {
     rotate: config.rotate !== undefined ? config.rotate : 0,
     expandRecurringFrom: config.expandRecurringFrom !== undefined ? config.expandRecurringFrom : -31,
     expandRecurringTo: config.expandRecurringTo !== undefined ? config.expandRecurringTo : 31,
-    locale: config.locale || 'en-US'
+    locale: config.locale || 'en-US',
+    extraDataCacheTtl: config.extraDataCacheTtl !== undefined ? config.extraDataCacheTtl : 300
   };
 }
 

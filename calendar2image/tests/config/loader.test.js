@@ -52,7 +52,8 @@ describe('config loader', () => {
         expandRecurringFrom: -60,
         expandRecurringTo: 60,
         rotate: 0,
-        locale: 'en-US'
+        locale: 'en-US',
+        extraDataCacheTtl: 300
       };
 
       await fs.writeFile(

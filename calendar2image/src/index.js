@@ -27,6 +27,29 @@ app.get('/health', (req, res) => {
     res.json({ status: 'healthy' });
 });
 
+// Mock weather endpoint for testing
+app.get('/api/mock-weather', (req, res) => {
+    const today = new Date();
+    const weather = {};
+    
+    // Generate 7 days of mock weather
+    for (let i = 0; i < 7; i++) {
+        const date = new Date(today);
+        date.setDate(today.getDate() + i);
+        const dateKey = date.toISOString().split('T')[0];
+        
+        const emojis = ['☀', '⛅', '☁', '🌧', '⛈', '🌤'];
+        const temps = [18, 20, 22, 24, 16, 19, 21];
+        
+        weather[dateKey] = {
+            emoji: emojis[i % emojis.length],
+            temp: temps[i % temps.length]
+        };
+    }
+    
+    res.json({ weather });
+});
+
 // 404 handler
 app.use((req, res) => {
     res.status(404).json({
@@ -62,6 +85,7 @@ const server = app.listen(PORT, '0.0.0.0', async () => {
     console.log(`  - GET /api/:index.:ext       : Get cached/fresh image (ext: png, jpg, bmp)`);
     console.log(`  - GET /api/:index.:ext.crc32 : Get CRC32 checksum (e.g., /api/0.png.crc32)`);
     console.log(`  - GET /api/:index/fresh.:ext : Force fresh generation`);
+    console.log(`  - GET /api/mock-weather      : Mock weather data for testing`);
     console.log(`  - GET /health                : Health check`);
     console.log(`Note: Extension must match imageType in config file`);
     console.log('='.repeat(50));

@@ -81,21 +81,30 @@ END:VCALENDAR`;
     });
 
     it('should expand recurring daily events', () => {
+      // Use today's date at start of day to ensure the event is within the expansion range
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);  // Start of today
+      const startDate = today.toISOString().replace(/[-:.]/g, '').replace(/000Z$/, 'Z');
+      
+      const endTime = new Date(today);
+      endTime.setHours(1, 0, 0, 0);
+      const endDate = endTime.toISOString().replace(/[-:.]/g, '').replace(/000Z$/, 'Z');
+      
       const icsData = `BEGIN:VCALENDAR
 VERSION:2.0
 PRODID:-//Test//Test//EN
 BEGIN:VEVENT
 UID:recurring-1
 SUMMARY:Daily Meeting
-DTSTART:20251030T100000Z
-DTEND:20251030T110000Z
+DTSTART:${startDate}
+DTEND:${endDate}
 RRULE:FREQ=DAILY;COUNT=5
 END:VEVENT
 END:VCALENDAR`;
 
       const events = parseICS(icsData, { expandRecurringFrom: -1, expandRecurringTo: 10 });
       
-      expect(events.length).toBeGreaterThanOrEqual(5);
+      expect(events.length).toBe(5);
       expect(events[0].summary).toBe('Daily Meeting');
       expect(events[0].isRecurring).toBe(true);
     });

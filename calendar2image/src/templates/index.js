@@ -85,7 +85,8 @@ async function renderTemplate(templateName, data) {
       config: data.config || {},
       now: Date.now(),
       locale: data.config?.locale || 'en-US',
-      timezone: data.config?.timezone || null
+      timezone: data.config?.timezone || null,
+      extra: data.extraData || {}
     };
 
     // Execute template and get HTML

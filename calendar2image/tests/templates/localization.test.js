@@ -255,14 +255,21 @@ describe('Template Localization', () => {
 
   describe('edge cases', () => {
     it('should handle events with special characters in different locales', async () => {
+      // Use today's date so the event shows up in today-view
+      const today = new Date();
+      today.setHours(8, 0, 0, 0);
+      const start = today.toISOString();
+      const end = new Date(today);
+      end.setHours(9, 0, 0, 0);
+      
       const specialEvents = [
         {
           uid: 'special-1',
           summary: 'Café & Früh­stück',
           description: 'Köln, Düsseldorf',
           location: 'München',
-          start: '2025-10-30T08:00:00.000Z',
-          end: '2025-10-30T09:00:00.000Z',
+          start: start,
+          end: end.toISOString(),
           isRecurring: false,
           isAllDay: false
         }
@@ -278,13 +285,20 @@ describe('Template Localization', () => {
     });
 
     it('should handle very long event names in different locales', async () => {
+      // Use today's date so the event shows up in templates
+      const today = new Date();
+      today.setHours(10, 0, 0, 0);
+      const start = today.toISOString();
+      const end = new Date(today);
+      end.setHours(11, 0, 0, 0);
+      
       const longNameEvent = {
         uid: 'long-name',
         summary: 'This is a very long event name that should still render correctly in all locales regardless of the length',
         description: '',
         location: '',
-        start: '2025-10-30T10:00:00.000Z',
-        end: '2025-10-30T11:00:00.000Z',
+        start: start,
+        end: end.toISOString(),
         isRecurring: false,
         isAllDay: false
       };
