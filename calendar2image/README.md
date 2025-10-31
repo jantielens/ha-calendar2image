@@ -95,6 +95,12 @@ GET /api/:index/fresh.:ext
 
 # Get CRC32 checksum (without downloading image)
 GET /api/:index.:ext.crc32
+
+# Get CRC32 history (JSON)
+GET /api/:index/crc32-history
+
+# View CRC32 history (visual page)
+GET /crc32-history/:index
 ```
 
 **Note:** Extension must match the `imageType` in your config file.
@@ -104,6 +110,17 @@ GET /api/:index.:ext.crc32
 - `X-Cache` - Cache status: `HIT`, `MISS`, `DISABLED`, or `BYPASS`
 - `X-CRC32` - Image checksum (lowercase hex)
 - `X-Generated-At` - ISO timestamp of generation
+
+### CRC32 History
+
+Track the last 500 image generations for each config to debug display refresh issues:
+
+- **Timeline view** - See when images were generated and which trigger caused them
+- **Duration stats** - Monitor generation performance (min, max, avg)
+- **CRC32 blocks** - Identify consecutive runs of the same CRC32 value
+- **Trigger tracking** - Know what caused each generation (startup, scheduled, fresh, etc.)
+
+Access via the dashboard's "CRC32 history" button or directly at `/crc32-history/:index`.
 
 ## 📚 Complete Documentation
 

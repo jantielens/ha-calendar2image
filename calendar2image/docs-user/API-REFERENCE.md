@@ -125,6 +125,102 @@ curl http://homeassistant.local:3000/api/0.png.crc32
 
 ---
 
+### GET /api/:index/crc32-history
+
+**Returns the CRC32 history** for a configuration (last 500 generations)
+
+**Parameters:**
+- `:index` - Configuration index (0, 1, 2, etc.)
+
+**Examples:**
+```bash
+# Get CRC32 history for config 0
+curl http://homeassistant.local:3000/api/0/crc32-history
+```
+
+**Response:**
+```json
+{
+  "index": 0,
+  "history": [
+    {
+      "crc32": "8f8ea89f",
+      "timestamp": "2025-10-31T20:26:11.263Z",
+      "trigger": "fresh",
+      "generationDuration": 2479,
+      "imageSize": 16180
+    },
+    {
+      "crc32": "8ceb9829",
+      "timestamp": "2025-10-31T20:26:03.880Z",
+      "trigger": "cache_miss",
+      "generationDuration": 4145,
+      "imageSize": 16180
+    }
+  ],
+  "stats": {
+    "uniqueCRC32Values": 2,
+    "changes": 1,
+    "durationStats": {
+      "min": 2479,
+      "max": 4145,
+      "avg": 3312
+    },
+    "blocks": [
+      {
+        "crc32": "8f8ea89f",
+        "start": "2025-10-31T20:26:11.263Z",
+        "end": "2025-10-31T20:26:11.263Z",
+        "count": 1
+      },
+      {
+        "crc32": "8ceb9829",
+        "start": "2025-10-31T20:26:03.880Z",
+        "end": "2025-10-31T20:26:03.880Z",
+        "count": 1
+      }
+    ]
+  },
+  "maxEntries": 500
+}
+```
+
+**Use Cases:**
+- Debug when images changed (for display refresh troubleshooting)
+- Track generation performance over time
+- Identify patterns in CRC32 changes
+
+**Status Codes:**
+- `200 OK` - Success
+- `400 Bad Request` - Invalid index parameter
+- `404 Not Found` - Configuration not found
+- `500 Internal Server Error` - Error fetching history
+
+---
+
+### GET /crc32-history/:index
+
+**Displays a visual CRC32 history page** with timeline and statistics
+
+**Parameters:**
+- `:index` - Configuration index (0, 1, 2, etc.)
+
+**Examples:**
+- Navigate to `http://homeassistant.local:3000/crc32-history/0` in your browser
+
+**Features:**
+- Timeline of all generations with trigger types
+- Duration statistics (min, max, avg)
+- CRC32 blocks showing consecutive runs of the same value
+- Visual indicators for when CRC32 changed
+
+**Use Cases:**
+- Visual debugging of display refresh issues
+- Understanding generation patterns
+- Performance monitoring
+
+---
+
 ### GET /health
 
 **Health check endpoint**

@@ -597,6 +597,12 @@ curl -I http://homeassistant.local:3000/api/0.png
    }
    ```
 
+4. **Check CRC32 history for debugging:**
+   - View history page: `http://homeassistant.local:3000/crc32-history/0`
+   - See when images were generated and if CRC32 values changed
+   - Check generation triggers (scheduled, cache_miss, startup, etc.)
+   - Analyze CRC32 blocks to identify when content actually changed
+
 ---
 
 ## Performance Issues
