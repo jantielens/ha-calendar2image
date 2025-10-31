@@ -69,18 +69,31 @@ else
     echo "README.md already exists"
 fi
 
-# Create templates directory and copy sample template
+# Create templates directory and copy built-in templates as custom templates
 if [ ! -d "$CONFIG_DIR/templates" ]; then
     echo "Creating templates directory..."
     mkdir -p "$CONFIG_DIR/templates"
 fi
 
-if [ ! -f "$CONFIG_DIR/templates/custom-week-view.js" ]; then
-    echo "Copying sample custom template (custom-week-view.js)..."
-    cp /app/custom-week-view.js "$CONFIG_DIR/templates/custom-week-view.js"
-    echo "Sample template ready - you can customize it!"
+echo "Copying built-in templates as custom templates..."
+TEMPLATES_COPIED=0
+for template in /app/src/templates/built-in/*.js; do
+    if [ -f "$template" ]; then
+        filename=$(basename "$template")
+        custom_filename="custom-${filename}"
+        if [ ! -f "$CONFIG_DIR/templates/$custom_filename" ]; then
+            cp "$template" "$CONFIG_DIR/templates/$custom_filename"
+            echo "  ✓ Copied $filename as $custom_filename"
+            TEMPLATES_COPIED=$((TEMPLATES_COPIED + 1))
+        else
+            echo "  - $custom_filename already exists, skipping"
+        fi
+    fi
+done
+if [ $TEMPLATES_COPIED -gt 0 ]; then
+    echo "Sample templates ready - you can customize them!"
 else
-    echo "custom-week-view.js already exists"
+    echo "All custom templates already exist"
 fi
 
 echo "Final config directory contents:"

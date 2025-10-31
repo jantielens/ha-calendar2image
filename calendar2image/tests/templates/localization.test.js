@@ -31,7 +31,7 @@ describe('Template Localization', () => {
         config: { locale: 'en-US' }
       });
 
-      expect(html).toContain('Week View');
+      expect(html).toContain('Weekly Calendar');
       expect(typeof html).toBe('string');
       expect(html.length).toBeGreaterThan(0);
     });
@@ -42,7 +42,7 @@ describe('Template Localization', () => {
         config: { locale: 'de-DE' }
       });
 
-      expect(html).toContain('Week View');
+      expect(html).toContain('Weekly Calendar');
       expect(typeof html).toBe('string');
       expect(html.length).toBeGreaterThan(0);
     });
@@ -53,7 +53,7 @@ describe('Template Localization', () => {
         config: { locale: 'fr-FR' }
       });
 
-      expect(html).toContain('Week View');
+      expect(html).toContain('Weekly Calendar');
       expect(typeof html).toBe('string');
       expect(html.length).toBeGreaterThan(0);
     });
@@ -64,7 +64,7 @@ describe('Template Localization', () => {
         config: { locale: 'ja-JP' }
       });
 
-      expect(html).toContain('Week View');
+      expect(html).toContain('Weekly Calendar');
       expect(typeof html).toBe('string');
       expect(html.length).toBeGreaterThan(0);
     });
@@ -75,7 +75,7 @@ describe('Template Localization', () => {
         config: {}
       });
 
-      expect(html).toContain('Week View');
+      expect(html).toContain('Weekly Calendar');
       expect(typeof html).toBe('string');
       expect(html.length).toBeGreaterThan(0);
     });
@@ -97,7 +97,7 @@ describe('Template Localization', () => {
         config: { locale: 'es-ES' }
       });
 
-      expect(html).toContain('Week View');
+      expect(html).toContain('Weekly Calendar');
       expect(html).toContain('No events');
     });
   });
@@ -109,7 +109,7 @@ describe('Template Localization', () => {
         config: { locale: 'en-US' }
       });
 
-      expect(html).toContain('Today\'s Events');
+      expect(html).toMatch(/(?:Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)/);
       expect(typeof html).toBe('string');
       expect(html.length).toBeGreaterThan(0);
     });
@@ -120,7 +120,7 @@ describe('Template Localization', () => {
         config: { locale: 'de-DE' }
       });
 
-      expect(html).toContain('Today\'s Events');
+      expect(html).toMatch(/(?:Montag|Dienstag|Mittwoch|Donnerstag|Freitag|Samstag|Sonntag|Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)/);
       expect(typeof html).toBe('string');
       expect(html.length).toBeGreaterThan(0);
     });
@@ -131,7 +131,7 @@ describe('Template Localization', () => {
         config: { locale: 'fr-FR' }
       });
 
-      expect(html).toContain('Today\'s Events');
+      expect(html).toMatch(/(?:lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche|Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)/);
       expect(typeof html).toBe('string');
       expect(html.length).toBeGreaterThan(0);
     });
@@ -142,7 +142,7 @@ describe('Template Localization', () => {
         config: { locale: 'es-ES' }
       });
 
-      expect(html).toContain('Today\'s Events');
+      expect(html).toMatch(/(?:lunes|martes|miércoles|jueves|viernes|sábado|domingo|Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)/);
       expect(typeof html).toBe('string');
       expect(html.length).toBeGreaterThan(0);
     });
@@ -153,7 +153,7 @@ describe('Template Localization', () => {
         config: {}
       });
 
-      expect(html).toContain('Today\'s Events');
+      expect(html).toMatch(/(?:Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)/);
       expect(typeof html).toBe('string');
       expect(html.length).toBeGreaterThan(0);
     });
@@ -175,8 +175,8 @@ describe('Template Localization', () => {
         config: { locale: 'pt-BR' }
       });
 
-      expect(html).toContain('Today\'s Events');
-      expect(html).toContain('No events scheduled for today');
+      expect(html).toMatch(/(?:segunda-feira|terça-feira|quarta-feira|quinta-feira|sexta-feira|sábado|domingo|Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)/);
+      expect(html).toContain('No events');
     });
 
     it('should handle all-day events with different locales', async () => {
@@ -200,7 +200,7 @@ describe('Template Localization', () => {
           config: { locale }
         });
 
-        expect(html).toContain('ALL DAY');
+        expect(html).toContain('Full day');
         expect(html).toContain('All Day Event');
       }
     });

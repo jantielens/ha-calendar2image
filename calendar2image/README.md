@@ -37,7 +37,7 @@ Generate calendar images from ICS feeds with customizable templates. Perfect for
 
 The add-on automatically creates configuration files in `/addon_configs/17f877f5_calendar2image/`:
 - `0.json` - Working configuration with sample calendar
-- `templates/custom-week-view.js` - Sample custom template
+- `templates/` - All built-in templates as custom templates (prefixed with `custom-`) for you to customize
 - `README.md` - Configuration documentation
 
 **Edit the configuration:**

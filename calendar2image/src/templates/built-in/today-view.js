@@ -1,207 +1,168 @@
 /**
- * Today View Template
- * Displays only today's events
- * 
- * @param {Object} data - Template data
- * @param {Array} data.events - Array of calendar events
- * @param {Object} data.config - Configuration object
- * @param {number} data.now - Current timestamp
- * @returns {string} HTML string
+ * Day View Template
+ * A basic day view showing today's schedule
  */
-module.exports = function todayView(data) {
-  const { events, now, locale = 'en-US' } = data;
+
+// Configuration - Customize these values to personalize your day view
+const CONFIG = {
+  // Colors
+  colors: {
+    background: '#fff',          // Background color of the entire page
+    headerText: '#333',          // Color of the date header text
+    eventBackground: '#f5f5f5',  // Background color of event cards
+    eventBorder: '#4285f4',      // Color of the left border on event cards
+    timeText: '#666',            // Color of the time/duration text
+    titleText: '#333',           // Color of the event title text
+    locationText: '#999',        // Color of the location text
+    descriptionText: '#999',     // Color of the description text
+    noEventsText: '#999'         // Color of the "no events" message
+  },
   
-  // Get today's date boundaries
-  const today = new Date(now);
-  const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
-  const todayEnd = todayStart + (24 * 60 * 60 * 1000) - 1;
+  // Labels and prefixes
+  labels: {
+    fullDayEvent: 'Full day',    // Text shown for all-day events
+    noEvents: 'No events today', // Message when there are no events
+    timePrefix: '🕐',            // Emoji/icon before time
+    locationPrefix: '📍'         // Emoji/icon before location
+  },
   
-  // Filter events to today only
-  // Include events that:
-  // 1. Start today, OR
-  // 2. Are ongoing (started before today but end during or after today)
+  // Fonts
+  fonts: {
+    family: 'Arial, sans-serif',    // Font family for all text
+    headerSize: '24px',             // Font size of the date header
+    headerWeight: 'bold',           // Font weight of the date header
+    timeSize: '14px',               // Font size of event time
+    titleSize: '16px',              // Font size of event title
+    titleWeight: 'bold',            // Font weight of event title
+    locationSize: '13px',           // Font size of location text
+    descriptionSize: '13px',        // Font size of description text
+    descriptionLineHeight: '1.4'   // Line height for description text
+  },
+  
+  // Spacing
+  spacing: {
+    bodyPadding: '20px',         // Padding around the entire page
+    headerMarginBottom: '20px',  // Space below the date header
+    eventPadding: '12px',        // Padding inside event cards
+    eventMarginBottom: '8px',    // Space between event cards
+    eventBorderWidth: '4px',     // Width of the left border on events
+    timeMarginBottom: '4px',     // Space below the time text
+    locationMarginTop: '4px',    // Space above the location text
+    descriptionMarginTop: '6px', // Space above the description text
+    noEventsPadding: '20px'      // Padding for the "no events" message
+  },
+  
+  // Date format
+  dateFormat: {
+    options: {
+      weekday: 'long',  // Day of week format (e.g., "Monday")
+      month: 'long',    // Month format (e.g., "January")
+      day: 'numeric',   // Day format (e.g., "15")
+      year: 'numeric'   // Year format (e.g., "2025")
+    }
+  }
+};
+
+module.exports = function dayView(data) {
+  const { events, now, locale } = data;
+  
+  const currentDate = new Date(now);
+  const dayStart = new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate());
+  const dayEnd = new Date(dayStart.getTime() + 24 * 60 * 60 * 1000);
+  
+  // Filter events for today
   const todayEvents = events.filter(event => {
-    const eventStart = new Date(event.start).getTime();
-    const eventEnd = new Date(event.end).getTime();
+    const start = new Date(event.start);
+    const end = new Date(event.end);
+    return (start >= dayStart && start < dayEnd) || (start < dayStart && end > dayStart);
+  });
+  
+  // Sort by start time
+  todayEvents.sort((a, b) => new Date(a.start) - new Date(b.start));
+  
+  // Format date header
+  const dateHeader = currentDate.toLocaleDateString(
+    locale,
+    CONFIG.dateFormat.options
+  );
+  
+  // Build event list HTML
+  const eventListHTML = todayEvents.map(event => {
+    const start = new Date(event.start);
+    const end = new Date(event.end);
     
-    // Include if event starts today
-    if (eventStart >= todayStart && eventStart <= todayEnd) {
-      return true;
+    let timeStr;
+    if (event.allDay) {
+      timeStr = CONFIG.labels.fullDayEvent;
+    } else {
+      timeStr = `${CONFIG.labels.timePrefix} ${start.getHours().toString().padStart(2, '0')}:${start.getMinutes().toString().padStart(2, '0')} - ${end.getHours().toString().padStart(2, '0')}:${end.getMinutes().toString().padStart(2, '0')}`;
     }
     
-    // Include if event is ongoing (started before today but ends today or later)
-    if (eventStart < todayStart && eventEnd >= todayStart) {
-      return true;
-    }
-    
-    return false;
-  });
-
-  // Sort events by start time
-  todayEvents.sort((a, b) => {
-    return new Date(a.start).getTime() - new Date(b.start).getTime();
-  });
-
-  // Format time
-  const formatTime = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleTimeString(locale, {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false
-    });
-  };
-
-  // Format today's date
-  const formatTodayDate = () => {
-    return today.toLocaleDateString(locale, {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
-  };
-
-  // Check if event is all-day
-  const isAllDay = (event) => {
-    return event.allDay || false;
-  };
-
-  // Generate HTML
+    return `
+      <div class="event">
+        <div class="time">${timeStr}</div>
+        <div class="title">${event.summary}</div>
+        ${event.location ? `<div class="location">${CONFIG.labels.locationPrefix} ${event.location}</div>` : ''}
+        ${event.description ? `<div class="description">${event.description}</div>` : ''}
+      </div>
+    `;
+  }).join('');
+  
   return `
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="UTF-8">
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-    
     body {
-      font-family: Arial, Helvetica, sans-serif;
-      padding: 20px;
-      background: white;
-      color: #333;
+      font-family: ${CONFIG.fonts.family};
+      margin: 0;
+      padding: ${CONFIG.spacing.bodyPadding};
+      background: ${CONFIG.colors.background};
     }
-    
     .header {
-      font-size: 28px;
-      font-weight: bold;
-      margin-bottom: 10px;
-      color: #0066cc;
+      font-size: ${CONFIG.fonts.headerSize};
+      font-weight: ${CONFIG.fonts.headerWeight};
+      margin-bottom: ${CONFIG.spacing.headerMarginBottom};
+      color: ${CONFIG.colors.headerText};
     }
-    
-    .date {
-      font-size: 16px;
-      color: #666;
-      margin-bottom: 30px;
-      padding-bottom: 15px;
-      border-bottom: 2px solid #0066cc;
-    }
-    
     .event {
-      margin-bottom: 15px;
-      padding: 15px;
-      background: #f8f9fa;
-      border-left: 4px solid #0066cc;
-      border-radius: 4px;
-      position: relative;
+      padding: ${CONFIG.spacing.eventPadding};
+      margin-bottom: ${CONFIG.spacing.eventMarginBottom};
+      background: ${CONFIG.colors.eventBackground};
+      border-left: ${CONFIG.spacing.eventBorderWidth} solid ${CONFIG.colors.eventBorder};
     }
-    
-    .event:hover {
-      background: #e9ecef;
+    .time {
+      font-size: ${CONFIG.fonts.timeSize};
+      color: ${CONFIG.colors.timeText};
+      margin-bottom: ${CONFIG.spacing.timeMarginBottom};
     }
-    
-    .event-time {
-      font-size: 18px;
-      font-weight: bold;
-      color: #0066cc;
-      margin-bottom: 8px;
+    .title {
+      font-size: ${CONFIG.fonts.titleSize};
+      font-weight: ${CONFIG.fonts.titleWeight};
+      color: ${CONFIG.colors.titleText};
     }
-    
-    .event-title {
-      font-size: 16px;
-      font-weight: 600;
-      margin-bottom: 6px;
+    .location {
+      font-size: ${CONFIG.fonts.locationSize};
+      color: ${CONFIG.colors.locationText};
+      margin-top: ${CONFIG.spacing.locationMarginTop};
     }
-    
-    .event-description {
-      font-size: 13px;
-      color: #555;
-      margin-top: 6px;
-      line-height: 1.4;
+    .description {
+      font-size: ${CONFIG.fonts.descriptionSize};
+      color: ${CONFIG.colors.descriptionText};
+      margin-top: ${CONFIG.spacing.descriptionMarginTop};
+      line-height: ${CONFIG.fonts.descriptionLineHeight};
     }
-    
-    .event-location {
-      font-size: 12px;
-      color: #777;
-      margin-top: 6px;
-    }
-    
-    .all-day-event {
-      border-left-color: #28a745;
-    }
-    
-    .all-day-badge {
-      display: inline-block;
-      background: #28a745;
-      color: white;
-      padding: 3px 8px;
-      border-radius: 3px;
-      font-size: 12px;
-      font-weight: bold;
-      margin-bottom: 8px;
-    }
-    
     .no-events {
+      padding: ${CONFIG.spacing.noEventsPadding};
       text-align: center;
-      padding: 40px;
-      font-size: 16px;
-      color: #999;
-      font-style: italic;
-    }
-    
-    .event-count {
-      font-size: 14px;
-      color: #666;
-      margin-bottom: 20px;
+      color: ${CONFIG.colors.noEventsText};
     }
   </style>
 </head>
 <body>
-  <div class="header">Today's Events</div>
-  <div class="date">${formatTodayDate()}</div>
-  
-  ${todayEvents.length > 0 ? `
-    <div class="event-count">${todayEvents.length} event${todayEvents.length !== 1 ? 's' : ''} today</div>
-  ` : ''}
-  
-  ${todayEvents.length === 0 ? `
-    <div class="no-events">No events scheduled for today</div>
-  ` : ''}
-  
-  ${todayEvents.map(event => `
-    <div class="event ${isAllDay(event) ? 'all-day-event' : ''}">
-      ${isAllDay(event) ? `
-        <div class="all-day-badge">ALL DAY</div>
-      ` : `
-        <div class="event-time">
-          ⏰ ${formatTime(event.start)}${event.end ? ' - ' + formatTime(event.end) : ''}
-        </div>
-      `}
-      <div class="event-title">${event.summary || 'Untitled Event'}</div>
-      ${event.location ? `
-        <div class="event-location">📍 ${event.location}</div>
-      ` : ''}
-      ${event.description ? `
-        <div class="event-description">${event.description}</div>
-      ` : ''}
-    </div>
-  `).join('')}
+  <div class="header">${dateHeader}</div>
+  ${todayEvents.length > 0 ? eventListHTML : `<div class="no-events">${CONFIG.labels.noEvents}</div>`}
 </body>
 </html>
-  `.trim();
+  `;
 };

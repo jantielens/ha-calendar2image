@@ -35,7 +35,6 @@ COPY src ./src
 # Copy sample files to /app (will be copied to config dir at runtime)
 COPY sample-0.json ./sample-0.json
 COPY config-sample-README.md ./config-sample-README.md
-COPY custom-week-view.js ./custom-week-view.js
 
 # Copy s6-overlay service files and init scripts
 COPY rootfs /

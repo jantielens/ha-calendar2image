@@ -13,142 +13,82 @@
 // CONFIGURATION - Customize these values easily
 // ============================================================================
 const CONFIG = {
-  daysToShow: 7,
+  // Calendar settings
+  daysToShow: 7,                      // Number of days to display in the week view
   
-  // Visual symbols
+  // Text labels and symbols
   symbols: {
-    noEvents: 'No events',
-    allDay: '🕛'
+    title: 'Weekly Calendar 📆',               // Calendar title shown at the top
+    noEvents: 'No events 🎉',         // Message shown when a day has no events
+    allDay: 'all day'                 // Label for all-day events
   },
   
-  // Font sizes (adjust all typography here)
-  fontSize: {
-    dayName: '40px',
-    dayNumber: '50px',
-    eventTitle: '30px',
-    eventTime: '30px',
-    noEvents: '30px'
-  },
-  
-  // Colors
-  colors: {
-    background: 'white',
-    calendarBg: 'white',
-    text: '#000000ff',
-    textMuted: '#666',
-    textLight: '#999',
-    border: '#e0e0e0'
-  },
-  
-  // Dimensions
-  dimensions: {
-    dayHeaderWidth: '115px',
-    dayRowMinHeight: '60px',
-    maxWidth: '800px'
-  },
-  
-  // Time format
+  // Multi-day event time display
   timeFormat: {
-    multiDayStart: '00:00',
-    multiDayEnd: '23:59'
+    multiDayStart: '00:00',           // Time shown for events starting before this day
+    multiDayEnd: '23:59'              // Time shown for events ending after this day
+  },
+  
+  // Typography
+  fontSize: {
+    dayName: '40px',                  // Font size for day of week (Mon, Tue, etc.)
+    dayNumber: '50px',                // Font size for day number (1, 2, 3, etc.)
+    eventTitle: '30px',               // Font size for event titles
+    eventTime: '30px',                // Font size for event times
+    noEvents: '30px'                  // Font size for "no events" message
+  },
+  
+  // Color scheme
+  colors: {
+    background: 'white',              // Body background color
+    calendarBg: 'white',              // Calendar container background
+    text: '#000000ff',                // Primary text color
+    textMuted: '#666',                // Secondary text color (times, all-day badge)
+    textLight: '#999',                // Light text color (no events message)
+    border: '#e0e0e0'                 // Border color for dividers
+  },
+  
+  // Layout dimensions
+  dimensions: {
+    dayHeaderWidth: '115px',          // Width of the left column showing day/date
+    dayRowMinHeight: '60px',          // Minimum height for each day row
+    maxWidth: '800px'                 // Maximum width of the calendar container
   }
-};
-
-// ============================================================================
-// HELPER FUNCTIONS
-// ============================================================================
-const MS_PER_DAY = 24 * 60 * 60 * 1000;
-
-const getDayStart = (timestamp) => {
-  const date = new Date(timestamp);
-  return new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
-};
-
-const formatTime = (dateString, locale = 'en-US') => {
-  return new Date(dateString).toLocaleTimeString(locale, {
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false
-  });
-};
-
-const getDisplayTimes = (event, day, locale = 'en-US') => {
-  const eventStart = new Date(event.start).getTime();
-  const eventEnd = new Date(event.end).getTime();
-  const startDay = getDayStart(event.start);
-  const endDay = getDayStart(event.end);
-  const isMultiDay = endDay > startDay;
-  
-  if (!isMultiDay) {
-    return { start: formatTime(event.start, locale), end: formatTime(event.end, locale) };
-  }
-  
-  return {
-    start: day.dayStart > startDay ? CONFIG.timeFormat.multiDayStart : formatTime(event.start, locale),
-    end: eventEnd > day.dayEnd ? CONFIG.timeFormat.multiDayEnd : formatTime(event.end, locale)
-  };
-};
-
-const createDaysArray = (startTimestamp, daysCount, locale = 'en-US') => {
-  const days = [];
-  for (let i = 0; i < daysCount; i++) {
-    const dayStart = startTimestamp + (i * MS_PER_DAY);
-    const dayEnd = dayStart + MS_PER_DAY - 1;
-    const date = new Date(dayStart);
-    const dayKey = date.toLocaleDateString(locale, {
-      weekday: 'short',
-      month: 'numeric',
-      day: 'numeric'
-    });
-    days.push({ dayKey, dayStart, dayEnd, date });
-  }
-  return days;
-};
-
-const groupEventsByDay = (events, days) => {
-  const eventsByDay = {};
-  days.forEach(day => eventsByDay[day.dayKey] = []);
-  
-  events.forEach(event => {
-    const eventStart = new Date(event.start).getTime();
-    const eventEnd = new Date(event.end).getTime();
-    
-    days.forEach(day => {
-      if (eventStart < day.dayEnd && eventEnd > day.dayStart) {
-        eventsByDay[day.dayKey].push(event);
-      }
-    });
-  });
-  
-  // Sort events by start time
-  Object.values(eventsByDay).forEach(dayEvents => {
-    dayEvents.sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime());
-  });
-  
-  return eventsByDay;
 };
 
 // ============================================================================
 // HTML RENDERING
 // ============================================================================
-const renderEvent = (event, day, locale = 'en-US') => {
-  const times = getDisplayTimes(event, day, locale);
-  const isAllDay = event.allDay || false;
+
+// Render a single event item
+const renderEvent = (event, day, locale) => {
   const title = event.summary || 'Untitled Event';
-  const timeDisplay = isAllDay ? CONFIG.symbols.allDay : `${times.start} - ${times.end}`;
-  const timeClass = isAllDay ? 'all-day-badge' : '';
+  const isAllDay = event.allDay || false;
   
+  if (isAllDay) {
+    return `
+        <div class="event-item">
+          <div class="event-title">${title}</div>
+          <div class="event-time all-day-badge">${CONFIG.symbols.allDay}</div>
+        </div>`;
+  }
+  
+  const times = getDisplayTimes(event, day, locale);
   return `
         <div class="event-item">
           <div class="event-title">${title}</div>
-          <div class="event-time ${timeClass}">${timeDisplay}</div>
+          <div class="event-time">${times.start} - ${times.end}</div>
         </div>`;
 };
 
-const renderDay = (day, events, locale = 'en-US') => {
+// Render a complete day row with header and events
+const renderDay = (day, events, locale) => {
   const dayOfWeek = day.date.toLocaleDateString(locale, { weekday: 'short' });
   const dayOfMonth = day.date.getDate();
-  const hasEvents = events.length > 0;
+  
+  const eventsHtml = events.length > 0
+    ? events.map(e => renderEvent(e, day, locale)).join('')
+    : `<div class="no-events">${CONFIG.symbols.noEvents}</div>`;
   
   return `
     <div class="day-row">
@@ -157,12 +97,12 @@ const renderDay = (day, events, locale = 'en-US') => {
         <div class="day-number">${dayOfMonth}</div>
       </div>
       <div class="events-container">
-        ${hasEvents ? events.map(e => renderEvent(e, day, locale)).join('') : `
-        <div class="no-events">${CONFIG.symbols.noEvents}</div>`}
+        ${eventsHtml}
       </div>
     </div>`;
 };
 
+// Generate CSS styles for the calendar
 const generateStyles = () => `
     * {
       margin: 0;
@@ -262,7 +202,7 @@ const generateStyles = () => `
 // MAIN TEMPLATE FUNCTION
 // ============================================================================
 module.exports = function weekView(data) {
-  const { events, now, locale = 'en-US' } = data;
+  const { events, now, locale } = data;
   const todayStart = getDayStart(now);
   const days = createDaysArray(todayStart, CONFIG.daysToShow, locale);
   const eventsByDay = groupEventsByDay(events, days);
@@ -276,10 +216,99 @@ module.exports = function weekView(data) {
 </head>
 <body>
   <div class="calendar">
-    <div class="calendar-title">Week View</div>
+    <div class="calendar-title">${CONFIG.symbols.title}</div>
   ${days.map(day => renderDay(day, eventsByDay[day.dayKey], locale)).join('')}
   </div>
 </body>
 </html>
   `.trim();
+};
+
+// ============================================================================
+// HELPER FUNCTIONS - No need to modify these
+// ============================================================================
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
+
+// Get the start of day (midnight) for a given timestamp
+const getDayStart = (timestamp) => {
+  const date = new Date(timestamp);
+  date.setHours(0, 0, 0, 0);
+  return date.getTime();
+};
+
+// Format time as HH:MM in 24-hour format
+const formatTime = (dateString, locale) => {
+  return new Date(dateString).toLocaleTimeString(locale, {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false
+  });
+};
+
+// Get display times for an event, handling multi-day events
+const getDisplayTimes = (event, day, locale) => {
+  const isMultiDay = getDayStart(event.end) > getDayStart(event.start);
+  
+  // Single-day events show actual start/end times
+  if (!isMultiDay) {
+    return { 
+      start: formatTime(event.start, locale), 
+      end: formatTime(event.end, locale) 
+    };
+  }
+  
+  // Multi-day events show 00:00 or 23:59 if they extend beyond current day
+  const eventStart = new Date(event.start).getTime();
+  const eventEnd = new Date(event.end).getTime();
+  
+  return {
+    start: eventStart < day.dayStart ? CONFIG.timeFormat.multiDayStart : formatTime(event.start, locale),
+    end: eventEnd > day.dayEnd ? CONFIG.timeFormat.multiDayEnd : formatTime(event.end, locale)
+  };
+};
+
+// Create an array of day objects for the specified number of days
+const createDaysArray = (startTimestamp, daysCount, locale) => {
+  const days = [];
+  
+  for (let i = 0; i < daysCount; i++) {
+    const dayStart = startTimestamp + (i * MS_PER_DAY);
+    const dayEnd = dayStart + MS_PER_DAY - 1;
+    const date = new Date(dayStart);
+    const dayKey = date.toLocaleDateString(locale, {
+      weekday: 'short',
+      month: 'numeric',
+      day: 'numeric'
+    });
+    days.push({ dayKey, dayStart, dayEnd, date });
+  }
+  
+  return days;
+};
+
+// Group events by day, handling multi-day events that span multiple days
+const groupEventsByDay = (events, days) => {
+  // Initialize empty array for each day
+  const eventsByDay = {};
+  days.forEach(day => eventsByDay[day.dayKey] = []);
+  
+  // Add each event to all days it overlaps with
+  events.forEach(event => {
+    const eventStart = new Date(event.start).getTime();
+    const eventEnd = new Date(event.end).getTime();
+    
+    days.forEach(day => {
+      // Event overlaps if it starts before day ends AND ends after day starts
+      if (eventStart < day.dayEnd && eventEnd > day.dayStart) {
+        eventsByDay[day.dayKey].push(event);
+      }
+    });
+  });
+  
+  // Sort each day's events by start time
+  Object.values(eventsByDay).forEach(dayEvents => {
+    dayEvents.sort((a, b) => new Date(a.start) - new Date(b.start));
+  });
+  
+  return eventsByDay;
 };

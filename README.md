@@ -51,7 +51,7 @@ See the **[Installation Guide](calendar2image/docs-user/INSTALLATION.md)** for d
 
 The add-on automatically creates:
 - `0.json` - Working configuration with sample calendar
-- `templates/custom-week-view.js` - Sample custom template
+- `templates/` - All built-in templates as custom templates (prefixed with `custom-`) for you to customize
 - `README.md` - Configuration documentation
 
 **Location:** `/addon_configs/17f877f5_calendar2image/`
@@ -129,9 +129,13 @@ See the **[Configuration Guide](calendar2image/docs-user/CONFIGURATION.md)** for
 
 ## 🎨 Custom Templates
 
-### Using the Sample Template
+### Using the Provisioned Templates
 
-A sample custom template is created automatically:
+All built-in templates are automatically copied to your templates folder with a `custom-` prefix as examples:
+- `templates/custom-week-view.js`
+- `templates/custom-today-view.js`
+
+To use a custom template:
 
 1. Open `/addon_configs/17f877f5_calendar2image/0.json`
 2. Change:
@@ -140,7 +144,7 @@ A sample custom template is created automatically:
      "template": "custom-week-view"
    }
    ```
-3. Edit `templates/custom-week-view.js` to customize
+3. Edit the template file to customize it
 
 ### Creating Your Own Template
 

@@ -10,7 +10,7 @@ This follows the Home Assistant standard for add-on configurations. The folder n
 
 **Default configuration**: When you first start the add-on, it automatically creates `0.json` and `README.md` in this directory. The `0.json` file is a fully working configuration with all available parameters set to sensible defaults - just update the `icsUrl` to point to your calendar and you're ready to go!
 
-**Sample custom template**: A sample template (`templates/custom-week-view.js`) is also created for you to customize. To use it instead of the built-in template, change `"template": "week-view"` to `"template": "custom-week-view"` in your config file.
+**Custom templates**: All built-in templates are automatically copied to the `templates/` folder with a `custom-` prefix (e.g., `custom-week-view.js`, `custom-today-view.js`) as examples for you to customize. To use a custom template instead of a built-in one, change `"template": "week-view"` to `"template": "custom-week-view"` in your config file.
 
 ## File Naming Pattern
 

@@ -87,7 +87,7 @@ describe('Template System', () => {
       expect(html).toBeDefined();
       expect(typeof html).toBe('string');
       expect(html).toContain('<!DOCTYPE html>');
-      expect(html).toContain('Week View');
+      expect(html).toContain('Weekly Calendar');
       expect(html).toContain('Meeting'); // Event within 7 days
       expect(html).toContain('All Day Event'); // Event within 7 days
       expect(html).not.toContain('Future Event'); // Event outside 7 days
@@ -112,7 +112,7 @@ describe('Template System', () => {
       expect(html).toBeDefined();
       expect(typeof html).toBe('string');
       expect(html).toContain('<!DOCTYPE html>');
-      expect(html).toContain("Today's Events");
+      expect(html).toMatch(/(?:Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)/);
       expect(html).toContain('Today Meeting');
     });
 
@@ -295,9 +295,9 @@ describe('Template System', () => {
     test('should fall back to built-in template if custom template not found', () => {
       // Don't create the custom template, should fall back to built-in
       const template = templateModule.loadTemplate('week-view');
-      const html = template({ events: [], config: {} });
+      const html = template({ events: [], config: {}, now: Date.now(), locale: 'en-US' });
       
-      expect(html).toContain('Week View'); // Built-in template content
+      expect(html).toContain('Weekly Calendar'); // Built-in template content
     });
 
     test('should use default TEMPLATES_DIR when env var not set', () => {
