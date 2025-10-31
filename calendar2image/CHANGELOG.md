@@ -1,79 +1,21 @@
 # Changelog
 
-## [Unreleased]
+## [0.1.0] - 2025-10-31
 
-### Added
-- **Dynamic Configuration Detection**
-  - File system watcher automatically detects new configuration files added while container is running
-  - New configs are immediately scheduled and pre-generated if they have `preGenerateInterval`
-  - Deleted config files are automatically removed from scheduler
-  - Modified config files trigger schedule updates and immediate image regeneration
-  - Eliminates need to restart container when adding or modifying configurations
+First release with complete calendar-to-image generation functionality.
 
-## [0.1.0] - 2025-10-29
+### Features
 
-### Added
-- **Pre-generation and Caching System**
-  - Configurable pre-generation with cron-style scheduling (`preGenerateInterval`)
-  - Automatic image caching for ultra-fast responses (<100ms vs ~8 seconds)
-  - Cache directory with metadata storage (CRC32, timestamps, size)
-  - Background scheduler using node-cron for scheduled regeneration
-  - Graceful fallback to on-demand generation when cache unavailable
-  - Startup cache population for immediate availability
-
-- **CRC32 Checksum Support**
-  - New `/api/:index.crc32` endpoint for bandwidth-efficient change detection
-  - CRC32 checksums automatically calculated and cached during pre-generation
-  - `X-CRC32` header included in all image responses
-  - Perfect for e-ink displays and bandwidth-constrained scenarios
-  - Plain text response format (lowercase hexadecimal)
-
-- **Enhanced API Endpoints**
-  - `GET /api/:index` - Returns cached image if available, generates fresh otherwise
-  - `GET /api/:index.crc32` - Returns CRC32 checksum (plain text)
-  - `GET /api/:index/fresh` - Forces fresh generation, bypassing cache
-  - Response headers: `X-Cache` (HIT/MISS/BYPASS), `X-CRC32`, `X-Generated-At`
-
-- Initial release with basic add-on skeleton
-- Express web server with configurable port (default: 3000)
-- `/health` endpoint for health checks
-- Full calendar image generation via `/api/{index}` endpoints
-- Dynamic route handling for multiple calendar configurations
-- Binary image responses (PNG, JPG, BMP)
-- Comprehensive error handling with proper HTTP status codes (400, 404, 500, 502)
-- Verbose logging with performance metrics
-- ICS calendar data fetching and parsing with recurring event expansion
-- JSON configuration system with schema validation
-- Template engine with built-in templates (week-view, today-view)
-- Puppeteer-based image generation with Sharp conversion
-- Grayscale and bit depth control
-- Emoji and international character support (Noto fonts)
-- Custom template support via file system
-- Support for aarch64 and armv7 architectures (Raspberry Pi)
-- Configuration option to customize web server port
-- Graceful shutdown handling
-- Request logging with timestamps
-- Error handling for 404 and 500 errors
-
-### Changed
-- `/api/{index}` endpoints now return actual calendar images instead of JSON
-- Updated response headers to include Content-Type and Content-Length
-- Enhanced error responses with detailed error messages
-
-### Technical Details
-- Node.js 22 LTS runtime
-- Express.js 4.18.2 web framework
-- Complete API orchestration pipeline (config → fetch → render → generate)
-- Puppeteer 21.11.0 with Chromium for HTML rendering
-- Sharp 0.33.0 for high-performance image processing
-- ical.js 2.0.1 for ICS parsing
-- ajv 8.12.0 for JSON schema validation
-- 124 unit tests with 92.47% code coverage
-- Integration tests for API and Docker container
-- Docker-based containerization
-- Home Assistant add-on configuration via options.json
-
-[0.1.0]: https://github.com/jantielens/ha-calendar2image/releases/tag/v0.1.0
+- **Generate images from calendar data** - Fetch events from any ICS URL and render as PNG/JPG/BMP
+- **REST API** - Simple HTTP endpoints for on-demand or cached image generation
+- **Customizable templates** - Use built-in templates or create your own with JavaScript
+- **Pre-generation & caching** - Ultra-fast responses (<100ms) with scheduled background generation
+- **CRC32 checksums** - Bandwidth-efficient change detection for e-ink displays
+- **Extra data integration** - Fetch weather, tasks, or other JSON data for enhanced templates
+- **Grayscale & bit depth control** - Optimize images for e-ink displays
+- **Multiple calendars** - Configure as many calendars as needed
+- **Image rotation** - Support for landscape/portrait orientations
+- **Dynamic configuration detection** - Automatic detection of new/modified/deleted configuration files
 
 ---
 All notable changes to this add-on will be documented in this file.
