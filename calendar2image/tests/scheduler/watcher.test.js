@@ -89,7 +89,7 @@ describe('Scheduler Config Watcher', () => {
     expect(status[0].index).toBe(0);
 
     // Wait a bit for watcher to start
-    await new Promise(resolve => setTimeout(resolve, 200));
+    await new Promise(resolve => setTimeout(resolve, 500));
 
     // Create new config file (simulating adding 1.json while container is running)
     const config1 = {
@@ -107,7 +107,8 @@ describe('Scheduler Config Watcher', () => {
     );
 
     // Wait for file watcher to detect and process the change
-    await new Promise(resolve => setTimeout(resolve, 300));
+    // Manual polling runs every 2 seconds, so wait at least 2.5 seconds
+    await new Promise(resolve => setTimeout(resolve, 2500));
 
     // Verify config 1 is now scheduled
     status = getScheduleStatus();
@@ -152,7 +153,7 @@ describe('Scheduler Config Watcher', () => {
     await initializeScheduler();
     
     // Wait for watcher to start
-    await new Promise(resolve => setTimeout(resolve, 200));
+    await new Promise(resolve => setTimeout(resolve, 500));
 
     // Verify both configs are scheduled
     let status = getScheduleStatus();
@@ -162,7 +163,8 @@ describe('Scheduler Config Watcher', () => {
     await fs.unlink(path.join(testConfigDir, '1.json'));
 
     // Wait for file watcher to detect the deletion
-    await new Promise(resolve => setTimeout(resolve, 300));
+    // Manual polling runs every 2 seconds, so wait at least 2.5 seconds
+    await new Promise(resolve => setTimeout(resolve, 2500));
 
     // Verify config 1 is removed from schedule
     status = getScheduleStatus();
@@ -190,7 +192,7 @@ describe('Scheduler Config Watcher', () => {
     await initializeScheduler();
     
     // Wait for watcher to start
-    await new Promise(resolve => setTimeout(resolve, 200));
+    await new Promise(resolve => setTimeout(resolve, 500));
 
     // Verify config is scheduled
     let status = getScheduleStatus();
@@ -209,7 +211,8 @@ describe('Scheduler Config Watcher', () => {
     );
 
     // Wait for file watcher to detect the change
-    await new Promise(resolve => setTimeout(resolve, 300));
+    // Manual polling runs every 2 seconds, so wait at least 2.5 seconds
+    await new Promise(resolve => setTimeout(resolve, 2500));
 
     // Verify schedule was updated
     status = getScheduleStatus();
@@ -259,7 +262,8 @@ describe('Scheduler Config Watcher', () => {
     );
 
     // Wait for file watcher to detect the change
-    await new Promise(resolve => setTimeout(resolve, 300));
+    // Manual polling runs every 2 seconds, so wait at least 2.5 seconds
+    await new Promise(resolve => setTimeout(resolve, 2500));
 
     // Verify schedule was removed
     status = getScheduleStatus();
