@@ -21,15 +21,29 @@ if [ ! -f "${CONFIG_DIR}/README.md" ]; then
     cp /app/config-sample-README.md "${CONFIG_DIR}/README.md"
 fi
 
-# Create templates directory and copy sample template
+# Create templates directory and copy built-in templates as custom templates
 if [ ! -d "${CONFIG_DIR}/templates" ]; then
     bashio::log.info "Creating templates directory..."
     mkdir -p "${CONFIG_DIR}/templates"
 fi
 
-if [ ! -f "${CONFIG_DIR}/templates/custom-week-view.js" ]; then
-    bashio::log.info "Creating sample custom template (custom-week-view.js)..."
-    cp /app/custom-week-view.js "${CONFIG_DIR}/templates/custom-week-view.js"
+bashio::log.info "Copying built-in templates as custom templates..."
+TEMPLATES_COPIED=0
+for template in /app/src/templates/built-in/*.js; do
+    if [ -f "$template" ]; then
+        filename=$(basename "$template")
+        custom_filename="custom-${filename}"
+        if [ ! -f "${CONFIG_DIR}/templates/$custom_filename" ]; then
+            cp "$template" "${CONFIG_DIR}/templates/$custom_filename"
+            bashio::log.info "  ✓ Copied $filename as $custom_filename"
+            TEMPLATES_COPIED=$((TEMPLATES_COPIED + 1))
+        fi
+    fi
+done
+if [ $TEMPLATES_COPIED -gt 0 ]; then
+    bashio::log.info "Sample templates ready - you can customize them!"
+else
+    bashio::log.info "All custom templates already exist"
 fi
 
 bashio::log.info "Config directory contents:"
