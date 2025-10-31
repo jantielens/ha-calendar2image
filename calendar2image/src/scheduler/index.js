@@ -1,6 +1,7 @@
 const cron = require('node-cron');
 const fs = require('fs');
 const path = require('path');
+const chokidar = require('chokidar');
 const { loadAllConfigs, loadConfig, CONFIG_DIR } = require('../config/loader');
 const { preGenerateImage, setPreGenerateFunction, saveCachedImage } = require('../cache');
 
@@ -9,6 +10,9 @@ const activeJobs = new Map();
 
 // Store file system watcher
 let configWatcher = null;
+
+// Store file modification times for manual polling
+const fileStats = new Map();
 
 /**
  * Internal function to generate and cache an image
@@ -217,54 +221,210 @@ function startConfigWatcher() {
   console.log(`[Scheduler] Starting config file watcher on ${CONFIG_DIR}...`);
   
   try {
-    configWatcher = fs.watch(CONFIG_DIR, { persistent: true }, async (eventType, filename) => {
-      if (!filename || !filename.match(/^\d+\.json$/)) {
-        // Ignore non-config files
+    // Use chokidar for better cross-platform and Docker volume support
+    // fs.watch() doesn't work reliably with Docker bind mounts on Windows/Mac
+    configWatcher = chokidar.watch(path.join(CONFIG_DIR, '*.json'), {
+      persistent: true,
+      ignoreInitial: true,  // Don't trigger on initial scan
+      awaitWriteFinish: {   // Wait for file writes to complete
+        stabilityThreshold: 200,
+        pollInterval: 100
+      },
+      usePolling: true,     // Use polling for Docker volumes (more reliable)
+      interval: 500,        // Poll every 500ms for faster detection
+      binaryInterval: 500,
+      alwaysStat: true,     // Always stat files to detect changes
+      depth: 0              // Only watch the config directory, not subdirectories
+    });
+
+    // Handle file additions and changes
+    configWatcher.on('add', async (filePath) => {
+      const filename = path.basename(filePath);
+      if (!filename.match(/^\d+\.json$/)) {
         return;
       }
-
+      
       const index = parseInt(path.basename(filename, '.json'), 10);
-      console.log(`[Scheduler] Config file change detected: ${filename} (${eventType})`);
+      console.log(`[Scheduler] Config file added: ${filename}`);
+      
+      try {
+        console.log(`[Scheduler] Config ${index} added, updating schedule and generating image...`);
+        await scheduleConfigIfNeeded(index, true); // true = pre-generate immediately
+      } catch (error) {
+        console.error(`[Scheduler] Error handling config addition for ${filename}: ${error.message}`);
+      }
+    });
 
-      // Debounce: wait a bit to ensure file write is complete
-      setTimeout(async () => {
-        try {
-          // Check if file still exists
-          const configPath = path.join(CONFIG_DIR, filename);
-          const exists = await fs.promises.access(configPath).then(() => true).catch(() => false);
+    configWatcher.on('change', async (filePath) => {
+      const filename = path.basename(filePath);
+      if (!filename.match(/^\d+\.json$/)) {
+        return;
+      }
+      
+      const index = parseInt(path.basename(filename, '.json'), 10);
+      console.log(`[Scheduler] Config file changed: ${filename}`);
+      
+      try {
+        console.log(`[Scheduler] Config ${index} modified, updating schedule and generating image...`);
+        await scheduleConfigIfNeeded(index, true); // true = pre-generate immediately
+      } catch (error) {
+        console.error(`[Scheduler] Error handling config change for ${filename}: ${error.message}`);
+      }
+    });
 
-          if (exists) {
-            // File added or modified - schedule and pre-generate immediately
-            console.log(`[Scheduler] Config ${index} added/modified, updating schedule and generating image...`);
-            await scheduleConfigIfNeeded(index, true); // true = pre-generate immediately
-          } else {
-            // File deleted - stop scheduling
-            console.log(`[Scheduler] Config ${index} deleted, removing from schedule...`);
-            stopPreGeneration(index);
-          }
-        } catch (error) {
-          console.error(`[Scheduler] Error handling config change for ${filename}: ${error.message}`);
-        }
-      }, 100); // 100ms debounce
+    // Handle file deletions
+    configWatcher.on('unlink', async (filePath) => {
+      const filename = path.basename(filePath);
+      if (!filename.match(/^\d+\.json$/)) {
+        return;
+      }
+      
+      const index = parseInt(path.basename(filename, '.json'), 10);
+      console.log(`[Scheduler] Config file deleted: ${filename}`);
+      
+      try {
+        console.log(`[Scheduler] Config ${index} deleted, removing from schedule...`);
+        stopPreGeneration(index);
+      } catch (error) {
+        console.error(`[Scheduler] Error handling config deletion for ${filename}: ${error.message}`);
+      }
     });
 
     configWatcher.on('error', (error) => {
       console.error(`[Scheduler] Config watcher error: ${error.message}`);
     });
 
-    console.log('[Scheduler] Config file watcher started');
+    configWatcher.on('ready', () => {
+      console.log('[Scheduler] Config file watcher started and ready');
+      // Initialize file stats for manual polling fallback
+      initializeFileStats();
+      // Start manual polling as fallback (useful for Docker volumes on Windows/Mac)
+      startManualPolling();
+    });
+
   } catch (error) {
     console.error(`[Scheduler] Failed to start config watcher: ${error.message}`);
   }
 }
 
 /**
+ * Initialize file stats for manual polling
+ */
+async function initializeFileStats() {
+  try {
+    const files = await fs.promises.readdir(CONFIG_DIR);
+    for (const filename of files) {
+      if (filename.match(/^\d+\.json$/)) {
+        const filePath = path.join(CONFIG_DIR, filename);
+        try {
+          const stats = await fs.promises.stat(filePath);
+          fileStats.set(filename, {
+            mtime: stats.mtimeMs,
+            size: stats.size
+          });
+        } catch (error) {
+          // File might have been deleted
+        }
+      }
+    }
+    console.log(`[Scheduler] Initialized file stats for ${fileStats.size} config files`);
+  } catch (error) {
+    console.error(`[Scheduler] Error initializing file stats: ${error.message}`);
+  }
+}
+
+/**
+ * Manual polling as fallback for Docker volume watching
+ */
+let pollingInterval = null;
+
+function startManualPolling() {
+  if (pollingInterval) {
+    return;
+  }
+
+  console.log('[Scheduler] Starting manual polling (every 2 seconds) as fallback for Docker volumes...');
+  
+  pollingInterval = setInterval(async () => {
+    try {
+      const files = await fs.promises.readdir(CONFIG_DIR);
+      const currentFiles = new Set();
+
+      // Check for new and modified files
+      for (const filename of files) {
+        if (!filename.match(/^\d+\.json$/)) {
+          continue;
+        }
+
+        currentFiles.add(filename);
+        const filePath = path.join(CONFIG_DIR, filename);
+        
+        try {
+          const stats = await fs.promises.stat(filePath);
+          const oldStats = fileStats.get(filename);
+
+          if (!oldStats) {
+            // New file
+            console.log(`[Scheduler] Manual poll detected new file: ${filename}`);
+            const index = parseInt(path.basename(filename, '.json'), 10);
+            fileStats.set(filename, {
+              mtime: stats.mtimeMs,
+              size: stats.size
+            });
+            
+            console.log(`[Scheduler] Config ${index} added, updating schedule and generating image...`);
+            await scheduleConfigIfNeeded(index, true);
+          } else if (stats.mtimeMs !== oldStats.mtime || stats.size !== oldStats.size) {
+            // Modified file
+            console.log(`[Scheduler] Manual poll detected change in ${filename} (mtime: ${oldStats.mtime} -> ${stats.mtimeMs})`);
+            const index = parseInt(path.basename(filename, '.json'), 10);
+            fileStats.set(filename, {
+              mtime: stats.mtimeMs,
+              size: stats.size
+            });
+            
+            console.log(`[Scheduler] Config ${index} modified, updating schedule and generating image...`);
+            await scheduleConfigIfNeeded(index, true);
+          }
+        } catch (error) {
+          // File might have been deleted during stat
+        }
+      }
+
+      // Check for deleted files
+      for (const [filename] of fileStats) {
+        if (!currentFiles.has(filename)) {
+          console.log(`[Scheduler] Manual poll detected deleted file: ${filename}`);
+          const index = parseInt(path.basename(filename, '.json'), 10);
+          fileStats.delete(filename);
+          
+          console.log(`[Scheduler] Config ${index} deleted, removing from schedule...`);
+          stopPreGeneration(index);
+        }
+      }
+    } catch (error) {
+      console.error(`[Scheduler] Error in manual polling: ${error.message}`);
+    }
+  }, 2000); // Poll every 2 seconds
+}
+
+function stopManualPolling() {
+  if (pollingInterval) {
+    console.log('[Scheduler] Stopping manual polling...');
+    clearInterval(pollingInterval);
+    pollingInterval = null;
+  }
+}
+
+/**
  * Stop watching the config directory
  */
-function stopConfigWatcher() {
+async function stopConfigWatcher() {
+  stopManualPolling();
+  
   if (configWatcher) {
     console.log('[Scheduler] Stopping config file watcher...');
-    configWatcher.close();
+    await configWatcher.close();
     configWatcher = null;
     console.log('[Scheduler] Config file watcher stopped');
   }
@@ -273,11 +433,11 @@ function stopConfigWatcher() {
 /**
  * Stop all scheduled jobs
  */
-function stopAllSchedules() {
+async function stopAllSchedules() {
   console.log('[Scheduler] Stopping all scheduled jobs...');
   
   // Stop config watcher
-  stopConfigWatcher();
+  await stopConfigWatcher();
   
   // Stop all cron jobs
   for (const [index, job] of activeJobs.entries()) {
