@@ -145,7 +145,7 @@ function generateHomePageHTML(configs, baseUrl) {
         <td class="links-col">
           <a href="${imageUrl}" target="_blank" class="link-btn" title="Get image (cached if available)">Image</a>
           <a href="${freshUrl}" target="_blank" class="link-btn" title="Force fresh generation">Fresh</a>
-          <a href="${crc32Url}" target="_blank" class="link-btn" title="Get CRC32 checksum">CRC32</a>
+          <a href="${crc32Url}" target="_blank" class="link-btn crc32-btn" data-crc32-url="${crc32Url}" title="Get CRC32 checksum">CRC32: Loading...</a>
           <a href="${configUrl}" target="_blank" class="link-btn" title="View configuration JSON">Config</a>
         </td>
       </tr>`;
@@ -500,6 +500,31 @@ function generateHomePageHTML(configs, baseUrl) {
       <p style="margin-top: 5px; font-size: 0.9em;">Generated at ${new Date().toISOString()}</p>
     </div>
   </div>
+  
+  <script>
+    // Fetch CRC32 values for all configurations
+    document.addEventListener('DOMContentLoaded', async () => {
+      const crc32Buttons = document.querySelectorAll('.crc32-btn');
+      
+      for (const button of crc32Buttons) {
+        const crc32Url = button.getAttribute('data-crc32-url');
+        
+        try {
+          const response = await fetch(crc32Url);
+          if (response.ok) {
+            const crc32 = await response.text();
+            // Add 0x prefix for proper hex notation
+            button.textContent = \`CRC32: 0x\${crc32}\`;
+          } else {
+            button.textContent = 'CRC32: Error';
+          }
+        } catch (error) {
+          console.error('Failed to fetch CRC32:', error);
+          button.textContent = 'CRC32: Error';
+        }
+      }
+    });
+  </script>
 </body>
 </html>`;
 }
