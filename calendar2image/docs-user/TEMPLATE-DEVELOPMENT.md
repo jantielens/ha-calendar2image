@@ -766,6 +766,13 @@ Check these for inspiration:
 
 Located at: `c:\dev\ha-calendar2image\calendar2image\src\templates\built-in\`
 
+### Community Template Samples
+
+See the **[template-samples](template-samples/)** directory for complete, real-world template examples with documentation:
+- Full-featured templates ready to use
+- Configuration examples
+- Screenshots and explanations
+
 ---
 
 ## Summary

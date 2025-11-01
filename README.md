@@ -184,6 +184,8 @@ See the **[Template Development Guide](calendar2image/docs-user/TEMPLATE-DEVELOP
 - Helper functions
 - Built-in template examples
 
+Browse **[template samples](calendar2image/docs-user/template-samples/)** for ready-to-use examples with configuration and screenshots.
+
 ## 🌐 Extra Data Integration
 
 Fetch additional data (weather, tasks, etc.) from any JSON API:
@@ -287,6 +289,7 @@ See the **[Troubleshooting Guide](calendar2image/docs-user/TROUBLESHOOTING.md)**
 - **[Configuration Guide](calendar2image/docs-user/CONFIGURATION.md)** - All configuration options
 - **[API Reference](calendar2image/docs-user/API-REFERENCE.md)** - Complete API documentation
 - **[Template Development](calendar2image/docs-user/TEMPLATE-DEVELOPMENT.md)** - Creating custom templates
+- **[Template Samples](calendar2image/docs-user/template-samples/)** - Ready-to-use template examples
 - **[Extra Data Guide](calendar2image/docs-user/EXTRA-DATA.md)** - Using external data in templates
 - **[Troubleshooting](calendar2image/docs-user/TROUBLESHOOTING.md)** - Common issues and solutions
 

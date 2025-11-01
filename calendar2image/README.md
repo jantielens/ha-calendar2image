@@ -133,6 +133,7 @@ Including:
 - **[Configuration Guide](https://github.com/jantielens/ha-calendar2image/blob/main/calendar2image/docs-user/CONFIGURATION.md)** - All configuration options
 - **[API Reference](https://github.com/jantielens/ha-calendar2image/blob/main/calendar2image/docs-user/API-REFERENCE.md)** - Complete API documentation
 - **[Template Development](https://github.com/jantielens/ha-calendar2image/blob/main/calendar2image/docs-user/TEMPLATE-DEVELOPMENT.md)** - Creating custom templates
+- **[Template Samples](https://github.com/jantielens/ha-calendar2image/blob/main/calendar2image/docs-user/template-samples/)** - Ready-to-use template examples
 - **[Extra Data Guide](https://github.com/jantielens/ha-calendar2image/blob/main/calendar2image/docs-user/EXTRA-DATA.md)** - Using external data in templates
 - **[Troubleshooting](https://github.com/jantielens/ha-calendar2image/blob/main/calendar2image/docs-user/TROUBLESHOOTING.md)** - Common issues and solutions
 

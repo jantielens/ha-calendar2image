@@ -437,6 +437,10 @@ const location = event.location?.toUpperCase() || 'No location';
    - Available: `week-view`, `today-view`
    - No files needed (built into add-on)
 
+4. **Try a working example:**
+   - Browse **[template-samples](template-samples/)** for ready-to-use examples
+   - Copy a sample template to test your setup
+
 ---
 
 ### Template changes not showing

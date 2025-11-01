@@ -471,6 +471,11 @@ See the built-in templates for examples:
 Or check the sample template:
 - `data/calendar2image/templates/custom-week-view.js`
 
+For complete, documented examples, see the **[template-samples](template-samples/)** directory:
+- Full templates with extra data integration
+- Configuration examples
+- Screenshots and usage guides
+
 ---
 
 ## Support
