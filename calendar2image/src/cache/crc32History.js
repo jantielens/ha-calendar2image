@@ -142,6 +142,8 @@ async function getHistoryStats(index) {
     return {
       uniqueCRC32Values: 0,
       changes: 0,
+      changesInPastHour: 0,
+      changesInPast24Hours: 0,
       durationStats: null,
       blocks: []
     };
@@ -150,11 +152,27 @@ async function getHistoryStats(index) {
   // Count unique CRC32 values
   const uniqueValues = new Set(history.map(h => h.crc32));
 
+  // Calculate time thresholds
+  const now = new Date();
+  const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
+  const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+
   // Count changes (when CRC32 differs from previous)
   let changes = 0;
+  let changesInPastHour = 0;
+  let changesInPast24Hours = 0;
+  
   for (let i = 0; i < history.length - 1; i++) {
     if (history[i].crc32 !== history[i + 1].crc32) {
       changes++;
+      
+      const timestamp = new Date(history[i].timestamp);
+      if (timestamp >= oneHourAgo) {
+        changesInPastHour++;
+      }
+      if (timestamp >= twentyFourHoursAgo) {
+        changesInPast24Hours++;
+      }
     }
   }
 
@@ -191,6 +209,8 @@ async function getHistoryStats(index) {
   return {
     uniqueCRC32Values: uniqueValues.size,
     changes,
+    changesInPastHour,
+    changesInPast24Hours,
     durationStats,
     blocks
   };

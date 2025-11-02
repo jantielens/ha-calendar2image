@@ -43,14 +43,19 @@ END:VCALENDAR`;
     });
 
     it('should convert recurring events to specified timezone', () => {
+      // Use tomorrow's date to ensure the recurring events are in the future
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      const dateStr = tomorrow.toISOString().split('T')[0].replace(/-/g, '');
+      
       const icsData = `BEGIN:VCALENDAR
 VERSION:2.0
 PRODID:-//Test//Test//EN
 BEGIN:VEVENT
 UID:recurring-event
 SUMMARY:Daily Meeting
-DTSTART:20251030T100000Z
-DTEND:20251030T110000Z
+DTSTART:${dateStr}T100000Z
+DTEND:${dateStr}T110000Z
 RRULE:FREQ=DAILY;COUNT=3
 END:VEVENT
 END:VCALENDAR`;

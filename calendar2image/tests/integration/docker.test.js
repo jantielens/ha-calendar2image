@@ -181,8 +181,14 @@ describe('Docker Integration Tests', () => {
 
     // Clean up test data
     const configDir = path.resolve(__dirname, '../../test-data');
+    const parentDir = path.resolve(__dirname, '../..');
     if (fs.existsSync(configDir)) {
-      fs.rmSync(configDir, { recursive: true, force: true });
+      try {
+        // Use Docker to remove the entire directory with proper permissions
+        execSync(`docker run --rm -v "${parentDir}:/workspace" alpine sh -c "rm -rf /workspace/test-data"`, { stdio: 'ignore' });
+      } catch (error) {
+        console.warn('Warning: Could not remove test-data directory:', error.message);
+      }
     }
   }, 30000);
 

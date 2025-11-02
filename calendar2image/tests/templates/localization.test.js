@@ -180,13 +180,19 @@ describe('Template Localization', () => {
     });
 
     it('should handle all-day events with different locales', async () => {
+      // Use today's date so the event shows up in today-view
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      
       const allDayEvent = {
         uid: 'all-day',
         summary: 'All Day Event',
         description: '',
         location: '',
-        start: '2025-10-30T00:00:00.000Z',
-        end: '2025-10-31T00:00:00.000Z',
+        start: today.toISOString(),
+        end: tomorrow.toISOString(),
         isRecurring: false,
         isAllDay: true,
         allDay: true
