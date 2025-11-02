@@ -50,6 +50,13 @@ Each configuration file should contain:
   - `"*/15 * * * *"` - Every 15 minutes
   - `"0 * * * *"` - Every hour at :00
   - **(omitted)** - No caching, always generate fresh (ensures real-time calendar data)
+- **locale** (string, default: `"en-US"`): BCP 47 locale code for date/time formatting (e.g., `"en-US"`, `"de-DE"`, `"fr-FR"`)
+- **timezone** (string, optional): IANA timezone name to convert event times (e.g., `"Europe/Berlin"`, `"America/New_York"`)
+- **extraDataUrl** (string or array, optional): URL(s) to fetch additional JSON data for templates. See [Extra Data Guide](EXTRA-DATA.md) for details.
+  - **String format** (simple): Single URL
+  - **Array format** (advanced): Array of data source objects with per-source configuration
+- **extraDataHeaders** (object, optional): Global HTTP headers for extra data requests (e.g., Authorization for Home Assistant)
+- **extraDataCacheTtl** (number, default: `300`): Global cache TTL in seconds for extra data
 
 ## Example Configurations
 
@@ -98,6 +105,65 @@ With pre-generation enabled, images are regenerated every 5 minutes in the backg
 }
 ```
 Without `preGenerateInterval`, images are **always generated fresh** on each request, ensuring real-time calendar data at the cost of slower response times (~8 seconds).
+
+### Configuration with Extra Data (Single Source)
+```json
+{
+  "icsUrl": "https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics",
+  "template": "week-view",
+  "extraDataUrl": "http://homeassistant.local:8123/api/states/sensor.weather",
+  "extraDataHeaders": {
+    "Authorization": "Bearer YOUR_TOKEN"
+  },
+  "extraDataCacheTtl": 300
+}
+```
+Fetches weather data from Home Assistant to use in templates. See [Extra Data Guide](EXTRA-DATA.md) for more details.
+
+### Configuration with Multiple Extra Data Sources (Advanced)
+```json
+{
+  "icsUrl": "https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics",
+  "template": "week-view",
+  "extraDataHeaders": {
+    "Authorization": "Bearer GLOBAL_TOKEN"
+  },
+  "extraDataCacheTtl": 300,
+  "extraDataUrl": [
+    {
+      "url": "http://localhost:3001/weather"
+    },
+    {
+      "url": "http://localhost:3001/tasks",
+      "cacheTtl": 60
+    },
+    {
+      "url": "http://localhost:3001/public",
+      "headers": null
+    },
+    {
+      "url": "http://localhost:3001/todos",
+      "headers": {
+        "X-API-Key": "custom-key"
+      },
+      "cacheTtl": 120
+    }
+  ]
+}
+```
+
+**Multi-source configuration explained:**
+- **First source** (`/weather`): Uses global headers and cacheTtl
+- **Second source** (`/tasks`): Overrides cacheTtl to 60 seconds, uses global headers
+- **Third source** (`/public`): Disables global headers by setting `headers: null`
+- **Fourth source** (`/todos`): Uses custom headers and custom cacheTtl
+
+**Header opt-out options:** To disable global headers for a specific URL, use:
+- `"headers": null`
+- `"headers": ""`
+- `"headers": {}`
+
+See [Extra Data Guide](EXTRA-DATA.md) for complete multi-source documentation and template usage.
 
 ## API Endpoints
 

@@ -2,11 +2,13 @@
 
 Calendar2Image allows you to fetch additional data from any JSON API and use it in your templates. This is perfect for adding weather, holidays, tasks, or any other contextual information to your calendar images.
 
+**Advanced:** Support for multiple data sources with per-source configuration!
+
 ---
 
 ## Quick Start
 
-### 1. Configure Extra Data URL
+### Single Data Source (Simple Format)
 
 Add `extraDataUrl` to your configuration:
 
@@ -21,9 +23,7 @@ Add `extraDataUrl` to your configuration:
 }
 ```
 
-### 2. Access Data in Template
-
-The fetched JSON data is available as `extraData` in your template:
+Access data in template as an object:
 
 ```javascript
 module.exports = function(data) {
@@ -40,25 +40,102 @@ module.exports = function(data) {
 };
 ```
 
+### Multiple Data Sources (Advanced Array Format)
+
+Fetch from multiple APIs with independent configuration:
+
+```json
+{
+  "icsUrl": "https://calendar.google.com/calendar/ical/...",
+  "template": "week-view",
+  "extraDataHeaders": {
+    "Authorization": "Bearer GLOBAL_TOKEN"
+  },
+  "extraDataCacheTtl": 300,
+  "extraDataUrl": [
+    { "url": "http://localhost:3001/weather" },
+    { "url": "http://localhost:3001/tasks", "cacheTtl": 60 },
+    { "url": "http://localhost:3001/public", "headers": null }
+  ]
+}
+```
+
+Access data in template as an array:
+
+```javascript
+module.exports = function(data) {
+  const { events, config, extraData } = data;
+  const [weather, tasks, publicData] = extraData;
+  
+  return `
+    <html>
+      <body>
+        <h1>Weather: ${weather.temperature}°C</h1>
+        <p>Tasks: ${tasks.items.length}</p>
+      </body>
+    </html>
+  `;
+};
+```
+
 ---
 
 ## Configuration Options
 
 ### extraDataUrl
 
-**Type:** `string` (optional)  
-**Description:** URL to fetch JSON data from
+**Type:** `string` or `array` (optional)  
+**Description:** URL(s) to fetch JSON data from
 
-**Examples:**
+**String Format (Simple - Single Source):**
 ```json
-// Home Assistant sensor
 "extraDataUrl": "http://homeassistant.local:8123/api/states/sensor.weather"
+```
+Template receives `extraData` as an **object**.
 
+**Array Format (Advanced - Multiple Sources):**
+```json
+"extraDataUrl": [
+  {
+    "url": "http://localhost:3001/weather",
+    "headers": { "X-Weather-Key": "abc123" },
+    "cacheTtl": 600
+  },
+  {
+    "url": "http://localhost:3001/tasks",
+    "cacheTtl": 60
+  },
+  {
+    "url": "http://localhost:3001/public",
+    "headers": null
+  }
+]
+```
+Template receives `extraData` as an **array**.
+
+**Array Entry Properties:**
+- **url** (string, required): URL to fetch JSON data from (must start with `http://` or `https://`)
+- **headers** (object/string/null, optional): HTTP headers for this specific URL
+  - If omitted: uses global `extraDataHeaders`
+  - If `null`, `""`, or `{}`: disables global headers for this URL
+  - If object: uses these headers instead of global
+- **cacheTtl** (number, optional): Cache TTL in seconds for this specific URL
+  - If omitted: uses global `extraDataCacheTtl`
+  - If provided: overrides global for this URL
+
+**More Examples:**
+```json
 // External API
 "extraDataUrl": "https://api.weather.com/v1/forecast?location=amsterdam"
 
 // Local service
 "extraDataUrl": "http://192.168.1.100:3001/api/data"
+
+// Multiple sources with global defaults
+"extraDataUrl": [
+  { "url": "http://localhost:3001/weather" },
+  { "url": "http://localhost:3001/tasks" }
+]
 ```
 
 ### extraDataHeaders
@@ -106,6 +183,189 @@ module.exports = function(data) {
 // No caching (always fresh)
 "extraDataCacheTtl": 0
 ```
+
+---
+
+## Multiple Data Sources (Advanced)
+
+### Why Use Multiple Sources?
+
+- **Different APIs**: Combine weather, tasks, calendar metadata, etc.
+- **Different refresh rates**: Fast-changing data (60s) vs. slow-changing (1h)
+- **Different authentication**: Some APIs need tokens, others are public
+- **Independent caching**: Each source can have its own cache TTL
+
+### Configuration Examples
+
+**Example 1: Weather + Tasks with Different Cache Times**
+```json
+{
+  "extraDataHeaders": {
+    "Authorization": "Bearer GLOBAL_TOKEN"
+  },
+  "extraDataCacheTtl": 300,
+  "extraDataUrl": [
+    { "url": "http://localhost:3001/weather" },
+    { "url": "http://localhost:3001/tasks", "cacheTtl": 60 }
+  ]
+}
+```
+- Weather uses global cache (300s)
+- Tasks refresh faster (60s)
+- Both use global auth token
+
+**Example 2: Mixed Public and Private APIs**
+```json
+{
+  "extraDataHeaders": {
+    "Authorization": "Bearer SECRET_TOKEN"
+  },
+  "extraDataUrl": [
+    {
+      "url": "http://homeassistant.local:8123/api/states/sensor.weather"
+    },
+    {
+      "url": "https://date.nager.at/api/v3/PublicHolidays/2025/US",
+      "headers": null
+    }
+  ]
+}
+```
+- Home Assistant sensor uses auth token
+- Public holidays API has headers disabled (`headers: null`)
+
+**Example 3: Different Auth per Source**
+```json
+{
+  "extraDataUrl": [
+    {
+      "url": "http://api1.example.com/data",
+      "headers": { "X-API-Key": "key1" }
+    },
+    {
+      "url": "http://api2.example.com/data",
+      "headers": { "X-API-Key": "key2" }
+    },
+    {
+      "url": "http://public-api.com/data",
+      "headers": {}
+    }
+  ]
+}
+```
+Each API has its own authentication or none at all.
+
+### Template Usage with Multiple Sources
+
+**Array destructuring (recommended):**
+```javascript
+module.exports = function(data) {
+  const { events, config, extraData } = data;
+  const [weather, tasks, holidays] = extraData;
+  
+  return `
+    <html>
+      <body>
+        <div>Temp: ${weather.temperature}°C</div>
+        <div>Tasks: ${tasks.items.length}</div>
+        <div>Next holiday: ${holidays[0]?.name}</div>
+      </body>
+    </html>
+  `;
+};
+```
+
+**Array indexing:**
+```javascript
+const weather = extraData[0];
+const tasks = extraData[1];
+```
+
+**Backwards compatible template (handles both formats):**
+```javascript
+module.exports = function(data) {
+  const { extraData } = data;
+  
+  // Detect format
+  if (Array.isArray(extraData)) {
+    // Advanced array format
+    const [weather] = extraData;
+    return renderWithWeather(weather);
+  } else {
+    // Legacy object format
+    return renderWithWeather(extraData);
+  }
+};
+```
+
+### Migration from Single to Multiple Sources
+
+**Before (single source):**
+```json
+{
+  "extraDataUrl": "http://localhost:3001/weather",
+  "extraDataHeaders": { "Authorization": "Bearer token" },
+  "extraDataCacheTtl": 300
+}
+```
+
+Template:
+```javascript
+const { extraData } = data;
+const temp = extraData.temperature;
+```
+
+**After (array with single source):**
+```json
+{
+  "extraDataHeaders": { "Authorization": "Bearer token" },
+  "extraDataCacheTtl": 300,
+  "extraDataUrl": [
+    { "url": "http://localhost:3001/weather" }
+  ]
+}
+```
+
+Template:
+```javascript
+const { extraData } = data;
+const [weather] = extraData;  // Note: extraData is now an array
+const temp = weather.temperature;
+```
+
+**After (adding more sources):**
+```json
+{
+  "extraDataHeaders": { "Authorization": "Bearer token" },
+  "extraDataCacheTtl": 300,
+  "extraDataUrl": [
+    { "url": "http://localhost:3001/weather" },
+    { "url": "http://localhost:3001/tasks", "cacheTtl": 60 }
+  ]
+}
+```
+
+Template:
+```javascript
+const { extraData } = data;
+const [weather, tasks] = extraData;
+const temp = weather.temperature;
+const taskCount = tasks.items.length;
+```
+
+### Header Opt-Out Options
+
+To disable global headers for a specific URL, use any of these:
+
+```json
+"extraDataUrl": [
+  { "url": "http://public-api.com/data", "headers": null },
+  { "url": "http://public-api.com/data", "headers": "" },
+  { "url": "http://public-api.com/data", "headers": {} }
+]
+```
+
+All three options prevent global `extraDataHeaders` from being applied to that URL.
 
 ---
 
@@ -194,48 +454,26 @@ module.exports = function(data) {
 
 ### Multiple Data Sources
 
-Fetch multiple endpoints by creating a simple aggregation service:
+**Advanced feature:** Native support for fetching from multiple APIs simultaneously!
 
-**Option 1: Home Assistant REST sensor**
-```yaml
-# configuration.yaml
-rest:
-  - resource: http://api1.example.com/data
-    sensor:
-      - name: "Data Source 1"
-        value_template: "{{ value_json }}"
+See the [Multiple Data Sources (Advanced)](#multiple-data-sources-advanced) section above for complete documentation.
 
-# Then use:
-"extraDataUrl": "http://homeassistant.local:8123/api/states/sensor.data_source_1"
-```
-
-**Option 2: Simple aggregation endpoint**
-
-Create a simple Node.js endpoint that fetches multiple sources:
-
-```javascript
-// aggregator.js
-const express = require('express');
-const app = express();
-
-app.get('/aggregate', async (req, res) => {
-  const [weather, tasks] = await Promise.all([
-    fetch('http://weather-api.com/data').then(r => r.json()),
-    fetch('http://tasks-api.com/data').then(r => r.json())
-  ]);
-  
-  res.json({ weather, tasks });
-});
-
-app.listen(3001);
-```
-
-Then use:
+**Quick example:**
 ```json
 {
-  "extraDataUrl": "http://localhost:3001/aggregate"
+  "extraDataUrl": [
+    { "url": "http://localhost:3001/weather" },
+    { "url": "http://localhost:3001/tasks", "cacheTtl": 60 }
+  ]
 }
 ```
+
+Template:
+```javascript
+const [weather, tasks] = extraData;
+```
+
+Previously, you needed to create an aggregation endpoint. This is no longer necessary - just use the array format!
 
 ---
 

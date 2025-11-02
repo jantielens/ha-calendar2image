@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.3.0] - 2025-11-02
+
+### Added
+
+- **Multiple Extra Data Sources** - `extraDataUrl` now supports array format for fetching from multiple APIs simultaneously
+  - Each source can have independent `headers` and `cacheTtl` configuration
+  - Global `extraDataHeaders` and `extraDataCacheTtl` serve as defaults
+  - Header opt-out: Use `null`, `""`, or `{}` to disable global headers for specific URLs
+  - Sources are fetched in parallel for optimal performance
+  - Template data structure: string format → object, array format → array
+  - Full backwards compatibility with existing single-string format
+
+### Changed
+
+- **Template Context** - `extraData` is now an array when using array format for `extraDataUrl`, remains an object for legacy string format
+- **Documentation** - Updated all guides with multi-source examples and migration instructions
+
+See [Extra Data Guide](docs-user/EXTRA-DATA.md) for complete documentation.
+
 ## [0.2.0] - 2025-11-02
 
 ### Added

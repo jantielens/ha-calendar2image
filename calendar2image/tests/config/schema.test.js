@@ -252,6 +252,240 @@ describe('config schema', () => {
       const result = validateConfig(config);
       expect(result.valid).toBe(true);
     });
+
+    describe('extraDataUrl validation', () => {
+      it('should accept string format extraDataUrl', () => {
+        const config = {
+          icsUrl: 'https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics',
+          template: 'week-view',
+          extraDataUrl: 'http://localhost:3001/weather'
+        };
+
+        const result = validateConfig(config);
+        expect(result.valid).toBe(true);
+      });
+
+      it('should accept array format with single source', () => {
+        const config = {
+          icsUrl: 'https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics',
+          template: 'week-view',
+          extraDataUrl: [
+            { url: 'http://localhost:3001/weather' }
+          ]
+        };
+
+        const result = validateConfig(config);
+        expect(result.valid).toBe(true);
+      });
+
+      it('should accept array format with multiple sources', () => {
+        const config = {
+          icsUrl: 'https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics',
+          template: 'week-view',
+          extraDataUrl: [
+            { url: 'http://localhost:3001/weather' },
+            { url: 'http://localhost:3001/tasks' }
+          ]
+        };
+
+        const result = validateConfig(config);
+        expect(result.valid).toBe(true);
+      });
+
+      it('should accept empty array for extraDataUrl', () => {
+        const config = {
+          icsUrl: 'https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics',
+          template: 'week-view',
+          extraDataUrl: []
+        };
+
+        const result = validateConfig(config);
+        expect(result.valid).toBe(true);
+      });
+
+      it('should accept array with custom headers per source', () => {
+        const config = {
+          icsUrl: 'https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics',
+          template: 'week-view',
+          extraDataUrl: [
+            { url: 'http://localhost:3001/weather', headers: { 'Authorization': 'Bearer token123' } },
+            { url: 'http://localhost:3001/tasks', headers: { 'X-API-Key': 'custom' } }
+          ]
+        };
+
+        const result = validateConfig(config);
+        expect(result.valid).toBe(true);
+      });
+
+      it('should accept array with custom cacheTtl per source', () => {
+        const config = {
+          icsUrl: 'https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics',
+          template: 'week-view',
+          extraDataUrl: [
+            { url: 'http://localhost:3001/weather', cacheTtl: 600 },
+            { url: 'http://localhost:3001/tasks', cacheTtl: 60 }
+          ]
+        };
+
+        const result = validateConfig(config);
+        expect(result.valid).toBe(true);
+      });
+
+      it('should accept empty string to disable headers', () => {
+        const config = {
+          icsUrl: 'https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics',
+          template: 'week-view',
+          extraDataUrl: [
+            { url: 'http://localhost:3001/public', headers: '' }
+          ]
+        };
+
+        const result = validateConfig(config);
+        expect(result.valid).toBe(true);
+      });
+
+      it('should accept empty object to disable headers', () => {
+        const config = {
+          icsUrl: 'https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics',
+          template: 'week-view',
+          extraDataUrl: [
+            { url: 'http://localhost:3001/public', headers: {} }
+          ]
+        };
+
+        const result = validateConfig(config);
+        expect(result.valid).toBe(true);
+      });
+
+      it('should accept null to disable headers', () => {
+        const config = {
+          icsUrl: 'https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics',
+          template: 'week-view',
+          extraDataUrl: [
+            { url: 'http://localhost:3001/public', headers: null }
+          ]
+        };
+
+        const result = validateConfig(config);
+        expect(result.valid).toBe(true);
+      });
+
+      it('should accept array with mixed configuration', () => {
+        const config = {
+          icsUrl: 'https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics',
+          template: 'week-view',
+          extraDataUrl: [
+            { url: 'http://localhost:3001/weather' },
+            { url: 'http://localhost:3001/tasks', cacheTtl: 60 },
+            { url: 'http://localhost:3001/public', headers: null },
+            { url: 'http://localhost:3001/todos', headers: { 'X-API-Key': 'custom' }, cacheTtl: 120 }
+          ]
+        };
+
+        const result = validateConfig(config);
+        expect(result.valid).toBe(true);
+      });
+
+      it('should reject array entry without url', () => {
+        const config = {
+          icsUrl: 'https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics',
+          template: 'week-view',
+          extraDataUrl: [
+            { headers: { 'Authorization': 'Bearer token' } }
+          ]
+        };
+
+        const result = validateConfig(config);
+        expect(result.valid).toBe(false);
+      });
+
+      it('should reject array entry with empty url', () => {
+        const config = {
+          icsUrl: 'https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics',
+          template: 'week-view',
+          extraDataUrl: [
+            { url: '' }
+          ]
+        };
+
+        const result = validateConfig(config);
+        expect(result.valid).toBe(false);
+      });
+
+      it('should reject array entry with invalid url protocol', () => {
+        const config = {
+          icsUrl: 'https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics',
+          template: 'week-view',
+          extraDataUrl: [
+            { url: 'ftp://localhost:3001/data' }
+          ]
+        };
+
+        const result = validateConfig(config);
+        expect(result.valid).toBe(false);
+      });
+
+      it('should reject array entry with negative cacheTtl', () => {
+        const config = {
+          icsUrl: 'https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics',
+          template: 'week-view',
+          extraDataUrl: [
+            { url: 'http://localhost:3001/weather', cacheTtl: -10 }
+          ]
+        };
+
+        const result = validateConfig(config);
+        expect(result.valid).toBe(false);
+      });
+
+      it('should reject array entry with unknown properties', () => {
+        const config = {
+          icsUrl: 'https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics',
+          template: 'week-view',
+          extraDataUrl: [
+            { url: 'http://localhost:3001/weather', unknownProp: 'value' }
+          ]
+        };
+
+        const result = validateConfig(config);
+        expect(result.valid).toBe(false);
+      });
+
+      it('should reject string extraDataUrl without http/https', () => {
+        const config = {
+          icsUrl: 'https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics',
+          template: 'week-view',
+          extraDataUrl: 'ftp://example.com/data'
+        };
+
+        const result = validateConfig(config);
+        expect(result.valid).toBe(false);
+      });
+
+      it('should accept extraDataHeaders with extraDataUrl string', () => {
+        const config = {
+          icsUrl: 'https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics',
+          template: 'week-view',
+          extraDataUrl: 'http://localhost:3001/weather',
+          extraDataHeaders: { 'Authorization': 'Bearer token' }
+        };
+
+        const result = validateConfig(config);
+        expect(result.valid).toBe(true);
+      });
+
+      it('should accept extraDataCacheTtl with extraDataUrl string', () => {
+        const config = {
+          icsUrl: 'https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics',
+          template: 'week-view',
+          extraDataUrl: 'http://localhost:3001/weather',
+          extraDataCacheTtl: 600
+        };
+
+        const result = validateConfig(config);
+        expect(result.valid).toBe(true);
+      });
+    });
   });
 
   describe('applyDefaults', () => {

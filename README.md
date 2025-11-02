@@ -188,9 +188,9 @@ Browse **[template samples](calendar2image/docs-user/template-samples/)** for re
 
 ## 🌐 Extra Data Integration
 
-Fetch additional data (weather, tasks, etc.) from any JSON API:
+Fetch additional data (weather, tasks, etc.) from any JSON API - now with **multi-source support**!
 
-**Configuration:**
+**Single source (simple):**
 ```json
 {
   "extraDataUrl": "http://homeassistant.local:8123/api/states/sensor.weather",
@@ -201,17 +201,32 @@ Fetch additional data (weather, tasks, etc.) from any JSON API:
 }
 ```
 
+**Multiple sources (advanced):**
+```json
+{
+  "extraDataUrl": [
+    { "url": "http://localhost:3001/weather" },
+    { "url": "http://localhost:3001/tasks", "cacheTtl": 60 }
+  ]
+}
+```
+
 **Template usage:**
 ```javascript
 module.exports = function(data) {
   const { extraData } = data;
+  
+  // Single source: extraData is object
   const temp = extraData.state || 'N/A';
+  
+  // Multiple sources: extraData is array
+  const [weather, tasks] = extraData;
   
   return `<html><body>Temperature: ${temp}°C</body></html>`;
 };
 ```
 
-See the **[Extra Data Guide](calendar2image/docs-user/EXTRA-DATA.md)** for examples and best practices.
+See the **[Extra Data Guide](calendar2image/docs-user/EXTRA-DATA.md)** for complete documentation, examples, and migration guide.
 
 ## 💡 Use Cases
 

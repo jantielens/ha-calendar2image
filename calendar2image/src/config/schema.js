@@ -73,9 +73,44 @@ const configSchema = {
       description: 'IANA timezone name to convert event times (e.g., "Europe/Berlin", "America/New_York")'
     },
     extraDataUrl: {
-      type: 'string',
-      description: 'URL to fetch additional JSON data for templates (e.g., weather, holidays)',
-      pattern: '^https?://'
+      oneOf: [
+        {
+          type: 'string',
+          description: 'URL to fetch additional JSON data for templates (e.g., weather, holidays)',
+          pattern: '^https?://'
+        },
+        {
+          type: 'array',
+          description: 'Array of data sources with per-source configuration',
+          items: {
+            type: 'object',
+            properties: {
+              url: {
+                type: 'string',
+                description: 'URL to fetch JSON data from',
+                pattern: '^https?://',
+                minLength: 1
+              },
+              headers: {
+                oneOf: [
+                  { type: 'object', additionalProperties: { type: 'string' } },
+                  { type: 'string', maxLength: 0 },
+                  { type: 'null' }
+                ],
+                description: 'HTTP headers for this URL (overrides global). Use empty string, empty object, or null to disable global headers.'
+              },
+              cacheTtl: {
+                type: 'number',
+                description: 'Cache TTL in seconds for this URL (overrides global)',
+                minimum: 0
+              }
+            },
+            required: ['url'],
+            additionalProperties: false
+          },
+          minItems: 0
+        }
+      ]
     },
     extraDataCacheTtl: {
       type: 'number',
