@@ -182,7 +182,17 @@ describe('Docker Integration Tests', () => {
     // Clean up test data
     const configDir = path.resolve(__dirname, '../../test-data');
     if (fs.existsSync(configDir)) {
-      fs.rmSync(configDir, { recursive: true, force: true });
+      try {
+        // Try to change permissions first (helps with Docker-created files)
+        execSync(`chmod -R 777 "${configDir}"`, { stdio: 'ignore' });
+      } catch (error) {
+        // Ignore permission errors on chmod
+      }
+      try {
+        fs.rmSync(configDir, { recursive: true, force: true });
+      } catch (error) {
+        console.warn('Warning: Could not remove test-data directory:', error.message);
+      }
     }
   }, 30000);
 
