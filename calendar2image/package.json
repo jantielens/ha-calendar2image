@@ -1,6 +1,6 @@
 {
   "name": "ha-calendar2image",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Home Assistant add-on to generate images from calendar data",
   "main": "src/index.js",
   "scripts": {
