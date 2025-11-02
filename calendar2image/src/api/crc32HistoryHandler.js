@@ -536,6 +536,16 @@ function generateHistoryPageHTML(index, config, baseUrl) {
             <div class="subtext">\${changeRate}% of blocks</div>
           </div>
           <div class="stat-card">
+            <h3>Changes in Past Hour</h3>
+            <p>\${stats.changesInPastHour}</p>
+            <div class="subtext">Last 60 minutes</div>
+          </div>
+          <div class="stat-card">
+            <h3>Changes in Past 24 Hours</h3>
+            <p>\${stats.changesInPast24Hours}</p>
+            <div class="subtext">Last day</div>
+          </div>
+          <div class="stat-card">
             <h3>Unique CRC32s</h3>
             <p>\${stats.uniqueCRC32Values}</p>
             <div class="subtext">Different CRC32s</div>
