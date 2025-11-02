@@ -1,0 +1,103 @@
+name: PR Checks
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  version-check:
+    name: Version Update Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout PR
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get base branch versions
+        id: base-versions
+        run: |
+          git checkout origin/${{ github.base_ref }}
+          PACKAGE_VERSION=$(jq -r '.version' calendar2image/package.json)
+          CONFIG_VERSION=$(grep '^version:' calendar2image/config.yaml | awk '{print $2}' | tr -d '"')
+          echo "package_version=$PACKAGE_VERSION" >> $GITHUB_OUTPUT
+          echo "config_version=$CONFIG_VERSION" >> $GITHUB_OUTPUT
+
+      - name: Get PR branch versions
+        id: pr-versions
+        run: |
+          git checkout ${{ github.head_ref }}
+          PACKAGE_VERSION=$(jq -r '.version' calendar2image/package.json)
+          CONFIG_VERSION=$(grep '^version:' calendar2image/config.yaml | awk '{print $2}' | tr -d '"')
+          echo "package_version=$PACKAGE_VERSION" >> $GITHUB_OUTPUT
+          echo "config_version=$CONFIG_VERSION" >> $GITHUB_OUTPUT
+
+      - name: Compare versions
+        run: |
+          BASE_PKG="${{ steps.base-versions.outputs.package_version }}"
+          BASE_CFG="${{ steps.base-versions.outputs.config_version }}"
+          PR_PKG="${{ steps.pr-versions.outputs.package_version }}"
+          PR_CFG="${{ steps.pr-versions.outputs.config_version }}"
+          
+          echo "Base branch versions:"
+          echo "  package.json: $BASE_PKG"
+          echo "  config.yaml: $BASE_CFG"
+          echo ""
+          echo "PR branch versions:"
+          echo "  package.json: $PR_PKG"
+          echo "  config.yaml: $PR_CFG"
+          echo ""
+          
+          FAILED=0
+          
+          if [ "$BASE_PKG" == "$PR_PKG" ]; then
+            echo "❌ ERROR: package.json version not updated ($BASE_PKG -> $PR_PKG)"
+            FAILED=1
+          else
+            echo "✅ package.json version updated: $BASE_PKG -> $PR_PKG"
+          fi
+          
+          if [ "$BASE_CFG" == "$PR_CFG" ]; then
+            echo "❌ ERROR: config.yaml version not updated ($BASE_CFG -> $PR_CFG)"
+            FAILED=1
+          else
+            echo "✅ config.yaml version updated: $BASE_CFG -> $PR_CFG"
+          fi
+          
+          if [ "$PR_PKG" != "$PR_CFG" ]; then
+            echo "❌ ERROR: Versions do not match (package.json: $PR_PKG, config.yaml: $PR_CFG)"
+            FAILED=1
+          else
+            echo "✅ Versions match in both files"
+          fi
+          
+          if [ $FAILED -eq 1 ]; then
+            exit 1
+          fi
+
+  tests:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    needs: version-check
+    defaults:
+      run:
+        working-directory: calendar2image
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: calendar2image/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run test:all
+        run: npm run test:all
+
+      - name: Run test:ci
+        run: npm run test:ci
