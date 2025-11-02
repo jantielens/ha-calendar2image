@@ -96,8 +96,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run test:all
-        run: npm run test:all
+      - name: Run test:local
+        run: npm run test:local
 
       - name: Run test:ci
         run: npm run test:ci
+
+      - name: Run test:coverage (informational)
+        run: npm run test:coverage || true
+        continue-on-error: true
