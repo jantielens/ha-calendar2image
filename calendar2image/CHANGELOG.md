@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.2.0] - 2025-11-02
+
+### Added
+
+- **CRC32 History Statistics** - Added "Changes in Past Hour" and "Changes in Past 24 Hours" statistics to the CRC32 history page for better monitoring of calendar update frequency
+
 ## [0.1.0] - 2025-10-31
 
 First release with complete calendar-to-image generation functionality.
