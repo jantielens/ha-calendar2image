@@ -7,6 +7,61 @@ const { calculateCRC32 } = require('../utils/crc32');
 const { fetchExtraData } = require('../extraData');
 
 /**
+ * Fetch extra data based on config format (string or array)
+ * 
+ * @param {Object} config - Configuration object
+ * @returns {Promise<Object|Array>} Extra data as object (string format) or array (array format)
+ */
+async function fetchExtraDataForConfig(config) {
+  if (!config.extraDataUrl) {
+    return {};
+  }
+
+  // Legacy format: single string URL
+  if (typeof config.extraDataUrl === 'string') {
+    return fetchExtraData(config.extraDataUrl, {
+      cacheTtl: config.extraDataCacheTtl,
+      headers: config.extraDataHeaders || {}
+    });
+  }
+
+  // New format: array of sources
+  if (Array.isArray(config.extraDataUrl)) {
+    // Fetch all sources in parallel
+    const promises = config.extraDataUrl.map(source => {
+      // Determine headers for this source
+      let headers;
+      if (source.headers !== undefined) {
+        // Headers explicitly set for this source
+        if (source.headers === '' || source.headers === null || 
+            (typeof source.headers === 'object' && Object.keys(source.headers).length === 0)) {
+          // Opt-out: use no headers
+          headers = {};
+        } else {
+          // Use source-specific headers
+          headers = source.headers;
+        }
+      } else {
+        // No headers specified for this source, use global
+        headers = config.extraDataHeaders || {};
+      }
+
+      // Determine cacheTtl for this source
+      const cacheTtl = source.cacheTtl !== undefined 
+        ? source.cacheTtl 
+        : config.extraDataCacheTtl;
+
+      return fetchExtraData(source.url, { cacheTtl, headers });
+    });
+
+    return Promise.all(promises);
+  }
+
+  // Fallback
+  return {};
+}
+
+/**
  * Main API handler for generating calendar images
  * Orchestrates the entire pipeline: config -> fetch -> render -> generate
  * 
@@ -39,18 +94,16 @@ async function generateCalendarImage(index, options = {}) {
         expandRecurringTo: config.expandRecurringTo,
         timezone: config.timezone
       }),
-      config.extraDataUrl
-        ? fetchExtraData(config.extraDataUrl, {
-            cacheTtl: config.extraDataCacheTtl,
-            headers: config.extraDataHeaders || {}
-          })
-        : Promise.resolve({})
+      fetchExtraDataForConfig(config)
     ]);
     
     const fetchDuration = Date.now() - startFetch;
     console.log(`[API] Fetched ${events.length} events in ${fetchDuration}ms`);
     if (config.extraDataUrl) {
-      console.log(`[API] Extra data keys: ${Object.keys(extraData).join(', ') || 'none'}`);
+      const dataKeys = Array.isArray(extraData) 
+        ? `array with ${extraData.length} sources`
+        : Object.keys(extraData).join(', ') || 'none';
+      console.log(`[API] Extra data: ${dataKeys}`);
     }
 
     // Step 3: Render template

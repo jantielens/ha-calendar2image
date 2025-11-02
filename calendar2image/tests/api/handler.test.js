@@ -3,12 +3,14 @@ const { loadConfig } = require('../../src/config');
 const { getCalendarEvents } = require('../../src/calendar');
 const { renderTemplate } = require('../../src/templates');
 const { generateImage } = require('../../src/image');
+const { fetchExtraData } = require('../../src/extraData');
 
 // Mock all dependencies
 jest.mock('../../src/config');
 jest.mock('../../src/calendar');
 jest.mock('../../src/templates');
 jest.mock('../../src/image');
+jest.mock('../../src/extraData');
 
 describe('API Handler', () => {
   // Sample test data
@@ -196,6 +198,331 @@ describe('API Handler', () => {
         imageType: 'jpg'
       }));
       expect(result.contentType).toBe('image/jpeg');
+    });
+
+    describe('extraData handling', () => {
+      it('should fetch extraData with string URL format', async () => {
+        const configWithExtraData = {
+          ...mockConfig,
+          extraDataUrl: 'http://localhost:3001/weather',
+          extraDataHeaders: { 'Authorization': 'Bearer token' },
+          extraDataCacheTtl: 300
+        };
+        const mockExtraData = { temperature: 22, condition: 'sunny' };
+
+        loadConfig.mockResolvedValue(configWithExtraData);
+        getCalendarEvents.mockResolvedValue(mockEvents);
+        fetchExtraData.mockResolvedValue(mockExtraData);
+        renderTemplate.mockResolvedValue(mockHtml);
+        generateImage.mockResolvedValue(mockImageResult);
+
+        await generateCalendarImage(0);
+
+        expect(fetchExtraData).toHaveBeenCalledWith('http://localhost:3001/weather', {
+          cacheTtl: 300,
+          headers: { 'Authorization': 'Bearer token' }
+        });
+        expect(renderTemplate).toHaveBeenCalledWith(configWithExtraData.template, {
+          events: mockEvents,
+          config: configWithExtraData,
+          extraData: mockExtraData
+        });
+      });
+
+      it('should fetch extraData with array format - single source', async () => {
+        const configWithExtraData = {
+          ...mockConfig,
+          extraDataUrl: [
+            { url: 'http://localhost:3001/weather' }
+          ],
+          extraDataCacheTtl: 300
+        };
+        const mockExtraData = { temperature: 22, condition: 'sunny' };
+
+        loadConfig.mockResolvedValue(configWithExtraData);
+        getCalendarEvents.mockResolvedValue(mockEvents);
+        fetchExtraData.mockResolvedValue(mockExtraData);
+        renderTemplate.mockResolvedValue(mockHtml);
+        generateImage.mockResolvedValue(mockImageResult);
+
+        await generateCalendarImage(0);
+
+        expect(fetchExtraData).toHaveBeenCalledTimes(1);
+        expect(fetchExtraData).toHaveBeenCalledWith('http://localhost:3001/weather', {
+          cacheTtl: 300,
+          headers: {}
+        });
+        expect(renderTemplate).toHaveBeenCalledWith(configWithExtraData.template, {
+          events: mockEvents,
+          config: configWithExtraData,
+          extraData: [mockExtraData]
+        });
+      });
+
+      it('should fetch extraData with array format - multiple sources', async () => {
+        const configWithExtraData = {
+          ...mockConfig,
+          extraDataUrl: [
+            { url: 'http://localhost:3001/weather' },
+            { url: 'http://localhost:3001/tasks' }
+          ],
+          extraDataCacheTtl: 300
+        };
+        const mockWeather = { temperature: 22, condition: 'sunny' };
+        const mockTasks = { tasks: ['Buy milk', 'Call mom'] };
+
+        loadConfig.mockResolvedValue(configWithExtraData);
+        getCalendarEvents.mockResolvedValue(mockEvents);
+        fetchExtraData
+          .mockResolvedValueOnce(mockWeather)
+          .mockResolvedValueOnce(mockTasks);
+        renderTemplate.mockResolvedValue(mockHtml);
+        generateImage.mockResolvedValue(mockImageResult);
+
+        await generateCalendarImage(0);
+
+        expect(fetchExtraData).toHaveBeenCalledTimes(2);
+        expect(renderTemplate).toHaveBeenCalledWith(configWithExtraData.template, {
+          events: mockEvents,
+          config: configWithExtraData,
+          extraData: [mockWeather, mockTasks]
+        });
+      });
+
+      it('should use per-source cacheTtl overrides', async () => {
+        const configWithExtraData = {
+          ...mockConfig,
+          extraDataUrl: [
+            { url: 'http://localhost:3001/weather', cacheTtl: 600 },
+            { url: 'http://localhost:3001/tasks', cacheTtl: 60 }
+          ],
+          extraDataCacheTtl: 300
+        };
+
+        loadConfig.mockResolvedValue(configWithExtraData);
+        getCalendarEvents.mockResolvedValue(mockEvents);
+        fetchExtraData.mockResolvedValue({});
+        renderTemplate.mockResolvedValue(mockHtml);
+        generateImage.mockResolvedValue(mockImageResult);
+
+        await generateCalendarImage(0);
+
+        expect(fetchExtraData).toHaveBeenNthCalledWith(1, 'http://localhost:3001/weather', {
+          cacheTtl: 600,
+          headers: {}
+        });
+        expect(fetchExtraData).toHaveBeenNthCalledWith(2, 'http://localhost:3001/tasks', {
+          cacheTtl: 60,
+          headers: {}
+        });
+      });
+
+      it('should use per-source headers overrides', async () => {
+        const configWithExtraData = {
+          ...mockConfig,
+          extraDataUrl: [
+            { url: 'http://localhost:3001/weather', headers: { 'X-Weather-Key': 'abc' } },
+            { url: 'http://localhost:3001/tasks', headers: { 'X-Tasks-Key': 'xyz' } }
+          ],
+          extraDataHeaders: { 'Authorization': 'Bearer global' },
+          extraDataCacheTtl: 300
+        };
+
+        loadConfig.mockResolvedValue(configWithExtraData);
+        getCalendarEvents.mockResolvedValue(mockEvents);
+        fetchExtraData.mockResolvedValue({});
+        renderTemplate.mockResolvedValue(mockHtml);
+        generateImage.mockResolvedValue(mockImageResult);
+
+        await generateCalendarImage(0);
+
+        expect(fetchExtraData).toHaveBeenNthCalledWith(1, 'http://localhost:3001/weather', {
+          cacheTtl: 300,
+          headers: { 'X-Weather-Key': 'abc' }
+        });
+        expect(fetchExtraData).toHaveBeenNthCalledWith(2, 'http://localhost:3001/tasks', {
+          cacheTtl: 300,
+          headers: { 'X-Tasks-Key': 'xyz' }
+        });
+      });
+
+      it('should use global headers when not specified per-source', async () => {
+        const configWithExtraData = {
+          ...mockConfig,
+          extraDataUrl: [
+            { url: 'http://localhost:3001/weather' },
+            { url: 'http://localhost:3001/tasks' }
+          ],
+          extraDataHeaders: { 'Authorization': 'Bearer global' },
+          extraDataCacheTtl: 300
+        };
+
+        loadConfig.mockResolvedValue(configWithExtraData);
+        getCalendarEvents.mockResolvedValue(mockEvents);
+        fetchExtraData.mockResolvedValue({});
+        renderTemplate.mockResolvedValue(mockHtml);
+        generateImage.mockResolvedValue(mockImageResult);
+
+        await generateCalendarImage(0);
+
+        expect(fetchExtraData).toHaveBeenNthCalledWith(1, 'http://localhost:3001/weather', {
+          cacheTtl: 300,
+          headers: { 'Authorization': 'Bearer global' }
+        });
+        expect(fetchExtraData).toHaveBeenNthCalledWith(2, 'http://localhost:3001/tasks', {
+          cacheTtl: 300,
+          headers: { 'Authorization': 'Bearer global' }
+        });
+      });
+
+      it('should disable global headers with empty string', async () => {
+        const configWithExtraData = {
+          ...mockConfig,
+          extraDataUrl: [
+            { url: 'http://localhost:3001/public', headers: '' }
+          ],
+          extraDataHeaders: { 'Authorization': 'Bearer token' },
+          extraDataCacheTtl: 300
+        };
+
+        loadConfig.mockResolvedValue(configWithExtraData);
+        getCalendarEvents.mockResolvedValue(mockEvents);
+        fetchExtraData.mockResolvedValue({});
+        renderTemplate.mockResolvedValue(mockHtml);
+        generateImage.mockResolvedValue(mockImageResult);
+
+        await generateCalendarImage(0);
+
+        expect(fetchExtraData).toHaveBeenCalledWith('http://localhost:3001/public', {
+          cacheTtl: 300,
+          headers: {}
+        });
+      });
+
+      it('should disable global headers with empty object', async () => {
+        const configWithExtraData = {
+          ...mockConfig,
+          extraDataUrl: [
+            { url: 'http://localhost:3001/public', headers: {} }
+          ],
+          extraDataHeaders: { 'Authorization': 'Bearer token' },
+          extraDataCacheTtl: 300
+        };
+
+        loadConfig.mockResolvedValue(configWithExtraData);
+        getCalendarEvents.mockResolvedValue(mockEvents);
+        fetchExtraData.mockResolvedValue({});
+        renderTemplate.mockResolvedValue(mockHtml);
+        generateImage.mockResolvedValue(mockImageResult);
+
+        await generateCalendarImage(0);
+
+        expect(fetchExtraData).toHaveBeenCalledWith('http://localhost:3001/public', {
+          cacheTtl: 300,
+          headers: {}
+        });
+      });
+
+      it('should disable global headers with null', async () => {
+        const configWithExtraData = {
+          ...mockConfig,
+          extraDataUrl: [
+            { url: 'http://localhost:3001/public', headers: null }
+          ],
+          extraDataHeaders: { 'Authorization': 'Bearer token' },
+          extraDataCacheTtl: 300
+        };
+
+        loadConfig.mockResolvedValue(configWithExtraData);
+        getCalendarEvents.mockResolvedValue(mockEvents);
+        fetchExtraData.mockResolvedValue({});
+        renderTemplate.mockResolvedValue(mockHtml);
+        generateImage.mockResolvedValue(mockImageResult);
+
+        await generateCalendarImage(0);
+
+        expect(fetchExtraData).toHaveBeenCalledWith('http://localhost:3001/public', {
+          cacheTtl: 300,
+          headers: {}
+        });
+      });
+
+      it('should handle mixed configuration with some defaults', async () => {
+        const configWithExtraData = {
+          ...mockConfig,
+          extraDataUrl: [
+            { url: 'http://localhost:3001/weather' },
+            { url: 'http://localhost:3001/tasks', cacheTtl: 60 },
+            { url: 'http://localhost:3001/public', headers: null },
+            { url: 'http://localhost:3001/todos', headers: { 'X-API-Key': 'custom' }, cacheTtl: 120 }
+          ],
+          extraDataHeaders: { 'Authorization': 'Bearer global' },
+          extraDataCacheTtl: 300
+        };
+
+        loadConfig.mockResolvedValue(configWithExtraData);
+        getCalendarEvents.mockResolvedValue(mockEvents);
+        fetchExtraData.mockResolvedValue({});
+        renderTemplate.mockResolvedValue(mockHtml);
+        generateImage.mockResolvedValue(mockImageResult);
+
+        await generateCalendarImage(0);
+
+        expect(fetchExtraData).toHaveBeenNthCalledWith(1, 'http://localhost:3001/weather', {
+          cacheTtl: 300,
+          headers: { 'Authorization': 'Bearer global' }
+        });
+        expect(fetchExtraData).toHaveBeenNthCalledWith(2, 'http://localhost:3001/tasks', {
+          cacheTtl: 60,
+          headers: { 'Authorization': 'Bearer global' }
+        });
+        expect(fetchExtraData).toHaveBeenNthCalledWith(3, 'http://localhost:3001/public', {
+          cacheTtl: 300,
+          headers: {}
+        });
+        expect(fetchExtraData).toHaveBeenNthCalledWith(4, 'http://localhost:3001/todos', {
+          cacheTtl: 120,
+          headers: { 'X-API-Key': 'custom' }
+        });
+      });
+
+      it('should handle empty array extraDataUrl', async () => {
+        const configWithExtraData = {
+          ...mockConfig,
+          extraDataUrl: [],
+          extraDataCacheTtl: 300
+        };
+
+        loadConfig.mockResolvedValue(configWithExtraData);
+        getCalendarEvents.mockResolvedValue(mockEvents);
+        renderTemplate.mockResolvedValue(mockHtml);
+        generateImage.mockResolvedValue(mockImageResult);
+
+        await generateCalendarImage(0);
+
+        expect(fetchExtraData).not.toHaveBeenCalled();
+        expect(renderTemplate).toHaveBeenCalledWith(configWithExtraData.template, {
+          events: mockEvents,
+          config: configWithExtraData,
+          extraData: []
+        });
+      });
+
+      it('should not fetch extraData when not configured', async () => {
+        loadConfig.mockResolvedValue(mockConfig);
+        getCalendarEvents.mockResolvedValue(mockEvents);
+        renderTemplate.mockResolvedValue(mockHtml);
+        generateImage.mockResolvedValue(mockImageResult);
+
+        await generateCalendarImage(0);
+
+        expect(fetchExtraData).not.toHaveBeenCalled();
+        expect(renderTemplate).toHaveBeenCalledWith(mockConfig.template, {
+          events: mockEvents,
+          config: mockConfig,
+          extraData: {}
+        });
+      });
     });
   });
 
