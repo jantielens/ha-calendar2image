@@ -183,12 +183,8 @@ describe('Docker Integration Tests', () => {
     const configDir = path.resolve(__dirname, '../../test-data');
     if (fs.existsSync(configDir)) {
       try {
-        // Try to change permissions first (helps with Docker-created files)
-        execSync(`chmod -R 777 "${configDir}"`, { stdio: 'ignore' });
-      } catch (error) {
-        // Ignore permission errors on chmod
-      }
-      try {
+        // Use Docker to remove files with proper permissions
+        execSync(`docker run --rm -v "${configDir}:/data" alpine rm -rf /data/*`, { stdio: 'ignore' });
         fs.rmSync(configDir, { recursive: true, force: true });
       } catch (error) {
         console.warn('Warning: Could not remove test-data directory:', error.message);
