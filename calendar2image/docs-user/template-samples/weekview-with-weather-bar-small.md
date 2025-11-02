@@ -1,10 +1,12 @@
-# Week View with Weather Bar template
+# Week View with Weather Bar template (Small)
 
 ## Description
 
-This template displays a week view calendar in a simple table layout, with each day represented as a column. Each day's cell includes the day name, day number, weather icon, and min/max temperature at the top. Below that, events for the day are listed with their titles and times. If there are no events for a day, a "no events" message is shown.
+This template displays a week view calendar in a table layout with smaller font sizes, optimized for larger e-ink displays like the InkPlate 6 Flick. Each day is represented as a row with the day name, day number, weather icon, and min/max temperature in the left cell. The right cell shows events with their times and titles, with a colored vertical bar indicator. Events are displayed with time on the left and title on the right. If there are no events for a day, a "no events" message is shown.
 
-<img src="weekview-with-weather-bar.png" width="400">
+The top of the display includes an hourly weather forecast bar for today, showing time blocks with weather icons and temperatures.
+
+<img src="weekview-with-weather-bar-small.png" width="400">
 
 ## Configuration
 
@@ -18,12 +20,12 @@ The template requires weather data from the Open-Meteo API. To customize the wea
 
 Example configuration for Antwerp, Belgium:
 
-````json
+```json
 {
   "icsUrl": "...",
-  "template": "weekview-with-weather-bar.js",
-  "width": 720,
-  "height": 1280,
+  "template": "weekview-with-weather-bar-small.js",
+  "width": 600,
+  "height": 800,
   "grayscale": true,
   "bitDepth": 2,
   "imageType": "png",
@@ -34,7 +36,7 @@ Example configuration for Antwerp, Belgium:
   "extraDataUrl": "https://api.open-meteo.com/v1/forecast?latitude=51.2194&longitude=4.4025&hourly=temperature_2m,weather_code",
   "extraDataCacheTtl": 3600
 }
-````
+```
 
 ## Template Structure
 
@@ -46,10 +48,12 @@ Contains all customizable settings organized into logical groups:
 - **`layout`**: Dimensions and spacing (cell widths, heights, padding, margins)
 - **`colors`**: Color scheme for background, borders, and past events
 - **`border`**: Border styling (width and style)
-- **`fontStyle`**: Typography for all text elements (day names, event titles, times, etc.)
+- **`fontStyle`**: Typography for all text elements with smaller font sizes for fitting more content on larger displays
+  - Day cell: day names, numbers, and weather information
+  - Events: titles with vertical bar indicator, times, and "no events" message
 - **`todayWeather`**: Today's weather bar appearance and time window configuration
-  - **Important**: `startHour`, `endHour`, and `numberOfIntervals` control which hours are displayed
-  - For equal-width intervals, ensure `(endHour - startHour)` is evenly divisible by `numberOfIntervals`
+  - Configured for 8 time blocks from 7:00 to 23:00 (2-hour intervals)
+  - Smaller icon and font sizes for compact presentation
 - **`labels`**: Text strings for localization (no events message, full day label, today label)
 
 ### 2. Helper Functions
@@ -70,13 +74,16 @@ The core rendering code that:
 3. Groups calendar events by day, handling both all-day and timed events
 4. Generates HTML with a weather bar (if today) and a table of days with events
 5. Applies all configuration settings to create the final styled output
+6. Uses a compact layout with vertical bar indicators for events
 
 **Key Customization Points:**
-- Adjust `todayWeather.startHour`/`endHour`/`numberOfIntervals` to change the hourly forecast display
-- Modify `fontStyle` sizes to fit different screen resolutions
+- Smaller font sizes throughout for fitting more content on larger e-ink displays
+- Adjusted `todayWeather.startHour`/`endHour`/`numberOfIntervals` for 8 time blocks
+- Event layout shows time on left, title on right with vertical bar indicator
+- Modified `layout` dimensions optimized for devices like InkPlate 6 Flick
 - Change `colors` for different display modes (grayscale, color, inverted)
 - Update `labels` for different languages
 
 ## Template
 
-See [weekview-with-weather-bar.js](weekview-with-weather-bar.js) for the full template code.
+See [weekview-with-weather-bar-small.js](weekview-with-weather-bar-small.js) for the full template code.
