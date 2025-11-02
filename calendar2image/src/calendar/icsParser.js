@@ -73,41 +73,76 @@ function parseICS(icsData, options = {}) {
   const rangeEnd = today.clone();
   rangeEnd.adjust(expandRecurringTo, 0, 0, 0);
 
+  // First pass: collect all events and identify which are recurrence exceptions
+  const masterEvents = new Map(); // uid -> vevent (master recurring events)
+  const recurrenceExceptions = new Map(); // uid -> Map(recurrenceId -> vevent)
+  
   for (const vevent of vevents) {
     try {
       const event = new ICAL.Event(vevent);
-
-      // Check if event is recurring
-      if (event.isRecurring()) {
-        // Expand recurring events within the specified range
-        const expand = new ICAL.RecurExpansion({
-          component: vevent,
-          dtstart: event.startDate
-        });
-
-        let next;
-        while ((next = expand.next())) {
-          // Stop if we're past the end of our range
-          if (next.compare(rangeEnd) > 0) {
-            break;
-          }
-
-          // Skip if before our range
-          if (next.compare(rangeStart) < 0) {
-            continue;
-          }
-
-          // Create an occurrence
-          const occurrence = createEventObject(event, next, timezone);
-          events.push(occurrence);
+      const uid = event.uid;
+      
+      // Check if this is a recurrence exception (has RECURRENCE-ID property)
+      const recurrenceId = vevent.getFirstPropertyValue('recurrence-id');
+      
+      if (recurrenceId) {
+        // This is a modified occurrence of a recurring event
+        if (!recurrenceExceptions.has(uid)) {
+          recurrenceExceptions.set(uid, new Map());
         }
+        // Store using the recurrence-id time as key for matching
+        const recurrenceKey = recurrenceId.toString();
+        recurrenceExceptions.get(uid).set(recurrenceKey, vevent);
+      } else if (event.isRecurring()) {
+        // This is a master recurring event
+        masterEvents.set(uid, vevent);
       } else {
-        // Non-recurring event
+        // This is a simple non-recurring event
         events.push(createEventObject(event, null, timezone));
       }
     } catch (error) {
-      // Log warning but continue processing other events
       console.warn(`Warning: Failed to process event: ${error.message}`);
+    }
+  }
+
+  // Second pass: expand recurring events and apply exceptions
+  for (const [uid, vevent] of masterEvents) {
+    try {
+      const event = new ICAL.Event(vevent);
+      const exceptions = recurrenceExceptions.get(uid) || new Map();
+      
+      // Expand recurring events within the specified range
+      const expand = new ICAL.RecurExpansion({
+        component: vevent,
+        dtstart: event.startDate
+      });
+
+      let next;
+      while ((next = expand.next())) {
+        // Stop if we're past the end of our range
+        if (next.compare(rangeEnd) > 0) {
+          break;
+        }
+
+        // Skip if before our range
+        if (next.compare(rangeStart) < 0) {
+          continue;
+        }
+
+        // Check if this occurrence has been modified (RECURRENCE-ID) or cancelled (EXDATE)
+        const occurrenceKey = next.toString();
+        
+        if (exceptions.has(occurrenceKey)) {
+          // Use the modified occurrence instead of the master event
+          const exceptionEvent = new ICAL.Event(exceptions.get(occurrenceKey));
+          events.push(createEventObject(exceptionEvent, null, timezone));
+        } else {
+          // Normal occurrence from master event
+          events.push(createEventObject(event, next, timezone));
+        }
+      }
+    } catch (error) {
+      console.warn(`Warning: Failed to expand recurring event: ${error.message}`);
     }
   }
 
