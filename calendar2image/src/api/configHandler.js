@@ -522,15 +522,14 @@ async function generateConfigPageHTML(index, config, baseUrl) {
             <span class="setting-value" id="image-crc32"><code style="background:#f8f9fa;padding:4px 8px;border-radius:4px;">Loading...</code></span>
           </div>
           <div id="image-preview-container" style="margin-top: 15px; text-align: center; background: #f8f9fa; padding: 15px; border-radius: 8px;">
-            <img id="cached-image" src="${cachedImageUrl}" alt="Calendar Preview" style="max-width: 100%; height: auto; border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); display: none;" 
-                 onload="this.style.display='block'; document.getElementById('image-error').style.display='none';" 
-                 onerror="this.style.display='none'; document.getElementById('image-error').style.display='block';" />
+            <a href="${cachedImageUrl}" target="_blank" style="display: inline-block; cursor: pointer;">
+              <img id="cached-image" src="${cachedImageUrl}" alt="Calendar Preview" style="max-width: 100%; max-height: 200px; height: auto; border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); display: none;" 
+                   onload="this.style.display='block'; document.getElementById('image-error').style.display='none';" 
+                   onerror="this.style.display='none'; document.getElementById('image-error').style.display='block';" />
+            </a>
             <p id="image-error" style="color: #6c757d; padding: 15px; display: none;">
               No cached image available. Generate one using the Quick Actions below.
             </p>
-          </div>
-          <div style="margin-top: 10px; text-align: center;">
-            <a href="${cachedImageUrl}" target="_blank" class="copy-btn" style="display: inline-block;">View Full Size</a>
           </div>
         </div>
       </div>
