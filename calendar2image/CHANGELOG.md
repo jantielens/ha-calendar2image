@@ -1,5 +1,27 @@
 # Changelog
 
+## [0.5.0] - 2025-11-03
+
+### Added
+
+- **Interactive Configuration Viewer** - New HTML visualization page for each configuration accessible via dashboard
+  - Visual representation of all settings with organized cards
+  - Real-time validation with error indicators and banner
+  - JSON property path tooltips showing exact configuration structure
+  - Image preview with CRC32 checksum display
+  - Copy-to-clipboard for paths, templates, and JSON
+  - Collapsible sections for configuration and template content
+  - Section descriptions explaining each setting's purpose
+
+### Changed
+
+- **Dashboard** - Orange "Config" button now links to interactive HTML page instead of raw JSON
+- **Code Quality** - Refactored configuration handler (30% smaller, better maintainability)
+
+### Removed
+
+- **Dependencies** - Removed unused `croner` package (using `node-cron` instead)
+
 ## [0.4.0] - 2025-11-03
 
 ### Added

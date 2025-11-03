@@ -221,6 +221,87 @@ curl http://homeassistant.local:3000/api/0/crc32-history
 
 ---
 
+### GET /
+
+**Configuration dashboard** - Interactive HTML page listing all configurations
+
+**Example:**
+```bash
+# Open in browser
+http://homeassistant.local:3000/
+```
+
+**Features:**
+- View all configurations with status indicators
+- Quick access to images, CRC32 history, and configuration pages
+- Real-time validation status
+- Direct links to all API endpoints
+
+---
+
+### GET /config/:index
+
+**Interactive configuration viewer** - Detailed HTML visualization of a specific configuration
+
+**Parameters:**
+- `:index` - Configuration index (0, 1, 2, etc.)
+
+**Example:**
+```bash
+# Open in browser
+http://homeassistant.local:3000/config/0
+```
+
+**Features:**
+- Visual representation of all settings organized in cards
+- Real-time validation with error indicators and summary banner
+- JSON property path tooltips showing exact configuration structure
+- Image preview with CRC32 checksum
+- Copy-to-clipboard for file paths, templates, and JSON
+- Collapsible sections for configuration and template content
+- Section descriptions explaining each setting's purpose
+- Quick action buttons for common operations
+
+**Status Codes:**
+- `200 OK` - Success
+- `400 Bad Request` - Invalid index parameter
+- `404 Not Found` - Configuration not found
+- `500 Internal Server Error` - Error loading configuration
+
+---
+
+### GET /api/config/:index
+
+**Get configuration as JSON** - Returns raw configuration file
+
+**Parameters:**
+- `:index` - Configuration index (0, 1, 2, etc.)
+
+**Example:**
+```bash
+curl http://homeassistant.local:3000/api/config/0
+```
+
+**Response:**
+```json
+{
+  "icsUrl": "https://calendar.example.com/calendar.ics",
+  "template": "week-view",
+  "width": 800,
+  "height": 600,
+  "imageType": "png",
+  "preGenerateInterval": "*/5 * * * *",
+  ...
+}
+```
+
+**Status Codes:**
+- `200 OK` - Success
+- `400 Bad Request` - Invalid index parameter
+- `404 Not Found` - Configuration not found
+
+---
+
 ### GET /health
 
 **Health check endpoint**

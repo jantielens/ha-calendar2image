@@ -2,6 +2,7 @@ const express = require('express');
 const { handleImageRequest, handleFreshImageRequest, handleCRC32Request } = require('./api/handler');
 const { handleHomePage, handleConfigListAPI, handleConfigAPI } = require('./api/homeHandler');
 const { handleCRC32HistoryAPI, handleCRC32HistoryPage } = require('./api/crc32HistoryHandler');
+const { handleConfigPage } = require('./api/configHandler');
 const { ensureCacheDir } = require('./cache');
 const { initializeScheduler, generateAllImagesNow, stopAllSchedules } = require('./scheduler');
 
@@ -16,6 +17,9 @@ app.use((req, res, next) => {
 
 // Home page - Configuration dashboard
 app.get('/', handleHomePage);
+
+// Configuration visualization page
+app.get('/config/:index(\\d+)', handleConfigPage);
 
 // CRC32 History page
 app.get('/crc32-history/:index(\\d+)', handleCRC32HistoryPage);
@@ -40,6 +44,24 @@ app.get('/api/:index(\\d+).:ext(png|jpg|bmp)', handleImageRequest);
 // Health check endpoint
 app.get('/health', (req, res) => {
     res.json({ status: 'healthy' });
+});
+
+// Template content endpoint for copy feature
+app.get('/api/template/:name(*)', async (req, res) => {
+    try {
+        const templateName = req.params.name;
+        const fs = require('fs').promises;
+        const path = require('path');
+        const { CONFIG_DIR } = require('./config/loader');
+        
+        const templatePath = path.join(CONFIG_DIR, 'templates', templateName);
+        const content = await fs.readFile(templatePath, 'utf8');
+        
+        res.type('text/plain').send(content);
+    } catch (error) {
+        console.error('Error loading template:', error);
+        res.status(404).send('Template not found');
+    }
 });
 
 // Mock weather endpoint for testing

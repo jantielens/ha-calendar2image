@@ -2,11 +2,15 @@
 
 This folder contains sample configuration files for the HA Calendar2Image add-on.
 
+> 💡 **Tip**: You can view an interactive visualization of your configuration with validation at `http://homeassistant.local:3000/config/0` (replace `0` with your config index). Click the orange "Config" button from the dashboard to access it.
+
 ## Configuration Location
 
 Configuration files are stored in: `/addon_configs/17f877f5_calendar2image/`
 
 This follows the Home Assistant standard for add-on configurations. The folder name includes the add-on ID (17f877f5_calendar2image).
+
+> ⚠️ **File Editor Setup**: To edit configuration files with the File Editor add-on, you must set `enforce_basepath: false` in its configuration ([documentation](https://github.com/home-assistant/addons/blob/master/configurator/DOCS.md#option-enforce_basepath-required)). This allows access to add-on config folders which are outside the default `/config` directory.
 
 **Default configuration**: When you first start the add-on, it automatically creates `0.json` and `README.md` in this directory. The `0.json` file is a fully working configuration with all available parameters set to sensible defaults - just update the `icsUrl` to point to your calendar and you're ready to go!
 
