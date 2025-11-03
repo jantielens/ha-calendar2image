@@ -1,4 +1,4 @@
-﻿const { loadConfig, CONFIG_DIR } = require('../config/loader');
+﻿const { loadConfig, CONFIG_DIR, REAL_CONFIG_PATH } = require('../config/loader');
 const { getCachedImage } = require('../cache');
 const { calculateCRC32 } = require('../utils/crc32');
 const path = require('path');
@@ -552,6 +552,7 @@ async function generateConfigPageHTML(index, config, baseUrl) {
         <div class="card-content">
           <div class="section-description">
             File system paths within the Home Assistant environment. Configuration files are stored in <code>${escapeHtml(path.resolve(CONFIG_DIR))}/</code> and templates in <code>${escapeHtml(path.resolve(path.join(CONFIG_DIR, 'templates')))}/</code>.
+            ${REAL_CONFIG_PATH !== CONFIG_DIR ? `<br><small style="opacity: 0.8;">Host path: <code>${escapeHtml(REAL_CONFIG_PATH)}/</code></small>` : ''}
           </div>
           <div class="setting-row">
             <span class="setting-label">Configuration File <span class="json-path" data-json-preview="Configuration file: ${index}.json">${index}.json</span></span>

@@ -5,11 +5,18 @@
 
 bashio::log.info "Preparing Calendar2Image..."
 
-# Home Assistant mounts addon_config at /data inside the container
-# On host: /addon_configs/f5965daa_calendar2image/
-CONFIG_DIR="/data"
+# Home Assistant mounts addon_config at /config inside the container
+CONFIG_DIR="/config"
+
+# Get the real path (resolves symlinks and shows actual filesystem path)
+REAL_CONFIG_PATH=$(realpath "${CONFIG_DIR}" 2>/dev/null || echo "${CONFIG_DIR}")
 
 bashio::log.info "Using config directory: ${CONFIG_DIR}"
+bashio::log.info "Real filesystem path: ${REAL_CONFIG_PATH}"
+
+# Export both for use by the application
+export CONFIG_DIR
+export REAL_CONFIG_PATH
 
 # Copy default configuration if it doesn't exist
 if [ ! -f "${CONFIG_DIR}/0.json" ]; then
