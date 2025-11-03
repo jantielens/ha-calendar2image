@@ -8,7 +8,21 @@ bashio::log.info "Preparing Calendar2Image..."
 # Home Assistant mounts addon_config at /config inside the container
 CONFIG_DIR="/config"
 
+# Try to get the addon slug from Home Assistant
+ADDON_SLUG=$(bashio::addon.slug 2>/dev/null || echo "calendar2image")
+
+# Construct the host path based on Home Assistant's addon_configs structure
+# Inside container: /config -> Host: /addon_configs/<slug>/
+HOST_CONFIG_PATH="/addon_configs/${ADDON_SLUG}"
+
 bashio::log.info "Using config directory: ${CONFIG_DIR}"
+bashio::log.info "Add-on slug: ${ADDON_SLUG}"
+bashio::log.info "Host path (reference): ${HOST_CONFIG_PATH}"
+
+# Export paths for use by the application
+export CONFIG_DIR
+export ADDON_SLUG
+export HOST_CONFIG_PATH
 
 # Copy default configuration if it doesn't exist
 if [ ! -f "${CONFIG_DIR}/0.json" ]; then

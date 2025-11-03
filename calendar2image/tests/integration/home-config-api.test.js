@@ -225,9 +225,13 @@ describe('Home Page and Config API Integration Tests', () => {
     it('should contain links to config API', async () => {
       const response = await makeRequest('/');
       
-      expect(response.body).toContain('/api/config/0');
-      expect(response.body).toContain('/api/config/1');
-      expect(response.body).toContain('/api/config/5');
+      // Check for API documentation (generic placeholder)
+      expect(response.body).toContain('/api/config/{index}');
+      
+      // Check for actual config page links (HTML visualization)
+      expect(response.body).toContain('/config/0');
+      expect(response.body).toContain('/config/1');
+      expect(response.body).toContain('/config/5');
     });
 
     it('should show configuration count', async () => {

@@ -3,7 +3,8 @@ const path = require('path');
 const { calculateCRC32 } = require('../utils/crc32');
 const { addHistoryEntry } = require('./crc32History');
 
-const CACHE_DIR = path.join(process.cwd(), '..', 'data', 'cache');
+// Cache directory - use environment variable or default
+const CACHE_DIR = process.env.CACHE_DIR || path.join(process.cwd(), '..', 'data', 'cache');
 
 /**
  * Ensure cache directory exists

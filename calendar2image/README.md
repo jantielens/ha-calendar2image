@@ -41,7 +41,8 @@ The add-on automatically creates configuration files in `/addon_configs/17f877f5
 - `README.md` - Configuration documentation
 
 **Edit the configuration:**
-1. Open `0.json` in File Editor
+1. Open `0.json` in File Editor add-on
+   - ⚠️ **Important**: Set `enforce_basepath: false` in File Editor configuration to access add-on config folders ([docs](https://github.com/home-assistant/addons/blob/master/configurator/DOCS.md#option-enforce_basepath-required))
 2. Replace `icsUrl` with your calendar's public ICS URL
 3. Save and view the updated image at `http://homeassistant.local:3000/api/0.png`
 

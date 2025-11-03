@@ -71,8 +71,12 @@ The add-on automatically creates a working configuration on first startup:
 
 **Using File Editor Add-on (recommended):**
 1. Install the **File Editor** add-on if not already installed
-2. Navigate to `/addon_configs/17f877f5_calendar2image/`
-3. Edit `0.json` to configure your own calendar
+2. **Configure File Editor** to access add-on config folders:
+   - Go to File Editor add-on → Configuration tab
+   - Set `enforce_basepath: false` ([documentation](https://github.com/home-assistant/addons/blob/master/configurator/DOCS.md#option-enforce_basepath-required))
+   - Save and restart File Editor add-on
+3. Navigate to `/addon_configs/17f877f5_calendar2image/`
+4. Edit `0.json` to configure your own calendar
 
 **Using SSH/Terminal:**
 1. Connect via SSH or Terminal add-on
@@ -84,10 +88,12 @@ The add-on automatically creates a working configuration on first startup:
 
 ## Next Steps
 
-1. **Configure your calendar**: Edit `0.json` and replace the `icsUrl` with your own calendar feed
-2. **Create additional calendars**: Copy `0.json` to `1.json`, `2.json`, etc.
-3. **Customize templates**: See [Template Development Guide](TEMPLATE-DEVELOPMENT.md)
-4. **Integrate with Home Assistant**: Use the API endpoints in automations, dashboards, or e-ink displays
+1. **View the configuration dashboard**: Open `http://homeassistant.local:3000/` to see all your configurations
+2. **Explore configuration details**: Click the orange "Config" button to see an interactive visualization with validation
+3. **Configure your calendar**: Edit `0.json` and replace the `icsUrl` with your own calendar feed
+4. **Create additional calendars**: Copy `0.json` to `1.json`, `2.json`, etc.
+5. **Customize templates**: See [Template Development Guide](TEMPLATE-DEVELOPMENT.md)
+6. **Integrate with Home Assistant**: Use the API endpoints in automations, dashboards, or e-ink displays
 
 ## Troubleshooting
 

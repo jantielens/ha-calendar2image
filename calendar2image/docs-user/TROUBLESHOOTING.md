@@ -2,6 +2,8 @@
 
 Common issues and solutions for Calendar2Image.
 
+> 💡 **Quick Diagnostics**: Visit `http://homeassistant.local:3000/config/0` (replace `0` with your config index) to see validation errors and configuration details in a visual format.
+
 ---
 
 ## Installation Issues
@@ -105,6 +107,8 @@ Should return:
 ---
 
 ## Configuration Issues
+
+> ⚠️ **Note**: If you're using the File Editor add-on to edit configuration files, make sure you've set `enforce_basepath: false` in its configuration ([documentation](https://github.com/home-assistant/addons/blob/master/configurator/DOCS.md#option-enforce_basepath-required)). This allows access to add-on config folders at `/addon_configs/`.
 
 ### "Configuration file not found"
 
