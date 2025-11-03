@@ -269,9 +269,16 @@ Each event in the `events` array has:
   allDay: false,                  // Boolean
   description: "Details...",      // String or undefined
   location: "Location...",        // String or undefined
+  source: 0,                      // Number (calendar source index, 0-based)
+  sourceName: "Work",             // String or undefined (optional source name)
   // ... other ICS properties
 }
 ```
+
+**New in Multiple Calendar Support:**
+- `source`: Index (0, 1, 2...) indicating which calendar the event came from
+- `sourceName`: Optional human-readable name for the calendar source (if provided in config)
+- For failed calendar sources, placeholder events are created with title "failed loading ics X"
 
 ### Config Object
 
@@ -752,6 +759,56 @@ module.exports = function(data) {
       ${events.slice(0, 5).map(e => `
         <div>${e.title} - ${new Date(e.start).toLocaleDateString()}</div>
       `).join('')}
+    </body>
+    </html>
+  `;
+};
+```
+
+### Multi-Calendar Template with Source Display
+
+```javascript
+module.exports = function(data) {
+  const { events = [], config } = data;
+  
+  // Define colors for different calendar sources
+  const sourceColors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#feca57'];
+  
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <style>
+        body { 
+          width: ${config.width}px; 
+          height: ${config.height}px; 
+          margin: 0; padding: 20px;
+          font-family: Arial, sans-serif;
+        }
+        .event {
+          margin: 10px 0; padding: 10px;
+          border-radius: 5px; color: white;
+        }
+        .source-label {
+          font-size: 0.8em; opacity: 0.9;
+          float: right;
+        }
+      </style>
+    </head>
+    <body>
+      <h1>Multi-Calendar View (${events.length} events)</h1>
+      ${events.slice(0, 10).map(e => {
+        const sourceColor = sourceColors[e.source % sourceColors.length];
+        const sourceLabel = e.sourceName || \`Source \${e.source}\`;
+        return \`
+          <div class="event" style="background: \${sourceColor}">
+            <span class="source-label">\${sourceLabel}</span>
+            <strong>\${e.title}</strong><br>
+            \${new Date(e.start).toLocaleDateString()} 
+            \${e.allDay ? '(All Day)' : 'at ' + new Date(e.start).toLocaleTimeString()}
+          </div>
+        \`;
+      }).join('')}
     </body>
     </html>
   `;

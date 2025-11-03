@@ -85,7 +85,13 @@ async function generateCalendarImage(index, options = {}) {
     console.log(`[API] Image settings: ${config.width}x${config.height}, ${config.imageType}, grayscale=${config.grayscale}, bitDepth=${config.bitDepth}, rotate=${config.rotate}°`);
 
     // Step 2: Fetch calendar events and extra data in parallel
-    console.log(`[API] Fetching calendar events from ICS URL...`);
+    const isMultiSource = Array.isArray(config.icsUrl);
+    if (isMultiSource) {
+      console.log(`[API] Fetching calendar events from ${config.icsUrl.length} ICS source(s)...`);
+    } else {
+      console.log(`[API] Fetching calendar events from ICS URL...`);
+    }
+    
     const startFetch = Date.now();
     
     const [events, extraData] = await Promise.all([
@@ -98,7 +104,26 @@ async function generateCalendarImage(index, options = {}) {
     ]);
     
     const fetchDuration = Date.now() - startFetch;
-    console.log(`[API] Fetched ${events.length} events in ${fetchDuration}ms`);
+    
+    // Enhanced logging for multiple sources
+    if (isMultiSource) {
+      // Count events by source
+      const eventsBySource = {};
+      events.forEach(event => {
+        const sourceKey = event.source;
+        eventsBySource[sourceKey] = (eventsBySource[sourceKey] || 0) + 1;
+      });
+      
+      const sourceDetails = config.icsUrl.map((source, index) => {
+        const eventCount = eventsBySource[index] || 0;
+        const sourceName = source.sourceName ? ` (${source.sourceName})` : '';
+        return `source ${index}${sourceName}: ${eventCount} events`;
+      }).join(', ');
+      
+      console.log(`[API] Fetched ${events.length} events total in ${fetchDuration}ms - ${sourceDetails}`);
+    } else {
+      console.log(`[API] Fetched ${events.length} events in ${fetchDuration}ms`);
+    }
     if (config.extraDataUrl) {
       const dataKeys = Array.isArray(extraData) 
         ? `array with ${extraData.length} sources`

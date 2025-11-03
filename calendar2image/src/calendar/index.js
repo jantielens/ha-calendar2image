@@ -2,28 +2,94 @@ const { fetchICS } = require('./icsClient');
 const { parseICS } = require('./icsParser');
 
 /**
- * Fetches and parses calendar data from an ICS URL
- * @param {string} url - The ICS URL to fetch
+ * Creates error events for a failed ICS source
+ * @param {number} sourceIndex - Index of the failed source
+ * @param {string} sourceName - Optional name of the failed source  
+ * @param {Object} options - Parsing options for date range
+ * @returns {Array<Object>} Array of error event objects
+ */
+function createErrorEvents(sourceIndex, sourceName, options = {}) {
+  const { expandRecurringFrom = -31, expandRecurringTo = 31 } = options;
+  const today = new Date();
+  const events = [];
+  
+  // Create one error event per day in the configured range
+  for (let dayOffset = expandRecurringFrom; dayOffset <= expandRecurringTo; dayOffset++) {
+    const eventDate = new Date(today);
+    eventDate.setDate(today.getDate() + dayOffset);
+    
+    // Set to start of day in local timezone
+    const startOfDay = new Date(eventDate);
+    startOfDay.setHours(0, 0, 0, 0);
+    
+    const errorEvent = {
+      summary: `failed loading ics ${sourceIndex}`,
+      title: `failed loading ics ${sourceIndex}`,
+      start: startOfDay.toISOString(),
+      end: startOfDay.toISOString(),
+      allDay: true,
+      isAllDay: true,
+      source: sourceIndex
+    };
+    
+    // Add sourceName if provided
+    if (sourceName) {
+      errorEvent.sourceName = sourceName;
+    }
+    
+    events.push(errorEvent);
+  }
+  
+  return events;
+}
+
+/**
+ * Fetches and parses calendar data from ICS URL(s)
+ * @param {string|Array} icsUrlConfig - Single URL string or array of source objects
  * @param {Object} options - Parsing options
  * @param {number} options.expandRecurringFrom - Days from today to start expanding recurring events
  * @param {number} options.expandRecurringTo - Days from today to stop expanding recurring events
- * @returns {Promise<Array<Object>>} Array of event objects with normalized field names
+ * @param {string} options.timezone - IANA timezone name for event conversion
+ * @returns {Promise<Array<Object>>} Array of event objects with normalized field names and source information
  */
-async function getCalendarEvents(url, options = {}) {
-  const icsData = await fetchICS(url);
-  const events = parseICS(icsData, options);
+async function getCalendarEvents(icsUrlConfig, options = {}) {
+  // Handle backward compatibility: convert string to array format
+  const sources = typeof icsUrlConfig === 'string' 
+    ? [{ url: icsUrlConfig }] 
+    : icsUrlConfig;
+
+  // Fetch all ICS sources in parallel
+  const fetchPromises = sources.map(async (source, index) => {
+    try {
+      const icsData = await fetchICS(source.url);
+      const events = parseICS(icsData, options);
+      
+      // Add source information to each event and normalize field names
+      return events.map(event => ({
+        ...event,
+        title: event.summary,
+        allDay: event.isAllDay,
+        source: index,
+        ...(source.sourceName && { sourceName: source.sourceName })
+      }));
+    } catch (error) {
+      console.warn(`[Calendar] Failed to fetch ICS from source ${index} (${source.url}): ${error.message}`);
+      
+      // Return error events for this failed source
+      return createErrorEvents(index, source.sourceName, options);
+    }
+  });
+
+  // Wait for all sources to complete (successful or failed)
+  const eventArrays = await Promise.all(fetchPromises);
   
-  // Normalize field names for template compatibility
-  // Map ICS 'summary' field to 'title' for easier template usage
-  return events.map(event => ({
-    ...event,
-    title: event.summary,
-    allDay: event.isAllDay
-  }));
+  // Flatten and return combined events from all sources
+  return eventArrays.flat();
 }
 
 module.exports = {
   fetchICS,
   parseICS,
-  getCalendarEvents
+  getCalendarEvents,
+  createErrorEvents
 };

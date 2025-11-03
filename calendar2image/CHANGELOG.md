@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.4.0] - 2025-11-03
+
+### Added
+
+- **Multiple ICS URL Support** - `icsUrl` now supports array format for combining multiple calendars into a single view
+  - Each source can have an optional `sourceName` for identification
+  - Events include `source` (index) and `sourceName` fields for template customization
+  - Parallel fetching of all calendar sources for optimal performance
+  - Failed sources generate "failed loading ics X" placeholder events instead of breaking the entire request
+  - Full backwards compatibility with existing single-string format
+
+### Changed
+
+- **Event Objects** - Added `source` and `sourceName` fields to all events for multi-calendar scenarios
+- **Documentation** - Updated configuration guides and template examples with multi-calendar usage
+
 ## [0.3.0] - 2025-11-02
 
 ### Added

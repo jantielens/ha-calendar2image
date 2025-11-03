@@ -1,6 +1,6 @@
 # Calendar2Image for Home Assistant
 
-Generate calendar images from ICS feeds with customizable templates. Perfect for e-ink displays, dashboards, or any scenario where you need calendar data as an image.
+Transform ICS calendar feeds into customizable images with optional extra data sources (weather, tasks, etc.) - perfect for e-ink displays and dashboards. Features multiple calendar support, REST API, intelligent caching, custom JavaScript templates, and optimized rendering.
 
 > **⚠️ Network Access:** Generated images are served via the built-in web server (default port 3000) and will be accessible to any device or user on your internal network.
 
@@ -70,7 +70,9 @@ Create JSON files in `/addon_configs/17f877f5_calendar2image/`:
 ```
 
 **Key Parameters:**
-- `icsUrl` - Your calendar's ICS feed URL (required)
+- `icsUrl` - Your calendar's ICS feed URL or multiple sources (required)
+  - Single: `"https://calendar.example.com/feed.ics"`
+  - Multiple: `[{"url": "https://work.ics", "sourceName": "Work"}, {"url": "https://personal.ics", "sourceName": "Personal"}]`
 - `template` - Template name: `week-view`, `today-view`, or custom (required)
 - `width` / `height` - Image dimensions in pixels
 - `imageType` - Output format: `png`, `jpg`, or `bmp`

@@ -1,7 +1,7 @@
 name: HA Calendar2Image
-version: "0.3.0"
+version: "0.4.0"
 slug: calendar2image
-description: Generate images from calendar data (ICS URLs) using customizable templates
+description: Transform ICS calendar feeds into customizable images with optional extra data sources - perfect for e-ink displays and dashboards
 url: https://github.com/jantielens/ha-calendar2image
 arch:
   - aarch64
