@@ -687,13 +687,18 @@ function generateEventHTML(event, index) {
     ? `data-ip="${event.metadata.ip}"` 
     : '';
   
+  // Add visual indicator for generation events with CRC32 changes
+  const crc32Indicator = (event.eventType === 'generation' && event.metadata && event.metadata.changed === true)
+    ? ' 🆕'
+    : '';
+  
   return `
     <div class="timeline-item type-${event.eventType}" data-type="${event.eventType}" ${ipAttr}>
       <div class="timeline-dot"></div>
       <div class="timeline-content">
         <div class="event-header">
           <span class="event-time">${new Date(event.timestamp).toLocaleString()}</span>
-          <span class="event-badge badge-${event.eventType}">${event.eventType}:${event.eventSubtype}</span>
+          <span class="event-badge badge-${event.eventType}">${event.eventType}:${event.eventSubtype}${crc32Indicator}</span>
           <span class="event-metadata">${metadataStr}</span>
         </div>
         <div class="event-details">
