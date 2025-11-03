@@ -1,6 +1,4 @@
 ﻿const { loadConfig, CONFIG_DIR, HOST_CONFIG_PATH } = require('../config/loader');
-const { getCachedImage } = require('../cache');
-const { calculateCRC32 } = require('../utils/crc32');
 const path = require('path');
 const fs = require('fs').promises;
 
@@ -230,18 +228,9 @@ async function generateConfigPageHTML(index, config, baseUrl) {
   const crc32HistoryUrl = `${baseUrl}/crc32-history/${index}`;
   const jsonApiUrl = `${baseUrl}/api/config/${index}`;
   
-  // Get cached image
-  let imagePreview = null;
-  let imageCrc32 = null;
-  try {
-    const cachedImage = await getCachedImage(index);
-    if (cachedImage) {
-      imagePreview = `data:image/${config.imageType};base64,${cachedImage.toString('base64')}`;
-      imageCrc32 = calculateCRC32(cachedImage).toString(16).toUpperCase().padStart(8, '0');
-    }
-  } catch (error) {
-    console.log(`[Config Page] No cached image for config ${index}`);
-  }
+  // Use API URL for cached image (browser will load it directly)
+  const cachedImageUrl = `${baseUrl}/api/${index}.${config.imageType}`;
+  const imageCrc32Url = `${baseUrl}/api/${index}.${config.imageType}.crc32`;
   
   // Load template content
   let templateContent = null;
@@ -522,7 +511,6 @@ async function generateConfigPageHTML(index, config, baseUrl) {
       </div>
       
       <!-- Image Preview Card -->
-      ${imagePreview ? `
       <div class="card" style="margin-bottom: 20px;">
         <div class="card-header">
           <div class="card-icon">🖼️</div>
@@ -531,29 +519,21 @@ async function generateConfigPageHTML(index, config, baseUrl) {
         <div class="card-content">
           <div class="setting-row">
             <span class="setting-label">CRC32 Checksum</span>
-            <span class="setting-value"><code style="background:#f8f9fa;padding:4px 8px;border-radius:4px;">0x${imageCrc32}</code></span>
+            <span class="setting-value" id="image-crc32"><code style="background:#f8f9fa;padding:4px 8px;border-radius:4px;">Loading...</code></span>
           </div>
-          <div style="margin-top: 15px; text-align: center; background: #f8f9fa; padding: 15px; border-radius: 8px;">
-            <img src="${imagePreview}" alt="Calendar Preview" style="max-width: 100%; height: auto; border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);" />
+          <div id="image-preview-container" style="margin-top: 15px; text-align: center; background: #f8f9fa; padding: 15px; border-radius: 8px;">
+            <img id="cached-image" src="${cachedImageUrl}" alt="Calendar Preview" style="max-width: 100%; height: auto; border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); display: none;" 
+                 onload="this.style.display='block'; document.getElementById('image-error').style.display='none';" 
+                 onerror="this.style.display='none'; document.getElementById('image-error').style.display='block';" />
+            <p id="image-error" style="color: #6c757d; padding: 15px; display: none;">
+              No cached image available. Generate one using the Quick Actions below.
+            </p>
           </div>
           <div style="margin-top: 10px; text-align: center;">
-            <a href="${imageUrl}" target="_blank" class="copy-btn" style="display: inline-block;">View Full Size</a>
+            <a href="${cachedImageUrl}" target="_blank" class="copy-btn" style="display: inline-block;">View Full Size</a>
           </div>
         </div>
       </div>
-      ` : `
-      <div class="card" style="margin-bottom: 20px;">
-        <div class="card-header">
-          <div class="card-icon">🖼️</div>
-          <div class="card-title">Last Generated Image</div>
-        </div>
-        <div class="card-content">
-          <p style="color: #6c757d; text-align: center; padding: 30px;">
-            No cached image available. Generate one using the Quick Actions below.
-          </p>
-        </div>
-      </div>
-      `}
       
       <!-- File Paths Section -->
       <div class="card" style="margin-bottom: 20px;">
@@ -642,6 +622,16 @@ async function generateConfigPageHTML(index, config, baseUrl) {
   </div>
   
   <script>
+    // Fetch CRC32 on page load
+    fetch('${imageCrc32Url}')
+      .then(response => response.text())
+      .then(crc32 => {
+        document.getElementById('image-crc32').innerHTML = '<code style="background:#f8f9fa;padding:4px 8px;border-radius:4px;">0x' + crc32.toUpperCase() + '</code>';
+      })
+      .catch(error => {
+        document.getElementById('image-crc32').innerHTML = '<code style="background:#f8f9fa;padding:4px 8px;border-radius:4px; color: #6c757d;">N/A</code>';
+      });
+    
     // Toggle expand/collapse sections
     function toggleSection(id) {
       const section = document.getElementById(id);
