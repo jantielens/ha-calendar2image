@@ -3,6 +3,7 @@ const { handleImageRequest, handleFreshImageRequest, handleCRC32Request } = requ
 const { handleHomePage, handleConfigListAPI, handleConfigAPI } = require('./api/homeHandler');
 const { handleCRC32HistoryAPI, handleCRC32HistoryPage } = require('./api/crc32HistoryHandler');
 const { handleConfigPage } = require('./api/configHandler');
+const { handleTimelinePage } = require('./api/timelineHandler');
 const { ensureCacheDir } = require('./cache');
 const { initializeScheduler, generateAllImagesNow, stopAllSchedules } = require('./scheduler');
 
@@ -23,6 +24,9 @@ app.get('/config/:index(\\d+)', handleConfigPage);
 
 // CRC32 History page
 app.get('/crc32-history/:index(\\d+)', handleCRC32HistoryPage);
+
+// Timeline page
+app.get('/timeline/:index(\\d+)', handleTimelinePage);
 
 // Configuration API endpoints
 app.get('/api/configs', handleConfigListAPI);

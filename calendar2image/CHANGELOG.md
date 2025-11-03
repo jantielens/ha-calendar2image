@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.7.0] - 2025-11-03
+
+### Added
+
+- **Timeline Visualization** - New debugging/monitoring page for each configuration
+  - 24-hour rolling event history with automatic pruning
+  - Track generations (scheduled/boot/on-demand), downloads, ICS fetches, config changes, and errors
+  - Visual indicators: 🆕 emoji for CRC32 changes, event type filters, IP/host filtering for downloads
+  - Auto-refresh with configurable intervals (10s/30s/60s), settings persist in localStorage
+  - Git-style compact timeline with expandable JSON details
+  - Accessible via Timeline button on home page and `/timeline/:index` endpoint
+
+
 ## [0.6.0] - 2025-11-03
 
 ### Added

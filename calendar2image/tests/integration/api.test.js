@@ -107,8 +107,8 @@ describe('API Integration Tests', () => {
     try {
       execSync(`docker image inspect ${IMAGE_NAME}`, { stdio: 'ignore' });
     } catch (error) {
-      // Image doesn't exist, build it
-      execSync(`docker build -t ${IMAGE_NAME} --build-arg BUILD_FROM=ghcr.io/home-assistant/amd64-base:3.20 .`, {
+      // Image doesn't exist, build it (use local Dockerfile for testing without HA dependencies)
+      execSync(`docker build -f Dockerfile.local -t ${IMAGE_NAME} .`, {
         cwd: path.resolve(__dirname, '../..'),
         stdio: 'inherit'
       });

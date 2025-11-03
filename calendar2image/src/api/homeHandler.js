@@ -130,9 +130,9 @@ function generateHomePageHTML(configs, baseUrl) {
     const ext = config.imageType;
     const imageUrl = `${baseUrl}/api/${index}.${ext}`;
     const freshUrl = `${baseUrl}/api/${index}/fresh.${ext}`;
-    const crc32Url = `${baseUrl}/api/${index}.${ext}.crc32`;
     const configUrl = `${baseUrl}/config/${index}`;
     const historyUrl = `${baseUrl}/crc32-history/${index}`;
+    const timelineUrl = `${baseUrl}/timeline/${index}`;
     
     const hasSchedule = config.preGenerateInterval ? `Yes (${config.preGenerateInterval})` : 'No';
     
@@ -146,8 +146,8 @@ function generateHomePageHTML(configs, baseUrl) {
         <td class="links-col">
           <a href="${imageUrl}" target="_blank" class="link-btn" title="Get image (cached if available)">Image</a>
           <a href="${freshUrl}" target="_blank" class="link-btn" title="Force fresh generation">Fresh</a>
-          <a href="${crc32Url}" target="_blank" class="link-btn crc32-btn" data-crc32-url="${crc32Url}" title="Get CRC32 checksum">CRC32: Loading...</a>
           <a href="${historyUrl}" class="link-btn crc32-history-btn" style="background:linear-gradient(135deg,#ff9800 0%,#ff5722 100%);color:white;" title="View CRC32 history">CRC32 history</a>
+          <a href="${timelineUrl}" class="link-btn timeline-btn" style="background:linear-gradient(135deg,#ff9800 0%,#ff5722 100%);color:white;" title="View event timeline (24h)">Timeline</a>
           <a href="${configUrl}" class="link-btn config-btn" style="background:linear-gradient(135deg,#ff9800 0%,#ff5722 100%);color:white;" title="View configuration details">Config</a>
         </td>
       </tr>`;
@@ -502,31 +502,6 @@ function generateHomePageHTML(configs, baseUrl) {
       <p style="margin-top: 5px; font-size: 0.9em;">Generated at ${new Date().toISOString()}</p>
     </div>
   </div>
-  
-  <script>
-    // Fetch CRC32 values for all configurations
-    document.addEventListener('DOMContentLoaded', async () => {
-      const crc32Buttons = document.querySelectorAll('.crc32-btn');
-      
-      for (const button of crc32Buttons) {
-        const crc32Url = button.getAttribute('data-crc32-url');
-        
-        try {
-          const response = await fetch(crc32Url);
-          if (response.ok) {
-            const crc32 = await response.text();
-            // Add 0x prefix for proper hex notation
-            button.textContent = \`CRC32: 0x\${crc32}\`;
-          } else {
-            button.textContent = 'CRC32: Error';
-          }
-        } catch (error) {
-          console.error('Failed to fetch CRC32:', error);
-          button.textContent = 'CRC32: Error';
-        }
-      }
-    });
-  </script>
 </body>
 </html>`;
 }

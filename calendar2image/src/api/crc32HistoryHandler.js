@@ -1,5 +1,6 @@
 const { loadConfig } = require('../config/loader');
 const { getHistory, getHistoryStats, MAX_HISTORY_ENTRIES } = require('../cache/crc32History');
+const { logDownload, EVENT_SUBTYPES } = require('../timeline');
 
 /**
  * Express middleware handler for /api/:index/crc32-history endpoint
@@ -46,6 +47,15 @@ async function handleCRC32HistoryAPI(req, res) {
     ]);
     
     console.log(`[CRC32History API] Returning history for config ${index}: ${history.length} entries`);
+    
+    // Log download to timeline
+    const clientIp = req.ip || req.connection.remoteAddress || 'unknown';
+    const userAgent = req.get('user-agent') || 'unknown';
+    logDownload(index, EVENT_SUBTYPES.CRC32_HISTORY, {
+      ip: clientIp,
+      userAgent,
+      entryCount: history.length
+    }).catch(err => console.warn(`[Timeline] Failed to log CRC32 history download: ${err.message}`));
     
     res.json({
       index,

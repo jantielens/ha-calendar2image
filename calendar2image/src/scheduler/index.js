@@ -31,7 +31,7 @@ async function generateAndCache(index, trigger = 'scheduled') {
     
     const result = await generateCalendarImage(index, { 
       saveCache: false,  // We'll save manually to pass trigger
-      trigger: 'unknown' // Placeholder, will be overridden below
+      trigger: trigger   // Pass the actual trigger parameter
     });
     
     const generationDuration = Date.now() - startTime;
@@ -128,7 +128,7 @@ async function scheduleConfigIfNeeded(index, preGenerateNow = true) {
         // Pre-generate immediately if requested
         if (preGenerateNow) {
           console.log(`[Scheduler] Pre-generating image for config ${index}...`);
-          await generateAndCache(index, 'config_change');
+          await generateAndCache(index, 'scheduled');
         }
       }
       return success;
@@ -204,7 +204,7 @@ async function generateAllImagesNow() {
     }
 
     const results = await Promise.allSettled(
-      configsToGenerate.map(({ index }) => generateAndCache(index, 'startup'))
+      configsToGenerate.map(({ index }) => generateAndCache(index, 'boot'))
     );
 
     const successful = results.filter(r => r.status === 'fulfilled' && r.value === true).length;
