@@ -5,8 +5,9 @@
 
 bashio::log.info "Preparing Calendar2Image..."
 
-# Home Assistant mounts addon_config at /config inside the container
-CONFIG_DIR="/config"
+# Home Assistant mounts addon_config at /data inside the container
+# On host: /addon_configs/f5965daa_calendar2image/
+CONFIG_DIR="/data"
 
 bashio::log.info "Using config directory: ${CONFIG_DIR}"
 
