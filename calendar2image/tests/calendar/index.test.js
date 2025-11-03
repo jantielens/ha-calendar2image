@@ -19,13 +19,15 @@ describe('Calendar Index Module', () => {
   describe('createErrorEvents', () => {
     it('should create error events for the configured date range', () => {
       const options = { expandRecurringFrom: -2, expandRecurringTo: 2 };
-      const events = createErrorEvents(0, null, options);
+      const events = createErrorEvents(0, null, 'Network error', options);
       
       expect(events).toHaveLength(5); // -2, -1, 0, 1, 2
       
       events.forEach((event, index) => {
-        expect(event.summary).toBe('failed loading ics 0');
-        expect(event.title).toBe('failed loading ics 0');
+        expect(event.summary).toBe('Failed loading ICS 0: Network error');
+        expect(event.title).toBe('Failed loading ICS 0: Network error');
+        expect(event.description).toBe('Error loading calendar source 0: Network error');
+        expect(event.error).toBe('Network error');
         expect(event.allDay).toBe(true);
         expect(event.isAllDay).toBe(true);
         expect(event.source).toBe(0);
@@ -35,15 +37,16 @@ describe('Calendar Index Module', () => {
     });
 
     it('should include sourceName when provided', () => {
-      const events = createErrorEvents(1, 'Work Calendar', { expandRecurringFrom: 0, expandRecurringTo: 0 });
+      const events = createErrorEvents(1, 'Work Calendar', 'Server error', { expandRecurringFrom: 0, expandRecurringTo: 0 });
       
       expect(events).toHaveLength(1);
       expect(events[0].source).toBe(1);
       expect(events[0].sourceName).toBe('Work Calendar');
+      expect(events[0].error).toBe('Server error');
     });
 
     it('should not include sourceName when not provided', () => {
-      const events = createErrorEvents(2, null, { expandRecurringFrom: 0, expandRecurringTo: 0 });
+      const events = createErrorEvents(2, null, 'Timeout', { expandRecurringFrom: 0, expandRecurringTo: 0 });
       
       expect(events).toHaveLength(1);
       expect(events[0].source).toBe(2);
@@ -51,9 +54,19 @@ describe('Calendar Index Module', () => {
     });
 
     it('should use default date range when options not provided', () => {
-      const events = createErrorEvents(0);
+      const events = createErrorEvents(0, null, 'Test error');
       
       expect(events).toHaveLength(63); // Default -31 to 31 = 63 days
+    });
+
+    it('should truncate long error messages in title', () => {
+      const longError = 'This is a very long error message that exceeds fifty characters and should be truncated';
+      const events = createErrorEvents(0, null, longError, { expandRecurringFrom: 0, expandRecurringTo: 0 });
+      
+      expect(events).toHaveLength(1);
+      expect(events[0].summary).toBe('Failed loading ICS 0: This is a very long error message that exceeds ...');
+      expect(events[0].description).toContain(longError); // Full error in description
+      expect(events[0].error).toBe(longError); // Full error in error property
     });
   });
 
@@ -77,7 +90,7 @@ describe('Calendar Index Module', () => {
 
         const result = await getCalendarEvents(url, { expandRecurringFrom: -7, expandRecurringTo: 7 });
 
-        expect(fetchICS).toHaveBeenCalledWith(url);
+        expect(fetchICS).toHaveBeenCalledWith(url, { rejectUnauthorized: true });
         expect(parseICS).toHaveBeenCalledWith(mockIcsData, { expandRecurringFrom: -7, expandRecurringTo: 7 });
         expect(result).toHaveLength(1);
         expect(result[0]).toEqual({
@@ -98,7 +111,8 @@ describe('Calendar Index Module', () => {
           expect.stringContaining('[Calendar] Failed to fetch ICS from source 0')
         );
         expect(result).toHaveLength(3); // Error events for 3 days
-        expect(result[0].summary).toBe('failed loading ics 0');
+        expect(result[0].summary).toBe('Failed loading ICS 0: Network error');
+        expect(result[0].error).toBe('Network error');
       });
     });
 
@@ -207,7 +221,8 @@ describe('Calendar Index Module', () => {
         });
         
         // Second event should be error event
-        expect(result[1].summary).toBe('failed loading ics 1');
+        expect(result[1].summary).toBe('Failed loading ICS 1: Server error');
+        expect(result[1].error).toBe('Server error');
         expect(result[1].source).toBe(1);
         expect(result[1].sourceName).toBe('Broken');
       });

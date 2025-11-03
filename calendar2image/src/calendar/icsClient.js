@@ -4,10 +4,14 @@ const http = require('http');
 /**
  * Fetches ICS data from a given URL
  * @param {string} url - The ICS URL to fetch
+ * @param {Object} options - Fetch options
+ * @param {boolean} options.rejectUnauthorized - Whether to verify SSL certificates (default: true)
  * @returns {Promise<string>} The raw ICS data
  * @throws {Error} If the URL is invalid or the request fails
  */
-async function fetchICS(url) {
+async function fetchICS(url, options = {}) {
+  const { rejectUnauthorized = true } = options;
+  
   if (!url || typeof url !== 'string') {
     throw new Error('Invalid URL: URL must be a non-empty string');
   }
@@ -28,10 +32,15 @@ async function fetchICS(url) {
   return new Promise((resolve, reject) => {
     const client = parsedUrl.protocol === 'https:' ? https : http;
     
-    const request = client.get(url, (response) => {
+    // Build request options
+    const requestOptions = parsedUrl.protocol === 'https:' 
+      ? { rejectUnauthorized }
+      : {};
+    
+    const request = client.get(url, requestOptions, (response) => {
       // Handle redirects
       if (response.statusCode >= 300 && response.statusCode < 400 && response.headers.location) {
-        fetchICS(response.headers.location)
+        fetchICS(response.headers.location, options)
           .then(resolve)
           .catch(reject);
         return;

@@ -117,6 +117,7 @@ function getPageStyles() {
     .badge-secondary { background: #e9ecef; color: #6c757d; }
     .badge-info { background: #d1ecf1; color: #0c5460; }
     .badge-danger { background: #f8d7da; color: #721c24; }
+    .badge-warning { background: #fff3cd; color: #856404; border: 1px solid #ffc107; }
     .validation-indicator { display: inline-flex; align-items: center; gap: 5px; font-size: 0.9em; }
     .validation-banner { background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%); border: 2px solid #dc3545; border-radius: 8px; padding: 20px; margin-bottom: 30px; box-shadow: 0 4px 12px rgba(220, 53, 69, 0.2); }
     .validation-banner-title { color: #721c24; font-size: 1.3em; font-weight: 600; margin-bottom: 12px; display: flex; align-items: center; gap: 10px; }
@@ -349,6 +350,7 @@ async function generateConfigPageHTML(index, config, baseUrl) {
                 <li class="url-item">
                   <span class="url-name">[${idx}] ${escapeHtml(source.sourceName || 'Unnamed source')} <span class="json-path" data-json-preview="${escapeHtml(generateJsonPreview(config, `icsUrl[${idx}].${source.sourceName ? 'sourceName' : 'url'}`))}">icsUrl[${idx}].${source.sourceName ? 'sourceName' : 'url'}</span></span>
                   <a href="${escapeHtml(source.url)}" target="_blank" class="url-link">${escapeHtml(truncateUrl(source.url))}</a>
+                  ${source.rejectUnauthorized === false ? `<span class="badge badge-warning" title="SSL certificate verification disabled for this source">⚠️ SSL verification disabled</span>` : ''}
                   ${validations.icsUrls[idx] ? `<div class="url-meta">${getValidationBadge(validations.icsUrls[idx])}</div>` : ''}
                 </li>
               `).join('')}

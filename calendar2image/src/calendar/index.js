@@ -69,7 +69,9 @@ async function getCalendarEvents(icsUrlConfig, options = {}) {
   // Fetch all ICS sources in parallel
   const fetchPromises = sources.map(async (source, index) => {
     try {
-      const icsData = await fetchICS(source.url);
+      // Use rejectUnauthorized from source config, default to true (secure)
+      const rejectUnauthorized = source.rejectUnauthorized !== false;
+      const icsData = await fetchICS(source.url, { rejectUnauthorized });
       const events = parseICS(icsData, options);
       
       // Add source information to each event and normalize field names

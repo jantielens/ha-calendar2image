@@ -43,6 +43,7 @@ Each configuration file should contain:
   - **Array format**: Multiple calendar sources with optional names
     - `url` (string, required): ICS URL to fetch
     - `sourceName` (string, optional): Human-readable name for the calendar source
+    - `rejectUnauthorized` (boolean, optional, default: `true`): Verify SSL certificates. Set to `false` only for trusted sources with certificate issues.
 - **template** (string): Name of the template to use (e.g., "week-view", "today-view")
 
 ### Optional Fields
@@ -122,7 +123,27 @@ With pre-generation enabled, images are regenerated every 5 minutes in the backg
   "template": "week-view"
 }
 ```
-This configuration combines events from multiple calendars into a single view. Events include `source` (index) and `sourceName` (if provided) fields for templates that want to display calendar source information. Failed calendar sources will generate "failed loading ics X" placeholder events.
+This configuration combines events from multiple calendars into a single view. Events include `source` (index) and `sourceName` (if provided) fields for templates that want to display calendar source information. Failed calendar sources will generate error events with the actual error message.
+
+### Calendar Source with SSL Certificate Issues
+```json
+{
+  "icsUrl": [
+    {
+      "url": "https://problematic-server.com/calendar.ics",
+      "sourceName": "My Calendar",
+      "rejectUnauthorized": false
+    }
+  ],
+  "template": "week-view"
+}
+```
+**⚠️ Security Warning**: The `rejectUnauthorized: false` option disables SSL certificate verification for this specific calendar source only. Use this **only** if:
+- You trust the calendar source
+- The server has a self-signed or incomplete certificate chain
+- You're getting "unable to verify the first certificate" errors
+
+**Default**: `rejectUnauthorized: true` (secure). See [Troubleshooting](TROUBLESHOOTING.md#ssl-certificate-errors) for more details.
 
 ### Configuration without Pre-generation (Always Fresh)
 ```json

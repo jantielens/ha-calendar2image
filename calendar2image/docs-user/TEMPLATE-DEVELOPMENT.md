@@ -271,14 +271,21 @@ Each event in the `events` array has:
   location: "Location...",        // String or undefined
   source: 0,                      // Number (calendar source index, 0-based)
   sourceName: "Work",             // String or undefined (optional source name)
+  error: "Network error: ...",    // String or undefined (only present on error events)
   // ... other ICS properties
 }
 ```
 
-**New in Multiple Calendar Support:**
+**Multiple Calendar Support:**
 - `source`: Index (0, 1, 2...) indicating which calendar the event came from
 - `sourceName`: Optional human-readable name for the calendar source (if provided in config)
-- For failed calendar sources, placeholder events are created with title "failed loading ics X"
+
+**Error Events:**
+- For failed calendar sources, error events are created with detailed error messages
+- `title`: Includes truncated error message (e.g., "Failed loading ICS 0: unable to verify...")
+- `description`: Contains the full error message
+- `error`: The raw error message for programmatic access
+- These events span the entire date range to make fetch failures visible
 
 ### Config Object
 
