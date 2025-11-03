@@ -200,7 +200,20 @@ function collectValidationErrors(config, validations, icsUrls) {
 async function generateConfigPageHTML(index, config, baseUrl) {
   const configFileName = `${index}.json`;
   const configFilePath = path.resolve(path.join(CONFIG_DIR, configFileName));
-  const templatePath = path.resolve(path.join(CONFIG_DIR, 'templates', `${config.template}.js`));
+  
+  // Determine template path (check custom first, then built-in)
+  const customTemplatePath = path.resolve(path.join(CONFIG_DIR, 'templates', `${config.template}.js`));
+  const builtInTemplatePath = path.resolve(path.join(__dirname, '..', 'templates', 'built-in', `${config.template}.js`));
+  let templatePath = customTemplatePath;
+  let isBuiltInTemplate = false;
+  
+  try {
+    await fs.access(customTemplatePath);
+  } catch (error) {
+    // Custom template doesn't exist, use built-in path
+    templatePath = builtInTemplatePath;
+    isBuiltInTemplate = true;
+  }
   
   // Parse URLs
   const icsUrls = parseIcsUrls(config.icsUrl);
@@ -230,11 +243,10 @@ async function generateConfigPageHTML(index, config, baseUrl) {
     console.log(`[Config Page] No cached image for config ${index}`);
   }
   
-  // Load template
+  // Load template content
   let templateContent = null;
   try {
-    const templateFullPath = path.join(CONFIG_DIR, 'templates', `${config.template}.js`);
-    templateContent = await fs.readFile(templateFullPath, 'utf8');
+    templateContent = await fs.readFile(templatePath, 'utf8');
   } catch (error) {
     console.log(`[Config Page] Could not load template: ${error.message}`);
   }
@@ -1035,13 +1047,21 @@ async function runValidations(index, config, icsUrls, extraDataUrls) {
     }
   }
 
-  // Validate template exists
+  // Validate template exists (check custom first, then built-in)
   try {
-    const templateFilePath = path.join(CONFIG_DIR, 'templates', `${config.template}.js`);
-    await fs.access(templateFilePath);
-    validations.template = { valid: true, message: 'File exists' };
+    const customTemplatePath = path.join(CONFIG_DIR, 'templates', `${config.template}.js`);
+    const builtInTemplatePath = path.join(__dirname, '..', 'templates', 'built-in', `${config.template}.js`);
+    
+    try {
+      await fs.access(customTemplatePath);
+      validations.template = { valid: true, message: 'Custom template' };
+    } catch (customError) {
+      // If custom not found, try built-in
+      await fs.access(builtInTemplatePath);
+      validations.template = { valid: true, message: 'Built-in template' };
+    }
   } catch (error) {
-    validations.template = { valid: false, message: 'File not found' };
+    validations.template = { valid: false, message: 'Template not found' };
   }
 
   // Validate extra data URLs
