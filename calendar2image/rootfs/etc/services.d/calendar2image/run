@@ -14,8 +14,10 @@ export CHROMIUM_PATH=/usr/bin/chromium
 export CONFIG_DIR=/config
 export TEMPLATES_DIR=/config/templates
 
-# Get the real path (resolves symlinks and shows actual filesystem path)
-export REAL_CONFIG_PATH=$(realpath "${CONFIG_DIR}" 2>/dev/null || echo "${CONFIG_DIR}")
+# Set addon slug and host path (these should be set by init script)
+# But provide defaults just in case
+export ADDON_SLUG=${ADDON_SLUG:-calendar2image}
+export HOST_CONFIG_PATH=${HOST_CONFIG_PATH:-/addon_configs/${ADDON_SLUG}}
 
 cd /app
 exec node src/index.js
