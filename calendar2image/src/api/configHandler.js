@@ -199,8 +199,8 @@ function collectValidationErrors(config, validations, icsUrls) {
  */
 async function generateConfigPageHTML(index, config, baseUrl) {
   const configFileName = `${index}.json`;
-  const configFilePath = `/config/calendar2image/${configFileName}`;
-  const templatePath = `/config/calendar2image/templates/${config.template}`;
+  const configFilePath = path.resolve(path.join(CONFIG_DIR, configFileName));
+  const templatePath = path.resolve(path.join(CONFIG_DIR, 'templates', `${config.template}.js`));
   
   // Parse URLs
   const icsUrls = parseIcsUrls(config.icsUrl);
@@ -233,7 +233,7 @@ async function generateConfigPageHTML(index, config, baseUrl) {
   // Load template
   let templateContent = null;
   try {
-    const templateFullPath = path.join(CONFIG_DIR, 'templates', config.template);
+    const templateFullPath = path.join(CONFIG_DIR, 'templates', `${config.template}.js`);
     templateContent = await fs.readFile(templateFullPath, 'utf8');
   } catch (error) {
     console.log(`[Config Page] Could not load template: ${error.message}`);
@@ -551,14 +551,14 @@ async function generateConfigPageHTML(index, config, baseUrl) {
         </div>
         <div class="card-content">
           <div class="section-description">
-            File system paths within the Home Assistant environment. Configuration files are stored in <code>/config/calendar2image/</code> and templates in <code>/config/calendar2image/templates/</code>.
+            File system paths within the Home Assistant environment. Configuration files are stored in <code>${escapeHtml(path.resolve(CONFIG_DIR))}/</code> and templates in <code>${escapeHtml(path.resolve(path.join(CONFIG_DIR, 'templates')))}/</code>.
           </div>
           <div class="setting-row">
             <span class="setting-label">Configuration File <span class="json-path" data-json-preview="Configuration file: ${index}.json">${index}.json</span></span>
           </div>
           <div class="file-path">
             <code>${escapeHtml(configFilePath)}</code>
-            <button class="copy-btn" onclick="copyToClipboard('${escapeHtml(configFilePath)}', this)">Copy Path</button>
+            <button class="copy-btn" onclick="copyToClipboard('${escapeJs(configFilePath)}', this)">Copy Path</button>
           </div>
           
           <div class="setting-row" style="margin-top: 20px;">
@@ -566,7 +566,7 @@ async function generateConfigPageHTML(index, config, baseUrl) {
           </div>
           <div class="file-path">
             <code>${escapeHtml(templatePath)}</code>
-            <button class="copy-btn" onclick="copyToClipboard('${escapeHtml(templatePath)}', this)">Copy Path</button>
+            <button class="copy-btn" onclick="copyToClipboard('${escapeJs(templatePath)}', this)">Copy Path</button>
           </div>
           <div style="margin-top: 8px; margin-left: 0;">
             ${getValidationBadge(validations.template)}
@@ -862,6 +862,20 @@ function escapeHtml(text) {
 }
 
 /**
+ * Escape text for use in JavaScript strings (for onclick handlers)
+ */
+function escapeJs(text) {
+  if (text === null || text === undefined) return '';
+  
+  return String(text)
+    .replace(/\\/g, '\\\\')  // Escape backslashes first
+    .replace(/'/g, "\\'")    // Escape single quotes
+    .replace(/"/g, '\\"')    // Escape double quotes
+    .replace(/\n/g, '\\n')   // Escape newlines
+    .replace(/\r/g, '\\r');  // Escape carriage returns
+}
+
+/**
  * Generate JSON preview with highlighted property for tooltip
  * @param {Object} config - Full configuration object
  * @param {string} propertyPath - Dot-notation path to property (e.g., "width", "icsUrl[0].sourceName")
@@ -1022,7 +1036,7 @@ async function runValidations(index, config, icsUrls, extraDataUrls) {
 
   // Validate template exists
   try {
-    const templateFilePath = path.join(CONFIG_DIR, 'templates', config.template);
+    const templateFilePath = path.join(CONFIG_DIR, 'templates', `${config.template}.js`);
     await fs.access(templateFilePath);
     validations.template = { valid: true, message: 'File exists' };
   } catch (error) {
