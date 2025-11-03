@@ -78,6 +78,15 @@ function generateTimelinePageHTML(index, config, events, stats, baseUrl) {
       eventCounts[event.eventType]++;
     }
   });
+  
+  // Extract unique IPs from download events
+  const uniqueIPs = new Set();
+  events.forEach(event => {
+    if (event.eventType === 'download' && event.metadata && event.metadata.ip) {
+      uniqueIPs.add(event.metadata.ip);
+    }
+  });
+  const sortedIPs = Array.from(uniqueIPs).sort();
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -219,6 +228,31 @@ function generateTimelinePageHTML(index, config, events, stats, baseUrl) {
       background: white;
       border: 2px solid #e9ecef;
       border-radius: 6px;
+    }
+    
+    .ip-filter {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 5px 12px;
+      background: white;
+      border: 2px solid #e9ecef;
+      border-radius: 6px;
+    }
+    
+    .ip-filter select {
+      padding: 4px 8px;
+      border: 1px solid #dee2e6;
+      border-radius: 4px;
+      background: white;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    
+    .ip-filter label {
+      font-weight: 500;
+      color: #495057;
+      font-size: 14px;
     }
     
     .content {
@@ -428,6 +462,14 @@ function generateTimelinePageHTML(index, config, events, stats, baseUrl) {
           <input type="checkbox" checked data-filter="system"> System
         </label>
         
+        <div class="ip-filter">
+          <label for="ip-filter-select">IP/Host:</label>
+          <select id="ip-filter-select">
+            <option value="all">All IPs</option>
+            ${sortedIPs.map(ip => `<option value="${ip}">${ip}</option>`).join('')}
+          </select>
+        </div>
+        
         <div class="auto-refresh">
           <label>
             <input type="checkbox" id="auto-refresh"> Auto-refresh
@@ -475,14 +517,34 @@ function generateTimelinePageHTML(index, config, events, stats, baseUrl) {
       });
     });
     
+    // IP filter functionality
+    const ipFilterSelect = document.getElementById('ip-filter-select');
+    if (ipFilterSelect) {
+      ipFilterSelect.addEventListener('change', applyFilters);
+    }
+    
     function applyFilters() {
       const activeFilters = Array.from(filterCheckboxes)
         .filter(cb => cb.checked)
         .map(cb => cb.dataset.filter);
       
+      const selectedIP = ipFilterSelect ? ipFilterSelect.value : 'all';
+      
       timelineItems.forEach(item => {
         const eventType = item.dataset.type;
-        if (activeFilters.includes(eventType)) {
+        const itemIP = item.dataset.ip;
+        
+        // Check event type filter
+        const typeMatch = activeFilters.includes(eventType);
+        
+        // Check IP filter (only applies to download events)
+        let ipMatch = true;
+        if (selectedIP !== 'all' && eventType === 'download') {
+          ipMatch = (itemIP === selectedIP);
+        }
+        
+        // Show item only if both filters match
+        if (typeMatch && ipMatch) {
           item.style.display = '';
         } else {
           item.style.display = 'none';
@@ -516,10 +578,30 @@ function generateTimelinePageHTML(index, config, events, stats, baseUrl) {
       });
     });
     
-    // Auto-refresh
+    // Auto-refresh with localStorage persistence
     let refreshInterval = null;
     const autoRefreshCheckbox = document.getElementById('auto-refresh');
     const refreshIntervalSelect = document.getElementById('refresh-interval');
+    const storageKey = 'timeline-autorefresh-${index}';
+    
+    // Restore saved settings from localStorage
+    const savedSettings = localStorage.getItem(storageKey);
+    if (savedSettings) {
+      try {
+        const settings = JSON.parse(savedSettings);
+        autoRefreshCheckbox.checked = settings.enabled || false;
+        refreshIntervalSelect.value = settings.interval || '30';
+      } catch (e) {
+        console.error('Failed to restore auto-refresh settings:', e);
+      }
+    }
+    
+    function saveSettings() {
+      localStorage.setItem(storageKey, JSON.stringify({
+        enabled: autoRefreshCheckbox.checked,
+        interval: refreshIntervalSelect.value
+      }));
+    }
     
     function startAutoRefresh() {
       const seconds = parseInt(refreshIntervalSelect.value);
@@ -536,6 +618,7 @@ function generateTimelinePageHTML(index, config, events, stats, baseUrl) {
     }
     
     autoRefreshCheckbox.addEventListener('change', function() {
+      saveSettings();
       if (this.checked) {
         startAutoRefresh();
       } else {
@@ -544,11 +627,17 @@ function generateTimelinePageHTML(index, config, events, stats, baseUrl) {
     });
     
     refreshIntervalSelect.addEventListener('change', function() {
+      saveSettings();
       if (autoRefreshCheckbox.checked) {
         stopAutoRefresh();
         startAutoRefresh();
       }
     });
+    
+    // Start auto-refresh if it was enabled
+    if (autoRefreshCheckbox.checked) {
+      startAutoRefresh();
+    }
     
     // Format relative time
     function formatRelativeTime(timestamp) {
@@ -593,8 +682,13 @@ function generateEventHTML(event, index) {
     .map(([key, value]) => `${key}=${typeof value === 'object' ? JSON.stringify(value) : value}`)
     .join(' | ');
   
+  // Extract IP for download events
+  const ipAttr = (event.eventType === 'download' && event.metadata && event.metadata.ip) 
+    ? `data-ip="${event.metadata.ip}"` 
+    : '';
+  
   return `
-    <div class="timeline-item type-${event.eventType}" data-type="${event.eventType}">
+    <div class="timeline-item type-${event.eventType}" data-type="${event.eventType}" ${ipAttr}>
       <div class="timeline-dot"></div>
       <div class="timeline-content">
         <div class="event-header">
