@@ -1,5 +1,29 @@
 # Changelog
 
+## [0.6.0] - 2025-11-03
+
+### Added
+
+- **Per-Source SSL Certificate Control** - New `rejectUnauthorized` option for individual calendar sources
+  - Allows disabling SSL verification for specific calendars with certificate issues
+  - Secure by default (defaults to `true`)
+  - Per-source configuration prevents disabling SSL globally
+  - Documented in configuration and troubleshooting guides
+
+### Improved
+
+- **Error Messages** - Calendar fetch errors now include actual error messages in events
+  - Error events display full error details instead of generic "failed loading ics X"
+  - Error messages truncated in title for display, full message in description
+  - Helps users diagnose SSL, network, and server issues
+
+### Fixed
+
+- **SSL Certificate Chain Issues** - Resolved "unable to verify the first certificate" errors
+  - Added per-source `rejectUnauthorized` configuration option
+  - Config page displays warning badge for sources with SSL verification disabled
+  - Comprehensive troubleshooting documentation added
+
 ## [0.5.0] - 2025-11-03
 
 ### Added

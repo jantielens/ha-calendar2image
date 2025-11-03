@@ -223,6 +223,56 @@ http://homeassistant.local:3000/api/0.jpg  ✗
 
 ## Calendar Issues
 
+### SSL Certificate Errors
+
+**Error messages in logs or error events:**
+```
+Network error: unable to verify the first certificate
+unable to verify the first certificate
+UNABLE_TO_VERIFY_LEAF_SIGNATURE
+SELF_SIGNED_CERT_IN_CHAIN
+```
+
+**What this means:**
+The calendar server has an SSL certificate issue:
+- Self-signed certificate
+- Incomplete certificate chain (missing intermediate certificates)
+- Expired or invalid certificate
+
+**Why browsers work but Calendar2Image doesn't:**
+Modern browsers automatically download missing intermediate certificates and are more lenient with SSL validation. Node.js (which Calendar2Image uses) strictly requires the complete certificate chain to be sent by the server.
+
+**Solution:**
+
+Use the `rejectUnauthorized: false` option for the specific calendar source:
+
+```json
+{
+  "icsUrl": [
+    {
+      "url": "https://your-server.com/calendar.ics",
+      "sourceName": "My Calendar",
+      "rejectUnauthorized": false
+    }
+  ],
+  "template": "week-view"
+}
+```
+
+**⚠️ Security Warning:**
+- Only use this for calendar sources you trust
+- This disables SSL certificate verification for **this specific URL only**
+- Other calendar sources remain secure with normal verification
+- Default is `rejectUnauthorized: true` (secure)
+
+**Better solution (if possible):**
+Contact the calendar server administrator to fix their SSL configuration by:
+- Installing intermediate certificates
+- Using a properly signed certificate from a trusted CA
+- Ensuring the complete certificate chain is sent
+
+---
+
 ### "Failed to fetch calendar data"
 
 **Error:**

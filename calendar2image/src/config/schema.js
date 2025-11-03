@@ -32,6 +32,11 @@ const configSchema = {
                 type: 'string',
                 minLength: 1,
                 description: 'Optional human-readable name for this calendar source'
+              },
+              rejectUnauthorized: {
+                type: 'boolean',
+                default: true,
+                description: 'Verify SSL certificates for HTTPS requests (default: true). Set to false only for trusted sources with certificate issues.'
               }
             },
             required: ['url'],

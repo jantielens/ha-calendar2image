@@ -5,13 +5,19 @@ const { parseICS } = require('./icsParser');
  * Creates error events for a failed ICS source
  * @param {number} sourceIndex - Index of the failed source
  * @param {string} sourceName - Optional name of the failed source  
+ * @param {string} errorMessage - The error message to display
  * @param {Object} options - Parsing options for date range
  * @returns {Array<Object>} Array of error event objects
  */
-function createErrorEvents(sourceIndex, sourceName, options = {}) {
+function createErrorEvents(sourceIndex, sourceName, errorMessage, options = {}) {
   const { expandRecurringFrom = -31, expandRecurringTo = 31 } = options;
   const today = new Date();
   const events = [];
+  
+  // Truncate error message if too long (for better display)
+  const shortError = errorMessage.length > 50 
+    ? errorMessage.substring(0, 47) + '...' 
+    : errorMessage;
   
   // Create one error event per day in the configured range
   for (let dayOffset = expandRecurringFrom; dayOffset <= expandRecurringTo; dayOffset++) {
@@ -23,13 +29,15 @@ function createErrorEvents(sourceIndex, sourceName, options = {}) {
     startOfDay.setHours(0, 0, 0, 0);
     
     const errorEvent = {
-      summary: `failed loading ics ${sourceIndex}`,
-      title: `failed loading ics ${sourceIndex}`,
+      summary: `Failed loading ICS ${sourceIndex}: ${shortError}`,
+      title: `Failed loading ICS ${sourceIndex}: ${shortError}`,
+      description: `Error loading calendar source ${sourceIndex}: ${errorMessage}`,
       start: startOfDay.toISOString(),
       end: startOfDay.toISOString(),
       allDay: true,
       isAllDay: true,
-      source: sourceIndex
+      source: sourceIndex,
+      error: errorMessage
     };
     
     // Add sourceName if provided
@@ -61,7 +69,9 @@ async function getCalendarEvents(icsUrlConfig, options = {}) {
   // Fetch all ICS sources in parallel
   const fetchPromises = sources.map(async (source, index) => {
     try {
-      const icsData = await fetchICS(source.url);
+      // Use rejectUnauthorized from source config, default to true (secure)
+      const rejectUnauthorized = source.rejectUnauthorized !== false;
+      const icsData = await fetchICS(source.url, { rejectUnauthorized });
       const events = parseICS(icsData, options);
       
       // Add source information to each event and normalize field names
@@ -75,8 +85,8 @@ async function getCalendarEvents(icsUrlConfig, options = {}) {
     } catch (error) {
       console.warn(`[Calendar] Failed to fetch ICS from source ${index} (${source.url}): ${error.message}`);
       
-      // Return error events for this failed source
-      return createErrorEvents(index, source.sourceName, options);
+      // Return error events for this failed source with the actual error message
+      return createErrorEvents(index, source.sourceName, error.message, options);
     }
   });
 
