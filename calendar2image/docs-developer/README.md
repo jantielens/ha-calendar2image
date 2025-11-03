@@ -12,6 +12,13 @@ This directory contains technical documentation for developers working on the Ca
   - Troubleshooting
   - Advanced usage
 
+- [**LOCAL-CONTAINER.md**](./LOCAL-CONTAINER.md) - Local container development guide:
+  - Building and running containers locally
+  - Differences between development and Home Assistant production setups
+  - Docker configuration comparison (Dockerfile vs Dockerfile.local)
+  - Testing workflow without Home Assistant
+  - Troubleshooting container issues
+
 - [**IMPLEMENTATION.md**](./IMPLEMENTATION.md) - Steps 2-5 implementation details, including:
   - ICS Calendar Data Fetching module
   - Configuration System module

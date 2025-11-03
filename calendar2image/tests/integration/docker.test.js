@@ -88,9 +88,9 @@ describe('Docker Integration Tests', () => {
       // Ignore if container doesn't exist
     }
     
-    // Build Docker image (use HA base image for proper s6-overlay support)
+    // Build Docker image (use local Dockerfile for testing without HA dependencies)
     try {
-      execSync(`docker build -t ${IMAGE_NAME} --build-arg BUILD_FROM=ghcr.io/home-assistant/amd64-base:3.20 .`, {
+      execSync(`docker build -f Dockerfile.local -t ${IMAGE_NAME} .`, {
         cwd: path.resolve(__dirname, '../..'),
         stdio: 'inherit'
       });

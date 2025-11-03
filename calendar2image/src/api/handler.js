@@ -5,6 +5,7 @@ const { generateImage } = require('../image');
 const { loadCachedImage, saveCachedImage, getCacheMetadata } = require('../cache');
 const { calculateCRC32 } = require('../utils/crc32');
 const { fetchExtraData } = require('../extraData');
+const { logGeneration, logDownload, logICS, logError, EVENT_SUBTYPES } = require('../timeline');
 
 /**
  * Fetch extra data based on config format (string or array)
@@ -157,13 +158,34 @@ async function generateCalendarImage(index, options = {}) {
     console.log(`[API] Image generated: ${result.buffer.length} bytes in ${imageDuration}ms`);
     console.log(`[API] Total processing time: ${fetchDuration + renderDuration + imageDuration}ms`);
 
-    // Step 5: Save to cache if requested
+    // Step 5: Calculate CRC32 and check if it changed
+    const newCRC32 = calculateCRC32(result.buffer);
+    const oldMetadata = await getCacheMetadata(index);
+    const crc32Changed = !oldMetadata || oldMetadata.crc32 !== newCRC32;
+    const generationDuration = (Date.now() - generationStart) / 1000; // Convert to seconds
+
+    // Step 6: Log generation event to timeline
+    const generationSubtype = trigger === 'scheduled' ? EVENT_SUBTYPES.SCHEDULED :
+                              trigger === 'boot' ? EVENT_SUBTYPES.BOOT :
+                              EVENT_SUBTYPES.ON_DEMAND;
+    
+    await logGeneration(index, generationSubtype, {
+      crc32: newCRC32,
+      previousCrc32: oldMetadata ? oldMetadata.crc32 : null,
+      changed: crc32Changed,
+      duration: generationDuration,
+      template: config.template,
+      imageSize: result.buffer.length,
+      eventCount: events.length
+    }).catch(err => console.warn(`[Timeline] Failed to log generation: ${err.message}`));
+
+    // Step 7: Save to cache if requested
     if (saveCache) {
       try {
-        const generationDuration = Date.now() - generationStart;
+        const generationDurationMs = Date.now() - generationStart;
         await saveCachedImage(index, result.buffer, result.contentType, config.imageType, {
           trigger,
-          generationDuration
+          generationDuration: generationDurationMs
         });
       } catch (cacheError) {
         console.warn(`[API] Failed to save to cache: ${cacheError.message}`);
@@ -176,6 +198,13 @@ async function generateCalendarImage(index, options = {}) {
   } catch (error) {
     // Categorize errors for appropriate HTTP status codes
     const errorMessage = error.message || 'Unknown error';
+    
+    // Log error to timeline
+    await logError(index, EVENT_SUBTYPES.GENERATION_ERROR, {
+      error: errorMessage,
+      trigger,
+      duration: (Date.now() - generationStart) / 1000
+    }).catch(err => console.warn(`[Timeline] Failed to log error: ${err.message}`));
     
     // Configuration errors (404 - Not Found)
     if (errorMessage.includes('Configuration file not found')) {
@@ -303,6 +332,17 @@ async function handleImageRequest(req, res, next) {
       const cached = await loadCachedImage(index);
       
       if (cached) {
+        // Log download event to timeline
+        const clientIp = req.ip || req.connection.remoteAddress || 'unknown';
+        const userAgent = req.get('user-agent') || 'unknown';
+        await logDownload(index, EVENT_SUBTYPES.IMAGE, {
+          ip: clientIp,
+          userAgent,
+          cacheHit: true,
+          imageSize: cached.buffer.length,
+          crc32: cached.metadata.crc32
+        }).catch(err => console.warn(`[Timeline] Failed to log download: ${err.message}`));
+        
         // Serve cached image
         res.set('Content-Type', cached.contentType);
         res.set('Content-Length', cached.buffer.length);
@@ -326,6 +366,17 @@ async function handleImageRequest(req, res, next) {
 
     // Calculate CRC32 for fresh image
     const crc32 = calculateCRC32(result.buffer);
+
+    // Log download event to timeline
+    const clientIp = req.ip || req.connection.remoteAddress || 'unknown';
+    const userAgent = req.get('user-agent') || 'unknown';
+    await logDownload(index, EVENT_SUBTYPES.IMAGE, {
+      ip: clientIp,
+      userAgent,
+      cacheHit: false,
+      imageSize: result.buffer.length,
+      crc32
+    }).catch(err => console.warn(`[Timeline] Failed to log download: ${err.message}`));
 
     // Set response headers
     res.set('Content-Type', result.contentType);
@@ -499,6 +550,16 @@ async function handleCRC32Request(req, res, next) {
     const metadata = await getCacheMetadata(index);
     
     if (metadata && metadata.crc32) {
+      // Log CRC32 download to timeline
+      const clientIp = req.ip || req.connection.remoteAddress || 'unknown';
+      const userAgent = req.get('user-agent') || 'unknown';
+      await logDownload(index, EVENT_SUBTYPES.CRC32, {
+        ip: clientIp,
+        userAgent,
+        crc32: metadata.crc32,
+        cacheHit: true
+      }).catch(err => console.warn(`[Timeline] Failed to log CRC32 download: ${err.message}`));
+      
       // Return cached CRC32
       console.log(`[API] Returning cached CRC32 for config ${index}: ${metadata.crc32}`);
       return res.type('text/plain').send(metadata.crc32);
@@ -513,6 +574,16 @@ async function handleCRC32Request(req, res, next) {
     
     // Calculate CRC32
     const crc32 = calculateCRC32(result.buffer);
+    
+    // Log CRC32 download to timeline
+    const clientIp = req.ip || req.connection.remoteAddress || 'unknown';
+    const userAgent = req.get('user-agent') || 'unknown';
+    await logDownload(index, EVENT_SUBTYPES.CRC32, {
+      ip: clientIp,
+      userAgent,
+      crc32,
+      cacheHit: false
+    }).catch(err => console.warn(`[Timeline] Failed to log CRC32 download: ${err.message}`));
     
     console.log(`[API] Returning fresh CRC32 for config ${index}: ${crc32}`);
     res.type('text/plain').send(crc32);
