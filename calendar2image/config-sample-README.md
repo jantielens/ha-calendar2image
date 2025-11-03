@@ -29,7 +29,7 @@ Configuration files must be named with numeric IDs:
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `icsUrl` | string | URL to your iCalendar (.ics) file. Supports `http://` and `https://` protocols. |
+| `icsUrl` | string or array | Single ICS URL or array of calendar sources. For multiple sources, use objects with `url` (required) and `sourceName` (optional) fields. |
 | `template` | string | Template name to use for rendering (e.g., `"default"`, `"compact"`, `"weekly"`) |
 
 ### Optional Fields
@@ -88,6 +88,28 @@ This is what the default `0.json` file contains - a complete configuration with 
   "imageType": "png"
 }
 ```
+
+### Multiple Calendar Sources
+```json
+{
+  "icsUrl": [
+    {
+      "url": "https://calendar.google.com/calendar/ical/work-calendar/public/basic.ics",
+      "sourceName": "Work"
+    },
+    {
+      "url": "https://calendar.google.com/calendar/ical/personal-calendar/public/basic.ics",
+      "sourceName": "Personal"
+    },
+    {
+      "url": "https://calendar.google.com/calendar/ical/family-calendar/public/basic.ics"
+    }
+  ],
+  "template": "week-view",
+  "preGenerateInterval": "*/10 * * * *"
+}
+```
+This configuration combines events from multiple calendars. Events will include `source` (0, 1, 2...) and `sourceName` fields for template customization. Failed calendars generate placeholder events.
 
 ### JPEG Output
 ```json

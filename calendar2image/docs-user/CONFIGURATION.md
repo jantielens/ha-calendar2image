@@ -34,7 +34,11 @@ Each configuration file should contain:
 
 ### Required Fields
 
-- **icsUrl** (string): URL to the ICS calendar file. Must start with `http://` or `https://`
+- **icsUrl** (string or array): Calendar source configuration. Must start with `http://` or `https://`
+  - **String format**: Single ICS URL (e.g., `"https://calendar.example.com/feed.ics"`)
+  - **Array format**: Multiple calendar sources with optional names
+    - `url` (string, required): ICS URL to fetch
+    - `sourceName` (string, optional): Human-readable name for the calendar source
 - **template** (string): Name of the template to use (e.g., "week-view", "today-view")
 
 ### Optional Fields
@@ -94,6 +98,27 @@ Each configuration file should contain:
 }
 ```
 With pre-generation enabled, images are regenerated every 5 minutes in the background. API requests return cached images in <100ms instead of ~8 seconds for on-demand generation.
+
+### Multiple Calendar Sources
+```json
+{
+  "icsUrl": [
+    {
+      "url": "https://calendar.google.com/calendar/ical/work-calendar/public/basic.ics",
+      "sourceName": "Work"
+    },
+    {
+      "url": "https://calendar.google.com/calendar/ical/personal-calendar/public/basic.ics", 
+      "sourceName": "Personal"
+    },
+    {
+      "url": "https://calendar.google.com/calendar/ical/family-calendar/public/basic.ics"
+    }
+  ],
+  "template": "week-view"
+}
+```
+This configuration combines events from multiple calendars into a single view. Events include `source` (index) and `sourceName` (if provided) fields for templates that want to display calendar source information. Failed calendar sources will generate "failed loading ics X" placeholder events.
 
 ### Configuration without Pre-generation (Always Fresh)
 ```json

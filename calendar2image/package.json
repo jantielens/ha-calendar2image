@@ -1,7 +1,7 @@
 {
   "name": "ha-calendar2image",
-  "version": "0.3.0",
-  "description": "Home Assistant add-on to generate images from calendar data",
+  "version": "0.4.0",
+  "description": "Home Assistant add-on that transforms ICS calendar feeds into customizable images with optional extra data sources (weather, tasks, etc.) - perfect for e-ink displays and dashboards. Features multiple calendar support, REST API, intelligent caching, custom JavaScript templates, and optimized rendering.",
   "main": "src/index.js",
   "scripts": {
     "start": "node src/index.js",

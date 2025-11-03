@@ -75,6 +75,130 @@ describe('config schema', () => {
       expect(result.valid).toBe(false);
     });
 
+    describe('icsUrl array format', () => {
+      it('should accept array with single source', () => {
+        const config = {
+          icsUrl: [
+            { url: 'https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics' }
+          ],
+          template: 'week-view'
+        };
+
+        const result = validateConfig(config);
+        expect(result.valid).toBe(true);
+      });
+
+      it('should accept array with multiple sources', () => {
+        const config = {
+          icsUrl: [
+            { url: 'https://calendar1.google.com/calendar/ical/test1/public/basic.ics' },
+            { url: 'https://calendar2.google.com/calendar/ical/test2/public/basic.ics' }
+          ],
+          template: 'week-view'
+        };
+
+        const result = validateConfig(config);
+        expect(result.valid).toBe(true);
+      });
+
+      it('should accept array with sourceName', () => {
+        const config = {
+          icsUrl: [
+            { url: 'https://work.calendar.com/ics', sourceName: 'Work Calendar' },
+            { url: 'https://personal.calendar.com/ics', sourceName: 'Personal' }
+          ],
+          template: 'week-view'
+        };
+
+        const result = validateConfig(config);
+        expect(result.valid).toBe(true);
+      });
+
+      it('should accept mixed array with some having sourceName', () => {
+        const config = {
+          icsUrl: [
+            { url: 'https://work.calendar.com/ics', sourceName: 'Work' },
+            { url: 'https://personal.calendar.com/ics' },
+            { url: 'https://family.calendar.com/ics', sourceName: 'Family' }
+          ],
+          template: 'week-view'
+        };
+
+        const result = validateConfig(config);
+        expect(result.valid).toBe(true);
+      });
+
+      it('should reject empty array', () => {
+        const config = {
+          icsUrl: [],
+          template: 'week-view'
+        };
+
+        const result = validateConfig(config);
+        expect(result.valid).toBe(false);
+      });
+
+      it('should reject array entry without url', () => {
+        const config = {
+          icsUrl: [
+            { sourceName: 'Work Calendar' }
+          ],
+          template: 'week-view'
+        };
+
+        const result = validateConfig(config);
+        expect(result.valid).toBe(false);
+      });
+
+      it('should reject array entry with empty url', () => {
+        const config = {
+          icsUrl: [
+            { url: '' }
+          ],
+          template: 'week-view'
+        };
+
+        const result = validateConfig(config);
+        expect(result.valid).toBe(false);
+      });
+
+      it('should reject array entry with invalid url protocol', () => {
+        const config = {
+          icsUrl: [
+            { url: 'ftp://example.com/calendar.ics' }
+          ],
+          template: 'week-view'
+        };
+
+        const result = validateConfig(config);
+        expect(result.valid).toBe(false);
+      });
+
+      it('should reject array entry with empty sourceName', () => {
+        const config = {
+          icsUrl: [
+            { url: 'https://calendar.com/ics', sourceName: '' }
+          ],
+          template: 'week-view'
+        };
+
+        const result = validateConfig(config);
+        expect(result.valid).toBe(false);
+      });
+
+      it('should reject array entry with unknown properties', () => {
+        const config = {
+          icsUrl: [
+            { url: 'https://calendar.com/ics', unknownProp: 'value' }
+          ],
+          template: 'week-view'
+        };
+
+        const result = validateConfig(config);
+        expect(result.valid).toBe(false);
+      });
+    });
+
     it('should reject empty template', () => {
       const config = {
         icsUrl: 'https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics',

@@ -9,9 +9,37 @@ const configSchema = {
   type: 'object',
   properties: {
     icsUrl: {
-      type: 'string',
-      minLength: 1,
-      pattern: '^https?://'
+      oneOf: [
+        {
+          type: 'string',
+          minLength: 1,
+          pattern: '^https?://',
+          description: 'Single ICS URL to fetch calendar data from'
+        },
+        {
+          type: 'array',
+          description: 'Array of ICS sources with optional source names',
+          items: {
+            type: 'object',
+            properties: {
+              url: {
+                type: 'string',
+                minLength: 1,
+                pattern: '^https?://',
+                description: 'ICS URL to fetch calendar data from'
+              },
+              sourceName: {
+                type: 'string',
+                minLength: 1,
+                description: 'Optional human-readable name for this calendar source'
+              }
+            },
+            required: ['url'],
+            additionalProperties: false
+          },
+          minItems: 1
+        }
+      ]
     },
     template: {
       type: 'string',
