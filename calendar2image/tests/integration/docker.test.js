@@ -134,7 +134,7 @@ describe('Docker Integration Tests', () => {
         height: 300,
         grayscale: true,
         bitDepth: 1,
-        imageType: 'bmp',
+        imageType: 'png',
         expandRecurringFrom: -7,
         expandRecurringTo: 7
       }, null, 2)
@@ -227,11 +227,11 @@ describe('Docker Integration Tests', () => {
         expect(response.body.message).toContain('serves png images');
       });
 
-      it('should generate BMP image for config 1', async () => {
-        const response = await makeRequest('/api/1.bmp');
+      it('should generate PNG image for config 1', async () => {
+        const response = await makeRequest('/api/1.png');
         
         expect(response.statusCode).toBe(200);
-        expect(response.headers['content-type']).toBe('image/bmp');
+        expect(response.headers['content-type']).toBe('image/png');
         expect(response.headers['x-cache']).toBe('DISABLED');
         expect(response.buffer).toBeInstanceOf(Buffer);
         expect(response.buffer.length).toBeGreaterThan(0);
@@ -254,7 +254,7 @@ describe('Docker Integration Tests', () => {
       });
 
       it('should return DISABLED for non-cached config', async () => {
-        const response = await makeRequest('/api/1.bmp');
+        const response = await makeRequest('/api/1.png');
         
         expect(response.headers['x-cache']).toBe('DISABLED');
         expect(response.headers['x-crc32']).toBeTruthy();
@@ -289,11 +289,11 @@ describe('Docker Integration Tests', () => {
       });
 
       it('should generate fresh image even for non-cached config', async () => {
-        const response = await makeRequest('/api/1/fresh.bmp');
+        const response = await makeRequest('/api/1/fresh.png');
         
         expect(response.statusCode).toBe(200);
         expect(response.headers['x-cache']).toBe('BYPASS');
-        expect(response.headers['content-type']).toBe('image/bmp');
+        expect(response.headers['content-type']).toBe('image/png');
       });
     });
 
@@ -306,8 +306,8 @@ describe('Docker Integration Tests', () => {
         expect(response.body).toMatch(/^[a-f0-9]{8}$/);
       });
 
-      it('should return CRC32 checksum for BMP image', async () => {
-        const response = await makeRequest('/api/1.bmp.crc32');
+      it('should return CRC32 checksum for PNG image', async () => {
+        const response = await makeRequest('/api/1.png.crc32');
         
         expect(response.statusCode).toBe(200);
         expect(response.body).toMatch(/^[a-f0-9]{8}$/);
