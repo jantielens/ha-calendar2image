@@ -1,5 +1,25 @@
 # Changelog
 
+## [0.7.1] - 2025-11-05
+
+### Fixed
+
+- **PNG Bit Depth Support** - Fixed PNG output to properly honor the `bitDepth` configuration parameter
+  - Added `palette: true` requirement for Sharp's `colours` option to take effect
+  - Implemented proper mutually exclusive bit depth conditions (1-bit: 2 colors, 4-bit: 16 colors, 8-bit: 256 colors)
+  - Added fixed-palette quantization for e-ink displays - pixels are pre-quantized to evenly-distributed levels matching e-ink hardware capabilities
+  - Grayscale and color images now properly use limited color palettes for bit depths ≤ 8
+  - Standard 8-bit per channel output (no palette) for bit depths > 8
+
+### Changed
+
+- **JPEG Quality** - Changed from bit-depth-based calculation to sensible default quality of 90
+- **BMP Support Removed** - Removed incomplete BMP support to avoid confusion (was converting to PNG anyway)
+
+### Technical Details
+
+E-ink displays use fixed, evenly-distributed color palettes (e.g., 1-bit: [0, 255], 4-bit: [0, 17, 34, 51, 68, 85, 102, 119, 136, 153, 170, 187, 204, 221, 238, 255]). The new quantization ensures pixel values exactly match these hardware capabilities, eliminating additional dithering and improving image quality on e-ink displays.
+
 ## [0.7.0] - 2025-11-03
 
 ### Added

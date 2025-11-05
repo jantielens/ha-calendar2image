@@ -50,21 +50,6 @@ describe('Image Converter', () => {
       expect(metadata.format).toBe('jpeg');
     });
 
-    test('should convert to BMP format', async () => {
-      const result = await convertImage(testImageBuffer, {
-        imageType: 'bmp',
-        grayscale: false,
-        bitDepth: 8
-      });
-
-      expect(result).toBeInstanceOf(Buffer);
-      expect(result.length).toBeGreaterThan(0);
-      
-      // Note: Sharp converts BMP to PNG since it doesn't support BMP output
-      const metadata = await sharp(result).metadata();
-      expect(metadata.format).toBe('png');
-    });
-
     test('should apply grayscale conversion', async () => {
       const result = await convertImage(testImageBuffer, {
         imageType: 'png',
@@ -197,10 +182,6 @@ describe('Image Converter', () => {
     test('should return correct content type for JPEG', () => {
       expect(getContentType('jpg')).toBe('image/jpeg');
       expect(getContentType('jpeg')).toBe('image/jpeg');
-    });
-
-    test('should return correct content type for BMP', () => {
-      expect(getContentType('bmp')).toBe('image/bmp');
     });
 
     test('should handle uppercase formats', () => {

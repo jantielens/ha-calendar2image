@@ -142,7 +142,7 @@ describe('Home Page and Config API Integration Tests', () => {
         template: 'today-view',
         width: 400,
         height: 300,
-        imageType: 'bmp'
+        imageType: 'png'
       }, null, 2)
     );
 
@@ -218,7 +218,7 @@ describe('Home Page and Config API Integration Tests', () => {
       const response = await makeRequest('/');
       
       expect(response.body).toContain('/api/0.png');
-      expect(response.body).toContain('/api/1.bmp');
+      expect(response.body).toContain('/api/1.png');
       expect(response.body).toContain('/api/5.jpg');
     });
 
@@ -364,7 +364,7 @@ describe('Home Page and Config API Integration Tests', () => {
       expect(response.body.config).toHaveProperty('template', 'today-view');
       expect(response.body.config).toHaveProperty('width', 400);
       expect(response.body.config).toHaveProperty('height', 300);
-      expect(response.body.config).toHaveProperty('imageType', 'bmp');
+      expect(response.body.config).toHaveProperty('imageType', 'png');
     });
 
     it('should return 404 for non-existent configuration', async () => {
@@ -461,7 +461,7 @@ describe('Home Page and Config API Integration Tests', () => {
       
       // Verify each config has valid imageType
       configs.forEach(({ config }) => {
-        expect(['png', 'jpg', 'bmp']).toContain(config.imageType);
+        expect(['png', 'jpg']).toContain(config.imageType);
       });
     });
   });

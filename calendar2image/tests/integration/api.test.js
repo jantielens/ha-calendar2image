@@ -147,7 +147,7 @@ describe('API Integration Tests', () => {
         height: 300,
         grayscale: true,
         bitDepth: 1,
-        imageType: 'bmp',
+        imageType: 'png',
         expandRecurringFrom: -7,
         expandRecurringTo: 7
       }, null, 2)
@@ -204,7 +204,7 @@ describe('API Integration Tests', () => {
       const response = await makeRequest('/api/0.png');
       
       expect(response.statusCode).toBe(200);
-      expect(response.headers['content-type']).toMatch(/image\/(png|jpeg|bmp)/);
+      expect(response.headers['content-type']).toMatch(/image\/(png|jpeg)/);
       expect(response.headers['content-length']).toBeDefined();
       expect(parseInt(response.headers['content-length'])).toBeGreaterThan(0);
     });
@@ -217,12 +217,12 @@ describe('API Integration Tests', () => {
       expect(response.body.length).toBeGreaterThan(0);
     });
 
-    it('GET /api/1.bmp should return image if config exists', async () => {
-      const response = await makeRequest('/api/1.bmp');
+    it('GET /api/1.jpg should return image if config exists', async () => {
+      const response = await makeRequest('/api/1.jpg');
       
       // Config 1 exists, should return image
       if (response.statusCode === 200) {
-        expect(response.headers['content-type']).toMatch(/image\/(png|jpeg|bmp)/);
+        expect(response.headers['content-type']).toMatch(/image\/(png|jpeg)/);
         expect(response.body.length).toBeGreaterThan(0);
       } else if (response.statusCode === 404) {
         // Config might not exist - that's ok for this test
@@ -235,7 +235,7 @@ describe('API Integration Tests', () => {
       
       // Config 3 exists, should return image
       if (response.statusCode === 200) {
-        expect(response.headers['content-type']).toMatch(/image\/(png|jpeg|bmp)/);
+        expect(response.headers['content-type']).toMatch(/image\/(png|jpeg)/);
         expect(response.body.length).toBeGreaterThan(0);
       } else if (response.statusCode === 404) {
         // Config might not exist - that's ok for this test
