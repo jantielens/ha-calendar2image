@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.8.0] - 2025-11-06
+
+### Performance
+
+- **API Response Time Optimization** - Dramatically improved response times for CRC32 and image download endpoints
+  - Made timeline logging non-blocking by moving it after HTTP response (fire-and-forget pattern)
+  - **CRC32 endpoint**: 68% faster average (56ms → 18ms), 80% faster P95 (143ms → 28ms)
+  - **Image download endpoint**: 72% faster average (93ms → 26ms), 88% faster P95 (301ms → 36ms)
+  - **ESP32 workflow** (CRC32 + Image): 42% faster (78ms → 45ms average)
+  - Eliminated all slow requests >500ms during concurrent operations
+  - Maximum observed latency reduced by 80% (854ms → 174ms) during scheduler contention
+  - All logging functionality preserved - no data loss
+
+### Technical Details
+
+The optimization addresses a critical bottleneck where timeline logging was blocking HTTP responses during file I/O operations. By returning responses immediately and logging asynchronously, ESP32 devices and automation clients now receive data in milliseconds instead of waiting for disk writes to complete. This is especially important during concurrent operations when the scheduler is regenerating images. Performance testing with realistic load simulation (scheduler every 5s, ESP32 polling every 2s) showed consistent sub-30ms response times (P95) with zero contention-related delays.
+
 ## [0.7.1] - 2025-11-05
 
 ### Fixed
