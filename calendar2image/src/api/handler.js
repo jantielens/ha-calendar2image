@@ -332,18 +332,7 @@ async function handleImageRequest(req, res, next) {
       const cached = await loadCachedImage(index);
       
       if (cached) {
-        // Log download event to timeline
-        const clientIp = req.ip || req.connection.remoteAddress || 'unknown';
-        const userAgent = req.get('user-agent') || 'unknown';
-        await logDownload(index, EVENT_SUBTYPES.IMAGE, {
-          ip: clientIp,
-          userAgent,
-          cacheHit: true,
-          imageSize: cached.buffer.length,
-          crc32: cached.metadata.crc32
-        }).catch(err => console.warn(`[Timeline] Failed to log download: ${err.message}`));
-        
-        // Serve cached image
+        // Serve cached image IMMEDIATELY
         res.set('Content-Type', cached.contentType);
         res.set('Content-Length', cached.buffer.length);
         res.set('X-Cache', 'HIT');
@@ -351,7 +340,20 @@ async function handleImageRequest(req, res, next) {
         res.set('X-CRC32', cached.metadata.crc32 || calculateCRC32(cached.buffer));
         
         console.log(`[API] Serving cached image for config ${index} (${cached.buffer.length} bytes)`);
-        return res.send(cached.buffer);
+        res.send(cached.buffer);
+        
+        // Log download event to timeline AFTER response is sent (fire-and-forget)
+        const clientIp = req.ip || req.connection.remoteAddress || 'unknown';
+        const userAgent = req.get('user-agent') || 'unknown';
+        logDownload(index, EVENT_SUBTYPES.IMAGE, {
+          ip: clientIp,
+          userAgent,
+          cacheHit: true,
+          imageSize: cached.buffer.length,
+          crc32: cached.metadata.crc32
+        }).catch(err => console.warn(`[Timeline] Failed to log download: ${err.message}`));
+        
+        return;
       }
     } else {
       console.log(`[API] Config ${index} has no preGenerateInterval, generating fresh image...`);
@@ -367,17 +369,6 @@ async function handleImageRequest(req, res, next) {
     // Calculate CRC32 for fresh image
     const crc32 = calculateCRC32(result.buffer);
 
-    // Log download event to timeline
-    const clientIp = req.ip || req.connection.remoteAddress || 'unknown';
-    const userAgent = req.get('user-agent') || 'unknown';
-    await logDownload(index, EVENT_SUBTYPES.IMAGE, {
-      ip: clientIp,
-      userAgent,
-      cacheHit: false,
-      imageSize: result.buffer.length,
-      crc32
-    }).catch(err => console.warn(`[Timeline] Failed to log download: ${err.message}`));
-
     // Set response headers
     res.set('Content-Type', result.contentType);
     res.set('Content-Length', result.buffer.length);
@@ -386,8 +377,19 @@ async function handleImageRequest(req, res, next) {
     
     console.log(`[API] Successfully returning fresh image for config ${index} (${result.buffer.length} bytes)`);
     
-    // Send binary data
+    // Send binary data IMMEDIATELY
     res.send(result.buffer);
+    
+    // Log download event to timeline AFTER response is sent (fire-and-forget)
+    const clientIp = req.ip || req.connection.remoteAddress || 'unknown';
+    const userAgent = req.get('user-agent') || 'unknown';
+    logDownload(index, EVENT_SUBTYPES.IMAGE, {
+      ip: clientIp,
+      userAgent,
+      cacheHit: false,
+      imageSize: result.buffer.length,
+      crc32
+    }).catch(err => console.warn(`[Timeline] Failed to log download: ${err.message}`));
 
   } catch (error) {
     // Handle errors with appropriate HTTP status codes
@@ -550,19 +552,21 @@ async function handleCRC32Request(req, res, next) {
     const metadata = await getCacheMetadata(index);
     
     if (metadata && metadata.crc32) {
-      // Log CRC32 download to timeline
+      // Return cached CRC32 IMMEDIATELY (don't wait for logging)
+      console.log(`[API] Returning cached CRC32 for config ${index}: ${metadata.crc32}`);
+      res.type('text/plain').send(metadata.crc32);
+      
+      // Log CRC32 download to timeline AFTER response is sent (fire-and-forget)
       const clientIp = req.ip || req.connection.remoteAddress || 'unknown';
       const userAgent = req.get('user-agent') || 'unknown';
-      await logDownload(index, EVENT_SUBTYPES.CRC32, {
+      logDownload(index, EVENT_SUBTYPES.CRC32, {
         ip: clientIp,
         userAgent,
         crc32: metadata.crc32,
         cacheHit: true
       }).catch(err => console.warn(`[Timeline] Failed to log CRC32 download: ${err.message}`));
       
-      // Return cached CRC32
-      console.log(`[API] Returning cached CRC32 for config ${index}: ${metadata.crc32}`);
-      return res.type('text/plain').send(metadata.crc32);
+      return;
     }
     
     // No cache or no CRC32 in metadata, generate fresh image
@@ -575,18 +579,19 @@ async function handleCRC32Request(req, res, next) {
     // Calculate CRC32
     const crc32 = calculateCRC32(result.buffer);
     
-    // Log CRC32 download to timeline
+    // Return CRC32 IMMEDIATELY
+    console.log(`[API] Returning fresh CRC32 for config ${index}: ${crc32}`);
+    res.type('text/plain').send(crc32);
+    
+    // Log CRC32 download to timeline AFTER response is sent (fire-and-forget)
     const clientIp = req.ip || req.connection.remoteAddress || 'unknown';
     const userAgent = req.get('user-agent') || 'unknown';
-    await logDownload(index, EVENT_SUBTYPES.CRC32, {
+    logDownload(index, EVENT_SUBTYPES.CRC32, {
       ip: clientIp,
       userAgent,
       crc32,
       cacheHit: false
     }).catch(err => console.warn(`[Timeline] Failed to log CRC32 download: ${err.message}`));
-    
-    console.log(`[API] Returning fresh CRC32 for config ${index}: ${crc32}`);
-    res.type('text/plain').send(crc32);
 
   } catch (error) {
     // Handle errors with appropriate HTTP status codes
