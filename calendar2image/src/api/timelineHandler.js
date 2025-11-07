@@ -435,7 +435,7 @@ function generateTimelinePageHTML(index, config, events, stats, baseUrl) {
       overflow: hidden;
       margin: 0;
       padding: 0;
-      transition: opacity 0.3s ease, transform 0.3s ease, margin 0.3s ease, padding 0.3s ease, height 0.3s ease 0.3s;
+      transition: all 0.3s ease;
     }
     
     .timeline-item:last-child {
@@ -1010,7 +1010,7 @@ function generateTimelinePageHTML(index, config, events, stats, baseUrl) {
       // Update countdown every second
       countdownInterval = setInterval(() => {
         countdown--;
-        countdownSpan.textContent = \`Refreshing in \${countdown}s\`;
+        countdownSpan.textContent = `Refreshing in ${countdown}s`;
         if (countdown <= 0) {
           countdown = seconds;
         }
@@ -1023,7 +1023,7 @@ function generateTimelinePageHTML(index, config, events, stats, baseUrl) {
         }, 500);
       }, seconds * 1000);
       
-      countdownSpan.textContent = \`Refreshing in \${countdown}s\`;
+      countdownSpan.textContent = `Refreshing in ${countdown}s`;
     }
     
     function stopAutoRefresh() {
@@ -1090,6 +1090,15 @@ function generateTimelinePageHTML(index, config, events, stats, baseUrl) {
     // Update times every 10 seconds
     setInterval(updateRelativeTimes, 10000);
     updateRelativeTimes();
+    
+    // Pause background animation when page is not visible to save CPU
+    document.addEventListener('visibilitychange', function() {
+      if (document.hidden) {
+        document.body.style.animationPlayState = 'paused';
+      } else {
+        document.body.style.animationPlayState = 'running';
+      }
+    });
   </script>
 </body>
 </html>`;
