@@ -274,6 +274,7 @@ async function generateCalendarImage(index, options = {}) {
  * @param {Function} next - Express next middleware function
  */
 async function handleImageRequest(req, res, next) {
+  const requestStartTime = Date.now(); // Track request start time
   const indexParam = req.params.index;
   const requestedExt = req.params.ext;
   
@@ -345,12 +346,14 @@ async function handleImageRequest(req, res, next) {
         // Log download event to timeline AFTER response is sent (fire-and-forget)
         const clientIp = req.ip || req.connection.remoteAddress || 'unknown';
         const userAgent = req.get('user-agent') || 'unknown';
+        const duration = Date.now() - requestStartTime;
         logDownload(index, EVENT_SUBTYPES.IMAGE, {
           ip: clientIp,
           userAgent,
           cacheHit: true,
           imageSize: cached.buffer.length,
-          crc32: cached.metadata.crc32
+          crc32: cached.metadata.crc32,
+          duration
         }).catch(err => console.warn(`[Timeline] Failed to log download: ${err.message}`));
         
         return;
@@ -383,12 +386,14 @@ async function handleImageRequest(req, res, next) {
     // Log download event to timeline AFTER response is sent (fire-and-forget)
     const clientIp = req.ip || req.connection.remoteAddress || 'unknown';
     const userAgent = req.get('user-agent') || 'unknown';
+    const duration = Date.now() - requestStartTime;
     logDownload(index, EVENT_SUBTYPES.IMAGE, {
       ip: clientIp,
       userAgent,
       cacheHit: false,
       imageSize: result.buffer.length,
-      crc32
+      crc32,
+      duration
     }).catch(err => console.warn(`[Timeline] Failed to log download: ${err.message}`));
 
   } catch (error) {
@@ -526,6 +531,7 @@ function getErrorName(statusCode) {
  * @param {Function} next - Express next middleware function
  */
 async function handleCRC32Request(req, res, next) {
+  const requestStartTime = Date.now(); // Track request start time
   const indexParam = req.params.index;
   const requestedExt = req.params.ext;
   
@@ -559,11 +565,13 @@ async function handleCRC32Request(req, res, next) {
       // Log CRC32 download to timeline AFTER response is sent (fire-and-forget)
       const clientIp = req.ip || req.connection.remoteAddress || 'unknown';
       const userAgent = req.get('user-agent') || 'unknown';
+      const duration = Date.now() - requestStartTime;
       logDownload(index, EVENT_SUBTYPES.CRC32, {
         ip: clientIp,
         userAgent,
         crc32: metadata.crc32,
-        cacheHit: true
+        cacheHit: true,
+        duration
       }).catch(err => console.warn(`[Timeline] Failed to log CRC32 download: ${err.message}`));
       
       return;
@@ -586,11 +594,13 @@ async function handleCRC32Request(req, res, next) {
     // Log CRC32 download to timeline AFTER response is sent (fire-and-forget)
     const clientIp = req.ip || req.connection.remoteAddress || 'unknown';
     const userAgent = req.get('user-agent') || 'unknown';
+    const duration = Date.now() - requestStartTime;
     logDownload(index, EVENT_SUBTYPES.CRC32, {
       ip: clientIp,
       userAgent,
       crc32,
-      cacheHit: false
+      cacheHit: false,
+      duration
     }).catch(err => console.warn(`[Timeline] Failed to log CRC32 download: ${err.message}`));
 
   } catch (error) {

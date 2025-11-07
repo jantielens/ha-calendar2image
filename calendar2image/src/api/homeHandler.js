@@ -131,7 +131,6 @@ function generateHomePageHTML(configs, baseUrl) {
     const imageUrl = `${baseUrl}/api/${index}.${ext}`;
     const freshUrl = `${baseUrl}/api/${index}/fresh.${ext}`;
     const configUrl = `${baseUrl}/config/${index}`;
-    const historyUrl = `${baseUrl}/crc32-history/${index}`;
     const timelineUrl = `${baseUrl}/timeline/${index}`;
     
     const hasSchedule = config.preGenerateInterval ? `Yes (${config.preGenerateInterval})` : 'No';
@@ -146,7 +145,6 @@ function generateHomePageHTML(configs, baseUrl) {
         <td class="links-col">
           <a href="${imageUrl}" target="_blank" class="link-btn" title="Get image (cached if available)">Image</a>
           <a href="${freshUrl}" target="_blank" class="link-btn" title="Force fresh generation">Fresh</a>
-          <a href="${historyUrl}" class="link-btn crc32-history-btn" style="background:linear-gradient(135deg,#ff9800 0%,#ff5722 100%);color:white;" title="View CRC32 history">CRC32 history</a>
           <a href="${timelineUrl}" class="link-btn timeline-btn" style="background:linear-gradient(135deg,#ff9800 0%,#ff5722 100%);color:white;" title="View event timeline (24h)">Timeline</a>
           <a href="${configUrl}" class="link-btn config-btn" style="background:linear-gradient(135deg,#ff9800 0%,#ff5722 100%);color:white;" title="View configuration details">Config</a>
         </td>

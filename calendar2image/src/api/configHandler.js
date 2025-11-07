@@ -226,7 +226,6 @@ async function generateConfigPageHTML(index, config, baseUrl) {
   // Build URLs
   const imageUrl = `${baseUrl}/api/${index}.${config.imageType}`;
   const freshUrl = `${baseUrl}/api/${index}/fresh.${config.imageType}`;
-  const crc32HistoryUrl = `${baseUrl}/crc32-history/${index}`;
   const jsonApiUrl = `${baseUrl}/api/config/${index}`;
   
   // Use API URL for cached image (browser will load it directly)
@@ -616,7 +615,6 @@ async function generateConfigPageHTML(index, config, baseUrl) {
       <div class="action-buttons">
         <a href="${imageUrl}" target="_blank" class="action-btn">🖼️ View Image</a>
         <a href="${freshUrl}" target="_blank" class="action-btn">🔄 Generate Fresh</a>
-        <a href="${crc32HistoryUrl}" class="action-btn">📈 CRC32 History</a>
         <a href="${jsonApiUrl}" target="_blank" class="action-btn">{ } Raw JSON API</a>
       </div>
     </div>
