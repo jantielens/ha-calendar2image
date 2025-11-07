@@ -55,7 +55,7 @@ async function handleTimelinePage(req, res) {
 
 /**
  * Group events by CRC32 value
- * @param {Array} events - Timeline events
+ * @param {Array} events - Timeline events (sorted newest first)
  * @returns {Array} Array of CRC32 groups with events
  */
 function groupEventsByCRC32(events) {
@@ -63,12 +63,22 @@ function groupEventsByCRC32(events) {
   let currentCRC32 = null;
   let currentGroup = null;
   
+  // Events are already sorted newest first
+  // We want to group consecutive events with the same CRC32
   events.forEach(event => {
     // Extract CRC32 from event metadata
-    const eventCRC32 = event.metadata?.crc32 || event.metadata?.previousCrc32 || 'unknown';
+    // For generation events, use the new CRC32
+    // For download events, use the CRC32 from metadata
+    let eventCRC32 = 'unknown';
     
+    if (event.eventType === 'generation' && event.metadata?.crc32) {
+      eventCRC32 = event.metadata.crc32;
+    } else if (event.eventType === 'download' && event.metadata?.crc32) {
+      eventCRC32 = event.metadata.crc32;
+    }
+    
+    // Start a new group if CRC32 changes
     if (eventCRC32 !== currentCRC32) {
-      // Start a new group
       if (currentGroup) {
         groups.push(currentGroup);
       }
@@ -83,6 +93,7 @@ function groupEventsByCRC32(events) {
     
     // Add event to current group
     currentGroup.events.push(event);
+    // Update endTime (oldest event in the group, since we're going newest to oldest)
     currentGroup.endTime = event.timestamp;
   });
   
