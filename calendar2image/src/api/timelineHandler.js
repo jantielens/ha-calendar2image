@@ -477,6 +477,8 @@ function generateTimelinePageHTML(index, config, events, stats, baseUrl) {
     
     .badge-generation { background: #d4edda; color: #155724; }
     .badge-download { background: #fff3cd; color: #856404; }
+    .badge-download-image { background: #cce5ff; color: #004085; }
+    .badge-download-crc32 { background: #fff3cd; color: #856404; }
     .badge-ics { background: #d1ecf1; color: #0c5460; }
     .badge-config { background: #fff3cd; color: #856404; }
     .badge-system { background: #e2e3e5; color: #383d41; }
@@ -649,9 +651,6 @@ function generateTimelinePageHTML(index, config, events, stats, baseUrl) {
       header.addEventListener('click', function() {
         const block = this.closest('.crc32-block');
         block.classList.toggle('collapsed');
-        
-        // Save collapse state
-        saveCollapseState();
       });
     });
     
@@ -660,14 +659,12 @@ function generateTimelinePageHTML(index, config, events, stats, baseUrl) {
       document.querySelectorAll('.crc32-block').forEach(block => {
         block.classList.remove('collapsed');
       });
-      saveCollapseState();
     });
     
     document.getElementById('collapse-all-btn').addEventListener('click', function() {
       document.querySelectorAll('.crc32-block').forEach(block => {
         block.classList.add('collapsed');
       });
-      saveCollapseState();
     });
     
     // Expand/collapse individual event rows
@@ -706,49 +703,12 @@ function generateTimelinePageHTML(index, config, events, stats, baseUrl) {
       });
     });
     
-    // Save collapse state to localStorage
-    function saveCollapseState() {
-      const collapsedIndices = [];
-      document.querySelectorAll('.crc32-block').forEach((block, index) => {
-        if (block.classList.contains('collapsed')) {
-          collapsedIndices.push(index);
-        }
-      });
-      localStorage.setItem(\`timeline-collapsed-${index}\`, JSON.stringify(collapsedIndices));
-    }
-    
-    // Restore collapse state from localStorage
-    function restoreCollapseState() {
-      try {
-        const saved = localStorage.getItem(\`timeline-collapsed-${index}\`);
-        if (saved) {
-          const collapsedIndices = JSON.parse(saved);
-          document.querySelectorAll('.crc32-block').forEach((block, index) => {
-            if (collapsedIndices.includes(index)) {
-              block.classList.add('collapsed');
-            }
-          });
-        } else {
-          // Default: collapse all except the first (most recent)
-          document.querySelectorAll('.crc32-block').forEach((block, index) => {
-            if (index > 0) {
-              block.classList.add('collapsed');
-            }
-          });
-        }
-      } catch (e) {
-        console.error('Failed to restore collapse state:', e);
-        // Default: collapse all except the first
-        document.querySelectorAll('.crc32-block').forEach((block, index) => {
-          if (index > 0) {
-            block.classList.add('collapsed');
-          }
-        });
+    // Default: collapse all except the first (most recent)
+    document.querySelectorAll('.crc32-block').forEach((block, index) => {
+      if (index > 0) {
+        block.classList.add('collapsed');
       }
-    }
-    
-    // Initialize collapse state
-    restoreCollapseState();
+    });
     
     // Filter functionality
     const filterCheckboxes = document.querySelectorAll('[data-filter]');
@@ -926,6 +886,10 @@ function generateCRC32BlockHTML(group, groupIndex, configIndex) {
     ? `${startTime} to ${endTime}`
     : `${startDate} ${startTime} to ${endDate} ${endTime}`;
   
+  // Calculate duration in minutes
+  const durationMs = new Date(group.startTime) - new Date(group.endTime);
+  const durationMinutes = Math.round(durationMs / 60000);
+  
   // Build summary
   const summaryParts = [];
   if (counts.generation > 0) summaryParts.push(`${counts.generation} generation${counts.generation > 1 ? 's' : ''}`);
@@ -940,8 +904,8 @@ function generateCRC32BlockHTML(group, groupIndex, configIndex) {
     <div class="crc32-block">
       <div class="crc32-header">
         <div class="crc32-title">
-          <strong>CRC32:</strong> ${group.crc32}
-          <span style="color: #6c757d; font-weight: normal; margin-left: 10px;">(${group.events.length} events)</span>
+          <strong>CRC32:</strong> <span style="font-family: 'Courier New', monospace;">0x${group.crc32}</span>
+          <span style="color: #6c757d; font-weight: normal; margin-left: 10px;">(${group.events.length} events, ${durationMinutes} minutes)</span>
         </div>
         <div class="crc32-info">
           <span>${timeRange}</span>
@@ -970,10 +934,25 @@ function generateCRC32BlockHTML(group, groupIndex, configIndex) {
  * @returns {string} HTML for the event row
  */
 function generateEventRowHTML(event, eventIndex, groupIndex) {
-  const metadataStr = Object.entries(event.metadata || {})
-    .filter(([key]) => key !== 'crc32' && key !== 'previousCrc32') // Don't show CRC32 in metadata since it's in the header
-    .map(([key, value]) => `${key}=${typeof value === 'object' ? JSON.stringify(value) : value}`)
-    .join(' | ');
+  // Build metadata string with duration first (if present)
+  const metadata = event.metadata || {};
+  const metadataParts = [];
+  
+  // Add duration first if it exists (use correct unit based on event type)
+  if (metadata.duration !== undefined) {
+    // Generation events use seconds, download events use milliseconds
+    const unit = event.eventType === 'generation' ? 's' : 'ms';
+    metadataParts.push(`duration=${metadata.duration}${unit}`);
+  }
+  
+  // Add all other metadata (except crc32, previousCrc32, and duration)
+  Object.entries(metadata)
+    .filter(([key]) => key !== 'crc32' && key !== 'previousCrc32' && key !== 'duration')
+    .forEach(([key, value]) => {
+      metadataParts.push(`${key}=${typeof value === 'object' ? JSON.stringify(value) : value}`);
+    });
+  
+  const metadataStr = metadataParts.join(' | ');
   
   // Extract IP for download events
   const ipAttr = (event.eventType === 'download' && event.metadata && event.metadata.ip) 
@@ -985,11 +964,21 @@ function generateEventRowHTML(event, eventIndex, groupIndex) {
     ? ' 🆕'
     : '';
   
+  // Add "slow" warning for downloads that took more than 500ms
+  const slowWarning = (event.eventType === 'download' && metadata.duration && metadata.duration > 500)
+    ? ' <span style="color: #ff6b6b; font-weight: bold;">⚠️ SLOW</span>'
+    : '';
+  
+  // Determine badge class - use subtype for downloads to differentiate colors
+  const badgeClass = event.eventType === 'download' 
+    ? `badge-download-${event.eventSubtype}` 
+    : `badge-${event.eventType}`;
+  
   return `
     <tr class="event-row" data-type="${event.eventType}" ${ipAttr}>
       <td class="event-time">${new Date(event.timestamp).toLocaleString()}</td>
       <td>
-        <span class="event-badge badge-${event.eventType}">${event.eventType}:${event.eventSubtype}${crc32Indicator}</span>
+        <span class="event-badge ${badgeClass}">${event.eventType}:${event.eventSubtype}${crc32Indicator}</span>${slowWarning}
       </td>
       <td class="event-metadata">${metadataStr}</td>
     </tr>
