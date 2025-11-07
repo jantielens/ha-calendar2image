@@ -54,6 +54,82 @@ async function handleTimelinePage(req, res) {
 }
 
 /**
+ * Group events by CRC32 value
+ * @param {Array} events - Timeline events
+ * @returns {Array} Array of CRC32 groups with events
+ */
+function groupEventsByCRC32(events) {
+  const groups = [];
+  let currentCRC32 = null;
+  let currentGroup = null;
+  
+  events.forEach(event => {
+    // Extract CRC32 from event metadata
+    const eventCRC32 = event.metadata?.crc32 || event.metadata?.previousCrc32 || 'unknown';
+    
+    if (eventCRC32 !== currentCRC32) {
+      // Start a new group
+      if (currentGroup) {
+        groups.push(currentGroup);
+      }
+      currentCRC32 = eventCRC32;
+      currentGroup = {
+        crc32: eventCRC32,
+        events: [],
+        startTime: event.timestamp,
+        endTime: event.timestamp
+      };
+    }
+    
+    // Add event to current group
+    currentGroup.events.push(event);
+    currentGroup.endTime = event.timestamp;
+  });
+  
+  // Add the last group
+  if (currentGroup) {
+    groups.push(currentGroup);
+  }
+  
+  return groups;
+}
+
+/**
+ * Calculate event type counts for a group
+ * @param {Array} events - Events in the group
+ * @returns {Object} Event counts by type
+ */
+function calculateEventCounts(events) {
+  const counts = {
+    generation: 0,
+    download: 0,
+    ics: 0,
+    config: 0,
+    system: 0,
+    error: 0,
+    imageDownload: 0,
+    crc32Download: 0
+  };
+  
+  events.forEach(event => {
+    if (counts[event.eventType] !== undefined) {
+      counts[event.eventType]++;
+    }
+    
+    // Track download subtypes
+    if (event.eventType === 'download') {
+      if (event.eventSubtype === 'image') {
+        counts.imageDownload++;
+      } else if (event.eventSubtype === 'crc32') {
+        counts.crc32Download++;
+      }
+    }
+  });
+  
+  return counts;
+}
+
+/**
  * Generate the HTML for the timeline page
  * @param {number} index - Configuration index
  * @param {Object} config - Configuration object
@@ -63,21 +139,11 @@ async function handleTimelinePage(req, res) {
  * @returns {string} HTML content
  */
 function generateTimelinePageHTML(index, config, events, stats, baseUrl) {
-  // Calculate event type counts
-  const eventCounts = {
-    generation: 0,
-    download: 0,
-    ics: 0,
-    config: 0,
-    system: 0,
-    error: 0
-  };
+  // Group events by CRC32
+  const crc32Groups = groupEventsByCRC32(events);
   
-  events.forEach(event => {
-    if (eventCounts[event.eventType] !== undefined) {
-      eventCounts[event.eventType]++;
-    }
-  });
+  // Calculate overall event type counts
+  const eventCounts = calculateEventCounts(events);
   
   // Extract unique IPs from download events
   const uniqueIPs = new Set();
@@ -115,6 +181,29 @@ function generateTimelinePageHTML(index, config, events, stats, baseUrl) {
       border-radius: 12px;
       box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
       overflow: hidden;
+    }
+    
+    .controls {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+    
+    .control-btn {
+      padding: 8px 16px;
+      background: #667eea;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.9em;
+      font-weight: 500;
+      transition: background 0.2s;
+    }
+    
+    .control-btn:hover {
+      background: #5568d3;
     }
     
     .header {
@@ -259,77 +348,123 @@ function generateTimelinePageHTML(index, config, events, stats, baseUrl) {
       padding: 40px;
     }
     
-    .timeline {
-      position: relative;
+    .crc32-block {
+      margin-bottom: 20px;
+      border: 1px solid #dee2e6;
+      border-radius: 8px;
+      overflow: hidden;
     }
     
-    .timeline-item {
-      position: relative;
-      padding-left: 30px;
-      margin-bottom: 5px;
-      border-left: 2px solid #e9ecef;
+    .crc32-block:nth-child(odd) {
+      background: #f8f9fa;
     }
     
-    .timeline-item:last-child {
-      border-left: 2px solid transparent;
+    .crc32-block:nth-child(even) {
+      background: #e9ecef;
     }
     
-    .timeline-dot {
-      position: absolute;
-      left: -7px;
-      top: 8px;
-      width: 12px;
-      height: 12px;
-      border-radius: 50%;
-      background: #6c757d;
-      border: 2px solid white;
-      box-shadow: 0 0 0 2px #e9ecef;
-    }
-    
-    .timeline-item.type-generation .timeline-dot { background: #28a745; }
-    .timeline-item.type-download .timeline-dot { background: #fd7e14; }
-    .timeline-item.type-ics .timeline-dot { background: #28a745; }
-    .timeline-item.type-config .timeline-dot { background: #ffc107; }
-    .timeline-item.type-system .timeline-dot { background: #6c757d; }
-    .timeline-item.type-error .timeline-dot { background: #dc3545; }
-    
-    .timeline-content {
-      background: white;
-      padding: 12px 15px;
-      border-radius: 6px;
-      border: 1px solid #e9ecef;
+    .crc32-header {
+      padding: 15px 20px;
       cursor: pointer;
-      transition: all 0.2s;
-      margin-bottom: 10px;
-    }
-    
-    .timeline-content:hover {
-      border-color: #667eea;
-      box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
-    }
-    
-    .event-header {
+      user-select: none;
       display: flex;
+      justify-content: space-between;
       align-items: center;
+      transition: background 0.2s;
+    }
+    
+    .crc32-header:hover {
+      filter: brightness(0.98);
+    }
+    
+    .crc32-title {
+      font-weight: 600;
+      font-size: 1.1em;
+      color: #495057;
+      flex: 1;
+    }
+    
+    .crc32-info {
+      display: flex;
+      gap: 20px;
+      align-items: center;
+      font-size: 0.9em;
+      color: #6c757d;
+    }
+    
+    .crc32-summary {
+      display: flex;
       gap: 10px;
       flex-wrap: wrap;
-      font-size: 0.9em;
+    }
+    
+    .summary-badge {
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-size: 0.85em;
+      font-weight: 500;
+      background: white;
+      border: 1px solid #dee2e6;
+    }
+    
+    .expand-icon {
+      font-size: 1.2em;
+      transition: transform 0.3s;
+    }
+    
+    .crc32-block.collapsed .expand-icon {
+      transform: rotate(-90deg);
+    }
+    
+    .crc32-content {
+      max-height: 10000px;
+      overflow: hidden;
+      transition: max-height 0.3s ease-out;
+    }
+    
+    .crc32-block.collapsed .crc32-content {
+      max-height: 0;
+    }
+    
+    .event-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    
+    .event-row {
+      border-top: 1px solid #dee2e6;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    
+    .event-row:hover {
+      background: rgba(102, 126, 234, 0.05);
+    }
+    
+    .event-row.expanded {
+      background: rgba(102, 126, 234, 0.08);
+    }
+    
+    .event-row td {
+      padding: 12px 20px;
     }
     
     .event-time {
       color: #6c757d;
       font-weight: 500;
-      min-width: 120px;
+      min-width: 140px;
+      font-size: 0.9em;
     }
     
     .event-badge {
       display: inline-block;
-      padding: 3px 8px;
+      padding: 4px 10px;
       border-radius: 4px;
       font-size: 0.85em;
       font-weight: 600;
       text-transform: uppercase;
       letter-spacing: 0.3px;
+      white-space: nowrap;
     }
     
     .badge-generation { background: #d4edda; color: #155724; }
@@ -346,22 +481,18 @@ function generateTimelinePageHTML(index, config, events, stats, baseUrl) {
     }
     
     .event-details {
-      display: none;
-      margin-top: 10px;
-      padding-top: 10px;
-      border-top: 1px solid #e9ecef;
-    }
-    
-    .event-details.expanded {
-      display: block;
+      padding: 15px 20px;
+      background: rgba(255, 255, 255, 0.5);
+      border-top: 1px solid #dee2e6;
     }
     
     .event-details pre {
       background: #f8f9fa;
-      padding: 10px;
+      padding: 15px;
       border-radius: 4px;
       overflow-x: auto;
       font-size: 0.85em;
+      margin: 0;
     }
     
     .copy-btn {
@@ -420,25 +551,30 @@ function generateTimelinePageHTML(index, config, events, stats, baseUrl) {
           <p>${events.length}</p>
         </div>
         <div class="stat-card">
+          <h3>CRC32 Blocks</h3>
+          <p>${crc32Groups.length}</p>
+        </div>
+        <div class="stat-card">
           <h3>Generations</h3>
           <p>${eventCounts.generation}</p>
         </div>
         <div class="stat-card">
-          <h3>Downloads</h3>
-          <p>${eventCounts.download}</p>
+          <h3>Image Downloads</h3>
+          <p>${eventCounts.imageDownload}</p>
         </div>
         <div class="stat-card">
-          <h3>ICS Events</h3>
-          <p>${eventCounts.ics}</p>
+          <h3>CRC32 Downloads</h3>
+          <p>${eventCounts.crc32Download}</p>
         </div>
         <div class="stat-card">
           <h3>Errors</h3>
           <p>${eventCounts.error}</p>
         </div>
-        <div class="stat-card">
-          <h3>Other</h3>
-          <p>${eventCounts.config + eventCounts.system}</p>
-        </div>
+      </div>
+      
+      <div class="controls">
+        <button class="control-btn" id="expand-all-btn">Expand All</button>
+        <button class="control-btn" id="collapse-all-btn">Collapse All</button>
       </div>
       
       <div class="filters">
@@ -476,23 +612,21 @@ function generateTimelinePageHTML(index, config, events, stats, baseUrl) {
           </label>
           <select id="refresh-interval">
             <option value="10">10s</option>
+            <option value="20">20s</option>
             <option value="30" selected>30s</option>
-            <option value="60">60s</option>
           </select>
         </div>
       </div>
     </div>
     
     <div class="content">
-      ${events.length === 0 ? `
+      ${crc32Groups.length === 0 ? `
         <div class="empty-state">
           <h2>No Events Yet</h2>
           <p>Timeline events will appear here as they occur.</p>
         </div>
       ` : `
-        <div class="timeline">
-          ${events.map((event, i) => generateEventHTML(event, i)).join('')}
-        </div>
+        ${crc32Groups.map((group, groupIndex) => generateCRC32BlockHTML(group, groupIndex, index)).join('')}
       `}
     </div>
   </div>
@@ -500,10 +634,117 @@ function generateTimelinePageHTML(index, config, events, stats, baseUrl) {
   <script>
     // Event data
     const events = ${JSON.stringify(events)};
+    const crc32Groups = ${JSON.stringify(crc32Groups.map(g => ({ crc32: g.crc32, eventCount: g.events.length })))};
+    
+    // Expand/Collapse CRC32 blocks
+    document.querySelectorAll('.crc32-header').forEach(header => {
+      header.addEventListener('click', function() {
+        const block = this.closest('.crc32-block');
+        block.classList.toggle('collapsed');
+        
+        // Save collapse state
+        saveCollapseState();
+      });
+    });
+    
+    // Expand all / Collapse all buttons
+    document.getElementById('expand-all-btn').addEventListener('click', function() {
+      document.querySelectorAll('.crc32-block').forEach(block => {
+        block.classList.remove('collapsed');
+      });
+      saveCollapseState();
+    });
+    
+    document.getElementById('collapse-all-btn').addEventListener('click', function() {
+      document.querySelectorAll('.crc32-block').forEach(block => {
+        block.classList.add('collapsed');
+      });
+      saveCollapseState();
+    });
+    
+    // Expand/collapse individual event rows
+    document.querySelectorAll('.event-row').forEach(row => {
+      row.addEventListener('click', function(e) {
+        if (e.target.classList.contains('copy-btn')) return;
+        
+        // Find the next row (which is the details row)
+        const detailsRow = this.nextElementSibling;
+        if (detailsRow && detailsRow.querySelector('.event-details')) {
+          // Toggle visibility
+          if (detailsRow.style.display === 'none' || detailsRow.style.display === '') {
+            detailsRow.style.display = 'table-row';
+            this.classList.add('expanded');
+          } else {
+            detailsRow.style.display = 'none';
+            this.classList.remove('expanded');
+          }
+        }
+      });
+    });
+    
+    // Copy to clipboard
+    document.querySelectorAll('.copy-btn').forEach(btn => {
+      btn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        const eventData = this.dataset.event;
+        const eventObj = JSON.parse(eventData.replace(/&apos;/g, "'"));
+        navigator.clipboard.writeText(JSON.stringify(eventObj, null, 2)).then(() => {
+          const originalText = this.textContent;
+          this.textContent = 'Copied!';
+          setTimeout(() => {
+            this.textContent = originalText;
+          }, 1500);
+        });
+      });
+    });
+    
+    // Save collapse state to localStorage
+    function saveCollapseState() {
+      const collapsedIndices = [];
+      document.querySelectorAll('.crc32-block').forEach((block, index) => {
+        if (block.classList.contains('collapsed')) {
+          collapsedIndices.push(index);
+        }
+      });
+      localStorage.setItem('timeline-collapsed-${index}', JSON.stringify(collapsedIndices));
+    }
+    
+    // Restore collapse state from localStorage
+    function restoreCollapseState() {
+      try {
+        const saved = localStorage.getItem('timeline-collapsed-${index}');
+        if (saved) {
+          const collapsedIndices = JSON.parse(saved);
+          document.querySelectorAll('.crc32-block').forEach((block, index) => {
+            if (collapsedIndices.includes(index)) {
+              block.classList.add('collapsed');
+            }
+          });
+        } else {
+          // Default: collapse all except the first (most recent)
+          document.querySelectorAll('.crc32-block').forEach((block, index) => {
+            if (index > 0) {
+              block.classList.add('collapsed');
+            }
+          });
+        }
+      } catch (e) {
+        console.error('Failed to restore collapse state:', e);
+        // Default: collapse all except the first
+        document.querySelectorAll('.crc32-block').forEach((block, index) => {
+          if (index > 0) {
+            block.classList.add('collapsed');
+          }
+        });
+      }
+    }
+    
+    // Initialize collapse state
+    restoreCollapseState();
     
     // Filter functionality
     const filterCheckboxes = document.querySelectorAll('[data-filter]');
-    const timelineItems = document.querySelectorAll('.timeline-item');
+    const eventRows = document.querySelectorAll('.event-row');
     
     filterCheckboxes.forEach(checkbox => {
       checkbox.addEventListener('change', function() {
@@ -530,9 +771,10 @@ function generateTimelinePageHTML(index, config, events, stats, baseUrl) {
       
       const selectedIP = ipFilterSelect ? ipFilterSelect.value : 'all';
       
-      timelineItems.forEach(item => {
-        const eventType = item.dataset.type;
-        const itemIP = item.dataset.ip;
+      // First hide/show event rows
+      eventRows.forEach(row => {
+        const eventType = row.dataset.type;
+        const rowIP = row.dataset.ip;
         
         // Check event type filter
         const typeMatch = activeFilters.includes(eventType);
@@ -540,43 +782,29 @@ function generateTimelinePageHTML(index, config, events, stats, baseUrl) {
         // Check IP filter (only applies to download events)
         let ipMatch = true;
         if (selectedIP !== 'all' && eventType === 'download') {
-          ipMatch = (itemIP === selectedIP);
+          ipMatch = (rowIP === selectedIP);
         }
         
-        // Show item only if both filters match
+        // Show/hide row
         if (typeMatch && ipMatch) {
-          item.style.display = '';
+          row.style.display = '';
         } else {
-          item.style.display = 'none';
+          row.style.display = 'none';
+        }
+      });
+      
+      // Hide CRC32 blocks that have no visible events
+      document.querySelectorAll('.crc32-block').forEach(block => {
+        const visibleRows = Array.from(block.querySelectorAll('.event-row'))
+          .filter(row => row.style.display !== 'none');
+        
+        if (visibleRows.length === 0) {
+          block.style.display = 'none';
+        } else {
+          block.style.display = '';
         }
       });
     }
-    
-    // Expand/collapse event details
-    document.querySelectorAll('.timeline-content').forEach((content, index) => {
-      content.addEventListener('click', function(e) {
-        if (e.target.classList.contains('copy-btn')) return;
-        
-        const details = this.querySelector('.event-details');
-        details.classList.toggle('expanded');
-      });
-    });
-    
-    // Copy to clipboard
-    document.querySelectorAll('.copy-btn').forEach(btn => {
-      btn.addEventListener('click', function(e) {
-        e.stopPropagation();
-        const eventIndex = this.dataset.index;
-        const eventData = JSON.stringify(events[eventIndex], null, 2);
-        navigator.clipboard.writeText(eventData).then(() => {
-          const originalText = this.textContent;
-          this.textContent = 'Copied!';
-          setTimeout(() => {
-            this.textContent = originalText;
-          }, 1500);
-        });
-      });
-    });
     
     // Auto-refresh with localStorage persistence
     let refreshInterval = null;
@@ -672,13 +900,70 @@ function generateTimelinePageHTML(index, config, events, stats, baseUrl) {
 }
 
 /**
- * Generate HTML for a single timeline event
- * @param {Object} event - Timeline event object
- * @param {number} index - Event index
- * @returns {string} HTML for the event
+ * Generate HTML for a CRC32 block
+ * @param {Object} group - CRC32 group object
+ * @param {number} groupIndex - Group index
+ * @param {number} configIndex - Configuration index (for event indexing)
+ * @returns {string} HTML for the CRC32 block
  */
-function generateEventHTML(event, index) {
+function generateCRC32BlockHTML(group, groupIndex, configIndex) {
+  const counts = calculateEventCounts(group.events);
+  
+  // Format time range
+  const startTime = new Date(group.startTime).toLocaleTimeString();
+  const endTime = new Date(group.endTime).toLocaleTimeString();
+  const startDate = new Date(group.startTime).toLocaleDateString();
+  const endDate = new Date(group.endTime).toLocaleDateString();
+  const timeRange = startDate === endDate 
+    ? `${startTime} to ${endTime}`
+    : `${startDate} ${startTime} to ${endDate} ${endTime}`;
+  
+  // Build summary
+  const summaryParts = [];
+  if (counts.generation > 0) summaryParts.push(`${counts.generation} generation${counts.generation > 1 ? 's' : ''}`);
+  if (counts.imageDownload > 0) summaryParts.push(`${counts.imageDownload} image download${counts.imageDownload > 1 ? 's' : ''}`);
+  if (counts.crc32Download > 0) summaryParts.push(`${counts.crc32Download} CRC32 download${counts.crc32Download > 1 ? 's' : ''}`);
+  if (counts.ics > 0) summaryParts.push(`${counts.ics} ICS event${counts.ics > 1 ? 's' : ''}`);
+  if (counts.error > 0) summaryParts.push(`${counts.error} error${counts.error > 1 ? 's' : ''}`);
+  
+  const summary = summaryParts.length > 0 ? summaryParts.join(', ') : 'No events';
+  
+  return `
+    <div class="crc32-block">
+      <div class="crc32-header">
+        <div class="crc32-title">
+          <strong>CRC32:</strong> ${group.crc32}
+          <span style="color: #6c757d; font-weight: normal; margin-left: 10px;">(${group.events.length} events)</span>
+        </div>
+        <div class="crc32-info">
+          <span>${timeRange}</span>
+          <span class="expand-icon">▼</span>
+        </div>
+      </div>
+      <div class="crc32-content">
+        <div style="padding: 10px 20px; background: rgba(255,255,255,0.5); border-bottom: 1px solid #dee2e6; font-size: 0.9em; color: #6c757d;">
+          <strong>Summary:</strong> ${summary}
+        </div>
+        <table class="event-table">
+          <tbody>
+            ${group.events.map((event, eventIndex) => generateEventRowHTML(event, eventIndex, groupIndex)).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+}
+
+/**
+ * Generate HTML for a single event row
+ * @param {Object} event - Timeline event object
+ * @param {number} eventIndex - Event index within the group
+ * @param {number} groupIndex - Group index
+ * @returns {string} HTML for the event row
+ */
+function generateEventRowHTML(event, eventIndex, groupIndex) {
   const metadataStr = Object.entries(event.metadata || {})
+    .filter(([key]) => key !== 'crc32' && key !== 'previousCrc32') // Don't show CRC32 in metadata since it's in the header
     .map(([key, value]) => `${key}=${typeof value === 'object' ? JSON.stringify(value) : value}`)
     .join(' | ');
   
@@ -692,21 +977,24 @@ function generateEventHTML(event, index) {
     ? ' 🆕'
     : '';
   
+  // Global event index for copy functionality - need to track actual event index in the full events array
+  // For now, use group-local index
+  const globalIndex = `${groupIndex}-${eventIndex}`;
+  
   return `
-    <div class="timeline-item type-${event.eventType}" data-type="${event.eventType}" ${ipAttr}>
-      <div class="timeline-dot"></div>
-      <div class="timeline-content">
-        <div class="event-header">
-          <span class="event-time">${new Date(event.timestamp).toLocaleString()}</span>
-          <span class="event-badge badge-${event.eventType}">${event.eventType}:${event.eventSubtype}${crc32Indicator}</span>
-          <span class="event-metadata">${metadataStr}</span>
-        </div>
-        <div class="event-details">
-          <pre>${JSON.stringify(event, null, 2)}</pre>
-          <button class="copy-btn" data-index="${index}">Copy JSON</button>
-        </div>
-      </div>
-    </div>
+    <tr class="event-row" data-type="${event.eventType}" ${ipAttr}>
+      <td class="event-time">${new Date(event.timestamp).toLocaleString()}</td>
+      <td>
+        <span class="event-badge badge-${event.eventType}">${event.eventType}:${event.eventSubtype}${crc32Indicator}</span>
+      </td>
+      <td class="event-metadata">${metadataStr}</td>
+    </tr>
+    <tr style="display: none;">
+      <td colspan="3" class="event-details">
+        <pre>${JSON.stringify(event, null, 2)}</pre>
+        <button class="copy-btn" data-event='${JSON.stringify(event).replace(/'/g, "&apos;")}'>Copy JSON</button>
+      </td>
+    </tr>
   `;
 }
 
