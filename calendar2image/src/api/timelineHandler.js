@@ -106,6 +106,14 @@ function generateTimelinePageHTML(index, config, events, stats, baseUrl) {
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       min-height: 100vh;
       padding: 20px;
+      animation: gradientShift 15s ease infinite;
+      background-size: 200% 200%;
+    }
+    
+    @keyframes gradientShift {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
     }
     
     .container {
@@ -115,23 +123,74 @@ function generateTimelinePageHTML(index, config, events, stats, baseUrl) {
       border-radius: 12px;
       box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
       overflow: hidden;
+      animation: slideUp 0.5s ease-out;
+    }
+    
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
     
     .header {
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       color: white;
       padding: 30px 40px;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .header::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      right: -10%;
+      width: 300px;
+      height: 300px;
+      background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+      border-radius: 50%;
+      animation: float 6s ease-in-out infinite;
+    }
+    
+    .header::after {
+      content: '';
+      position: absolute;
+      bottom: -30%;
+      left: -5%;
+      width: 200px;
+      height: 200px;
+      background: radial-gradient(circle, rgba(255, 255, 255, 0.08) 0%, transparent 70%);
+      border-radius: 50%;
+      animation: float 8s ease-in-out infinite reverse;
+    }
+    
+    @keyframes float {
+      0%, 100% {
+        transform: translate(0, 0);
+      }
+      50% {
+        transform: translate(-20px, -20px);
+      }
     }
     
     .header h1 {
       font-size: 2em;
       font-weight: 600;
       margin-bottom: 10px;
+      position: relative;
+      z-index: 1;
     }
     
     .header .subtitle {
       opacity: 0.9;
       font-size: 0.95em;
+      position: relative;
+      z-index: 1;
     }
     
     .back-btn {
@@ -143,12 +202,36 @@ function generateTimelinePageHTML(index, config, events, stats, baseUrl) {
       text-decoration: none;
       border-radius: 6px;
       font-weight: 500;
-      transition: transform 0.2s, box-shadow 0.2s;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .back-btn::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.3);
+      transform: translate(-50%, -50%);
+      transition: width 0.6s ease, height 0.6s ease;
+    }
+    
+    .back-btn:hover::before {
+      width: 300px;
+      height: 300px;
     }
     
     .back-btn:hover {
       transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+      box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+    }
+    
+    .back-btn:active {
+      transform: translateY(0);
     }
     
     .stats-section {
@@ -170,6 +253,31 @@ function generateTimelinePageHTML(index, config, events, stats, baseUrl) {
       border-radius: 8px;
       border-left: 4px solid #667eea;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      transition: all 0.3s ease;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    
+    .stat-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+    }
+    
+    .stat-card:hover::before {
+      opacity: 1;
     }
     
     .stat-card h3 {
@@ -178,12 +286,28 @@ function generateTimelinePageHTML(index, config, events, stats, baseUrl) {
       text-transform: uppercase;
       letter-spacing: 0.5px;
       margin-bottom: 5px;
+      position: relative;
+      z-index: 1;
     }
     
     .stat-card p {
       color: #495057;
       font-size: 1.5em;
       font-weight: 600;
+      position: relative;
+      z-index: 1;
+      animation: countUp 0.5s ease-out;
+    }
+    
+    @keyframes countUp {
+      from {
+        opacity: 0;
+        transform: scale(0.5);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
     }
     
     .filters {
@@ -202,22 +326,48 @@ function generateTimelinePageHTML(index, config, events, stats, baseUrl) {
       border: 2px solid #e9ecef;
       border-radius: 6px;
       cursor: pointer;
-      transition: all 0.2s;
+      transition: all 0.3s ease;
       user-select: none;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .filter-label::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      border-radius: 50%;
+      background: rgba(102, 126, 234, 0.2);
+      transform: translate(-50%, -50%);
+      transition: width 0.4s ease, height 0.4s ease;
+    }
+    
+    .filter-label:active::before {
+      width: 200px;
+      height: 200px;
     }
     
     .filter-label:hover {
       border-color: #667eea;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
     }
     
     .filter-label input[type="checkbox"] {
       cursor: pointer;
+      position: relative;
+      z-index: 1;
     }
     
     .filter-label.active {
-      background: #667eea;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       border-color: #667eea;
       color: white;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
     }
     
     .auto-refresh {
@@ -268,10 +418,15 @@ function generateTimelinePageHTML(index, config, events, stats, baseUrl) {
       padding-left: 30px;
       margin-bottom: 5px;
       border-left: 2px solid #e9ecef;
+      transition: all 0.3s ease;
     }
     
     .timeline-item:last-child {
       border-left: 2px solid transparent;
+    }
+    
+    .timeline-item:hover {
+      border-left-color: #667eea;
     }
     
     .timeline-dot {
@@ -284,6 +439,18 @@ function generateTimelinePageHTML(index, config, events, stats, baseUrl) {
       background: #6c757d;
       border: 2px solid white;
       box-shadow: 0 0 0 2px #e9ecef;
+      animation: pulse 2s ease-in-out infinite;
+    }
+    
+    @keyframes pulse {
+      0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 2px #e9ecef;
+      }
+      50% {
+        transform: scale(1.2);
+        box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.3);
+      }
     }
     
     .timeline-item.type-generation .timeline-dot { background: #28a745; }
@@ -293,19 +460,52 @@ function generateTimelinePageHTML(index, config, events, stats, baseUrl) {
     .timeline-item.type-system .timeline-dot { background: #6c757d; }
     .timeline-item.type-error .timeline-dot { background: #dc3545; }
     
+    /* Highlight the most recent event */
+    .timeline-item:first-child .timeline-content {
+      background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+      border-color: #667eea;
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+    }
+    
+    .timeline-item:first-child .timeline-dot {
+      animation: pulse 2s ease-in-out infinite, glow 2s ease-in-out infinite;
+    }
+    
+    @keyframes glow {
+      0%, 100% {
+        box-shadow: 0 0 0 2px #e9ecef, 0 0 10px rgba(102, 126, 234, 0.5);
+      }
+      50% {
+        box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.3), 0 0 20px rgba(102, 126, 234, 0.8);
+      }
+    }
+    
     .timeline-content {
       background: white;
       padding: 12px 15px;
       border-radius: 6px;
       border: 1px solid #e9ecef;
       cursor: pointer;
-      transition: all 0.2s;
+      transition: all 0.3s ease;
       margin-bottom: 10px;
+      animation: fadeInSlide 0.4s ease-out;
+    }
+    
+    @keyframes fadeInSlide {
+      from {
+        opacity: 0;
+        transform: translateX(-20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
     }
     
     .timeline-content:hover {
       border-color: #667eea;
-      box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
+      box-shadow: 0 4px 16px rgba(102, 126, 234, 0.3);
+      transform: translateX(5px);
     }
     
     .event-header {
@@ -330,6 +530,24 @@ function generateTimelinePageHTML(index, config, events, stats, baseUrl) {
       font-weight: 600;
       text-transform: uppercase;
       letter-spacing: 0.3px;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .event-badge::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+      transition: left 0.5s ease;
+    }
+    
+    .timeline-content:hover .event-badge::before {
+      left: 100%;
     }
     
     .badge-generation { background: #d4edda; color: #155724; }
@@ -350,6 +568,18 @@ function generateTimelinePageHTML(index, config, events, stats, baseUrl) {
       margin-top: 10px;
       padding-top: 10px;
       border-top: 1px solid #e9ecef;
+      animation: expandDetails 0.3s ease-out;
+    }
+    
+    @keyframes expandDetails {
+      from {
+        opacity: 0;
+        max-height: 0;
+      }
+      to {
+        opacity: 1;
+        max-height: 500px;
+      }
     }
     
     .event-details.expanded {
@@ -373,20 +603,112 @@ function generateTimelinePageHTML(index, config, events, stats, baseUrl) {
       cursor: pointer;
       font-size: 0.85em;
       margin-top: 5px;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .copy-btn::after {
+      content: '✓';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0);
+      opacity: 0;
+      transition: all 0.3s ease;
+      font-size: 1.2em;
+    }
+    
+    .copy-btn.copied::after {
+      transform: translate(-50%, -50%) scale(1);
+      opacity: 1;
     }
     
     .copy-btn:hover {
       background: #5568d3;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+    
+    .copy-btn:active {
+      transform: translateY(0);
     }
     
     .empty-state {
       text-align: center;
       padding: 60px 20px;
       color: #6c757d;
+      animation: fadeIn 0.5s ease-out;
     }
     
     .empty-state h2 {
       margin-bottom: 10px;
+      font-size: 2em;
+    }
+    
+    .empty-state p {
+      font-size: 1.1em;
+    }
+    
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+      }
+      to {
+        opacity: 1;
+      }
+    }
+    
+    /* Loading indicator */
+    .loading-indicator {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 12px 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 16px rgba(102, 126, 234, 0.4);
+      display: none;
+      align-items: center;
+      gap: 10px;
+      z-index: 1000;
+      animation: slideInRight 0.3s ease-out;
+    }
+    
+    @keyframes slideInRight {
+      from {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+    
+    .loading-indicator.visible {
+      display: flex;
+    }
+    
+    .spinner {
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-top: 2px solid white;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    /* Refresh countdown */
+    .refresh-countdown {
+      font-size: 0.85em;
+      opacity: 0.9;
     }
     
     @media (max-width: 768px) {
@@ -399,9 +721,34 @@ function generateTimelinePageHTML(index, config, events, stats, baseUrl) {
         align-items: flex-start;
       }
     }
+    
+    /* Custom scrollbar */
+    ::-webkit-scrollbar {
+      width: 10px;
+      height: 10px;
+    }
+    
+    ::-webkit-scrollbar-track {
+      background: #f1f1f1;
+      border-radius: 10px;
+    }
+    
+    ::-webkit-scrollbar-thumb {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 10px;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+      background: linear-gradient(135deg, #5568d3 0%, #653a8a 100%);
+    }
   </style>
 </head>
 <body>
+  <div class="loading-indicator" id="loading-indicator">
+    <div class="spinner"></div>
+    <span>Refreshing timeline...</span>
+  </div>
+  
   <div class="container">
     <div class="header">
       <h1>Timeline - Config ${index}</h1>
@@ -415,55 +762,55 @@ function generateTimelinePageHTML(index, config, events, stats, baseUrl) {
     
     <div class="stats-section">
       <div class="stats-grid">
-        <div class="stat-card">
+        <div class="stat-card" style="border-left-color: #667eea;">
           <h3>Total Events</h3>
           <p>${events.length}</p>
         </div>
-        <div class="stat-card">
-          <h3>Generations</h3>
+        <div class="stat-card" style="border-left-color: #28a745;">
+          <h3>🎨 Generations</h3>
           <p>${eventCounts.generation}</p>
         </div>
-        <div class="stat-card">
-          <h3>Downloads</h3>
+        <div class="stat-card" style="border-left-color: #fd7e14;">
+          <h3>⬇️ Downloads</h3>
           <p>${eventCounts.download}</p>
         </div>
-        <div class="stat-card">
-          <h3>ICS Events</h3>
+        <div class="stat-card" style="border-left-color: #17a2b8;">
+          <h3>📅 ICS Events</h3>
           <p>${eventCounts.ics}</p>
         </div>
-        <div class="stat-card">
-          <h3>Errors</h3>
+        <div class="stat-card" style="border-left-color: #dc3545;">
+          <h3>❌ Errors</h3>
           <p>${eventCounts.error}</p>
         </div>
-        <div class="stat-card">
-          <h3>Other</h3>
+        <div class="stat-card" style="border-left-color: #6c757d;">
+          <h3>⚙️ Other</h3>
           <p>${eventCounts.config + eventCounts.system}</p>
         </div>
       </div>
       
       <div class="filters">
-        <strong>Filters:</strong>
+        <strong>🎯 Filters:</strong>
         <label class="filter-label active">
-          <input type="checkbox" checked data-filter="generation"> Generations
+          <input type="checkbox" checked data-filter="generation"> 🎨 Generations
         </label>
         <label class="filter-label active">
-          <input type="checkbox" checked data-filter="download"> Downloads
+          <input type="checkbox" checked data-filter="download"> ⬇️ Downloads
         </label>
         <label class="filter-label active">
-          <input type="checkbox" checked data-filter="ics"> ICS
+          <input type="checkbox" checked data-filter="ics"> 📅 ICS
         </label>
         <label class="filter-label active">
-          <input type="checkbox" checked data-filter="error"> Errors
+          <input type="checkbox" checked data-filter="error"> ❌ Errors
         </label>
         <label class="filter-label active">
-          <input type="checkbox" checked data-filter="config"> Config
+          <input type="checkbox" checked data-filter="config"> ⚙️ Config
         </label>
         <label class="filter-label active">
-          <input type="checkbox" checked data-filter="system"> System
+          <input type="checkbox" checked data-filter="system"> 💻 System
         </label>
         
         <div class="ip-filter">
-          <label for="ip-filter-select">IP/Host:</label>
+          <label for="ip-filter-select">🌐 IP/Host:</label>
           <select id="ip-filter-select">
             <option value="all">All IPs</option>
             ${sortedIPs.map(ip => `<option value="${ip}">${ip}</option>`).join('')}
@@ -472,7 +819,7 @@ function generateTimelinePageHTML(index, config, events, stats, baseUrl) {
         
         <div class="auto-refresh">
           <label>
-            <input type="checkbox" id="auto-refresh"> Auto-refresh
+            <input type="checkbox" id="auto-refresh"> 🔄 Auto-refresh
           </label>
           <select id="refresh-interval">
             <option value="10">10s</option>
@@ -486,8 +833,9 @@ function generateTimelinePageHTML(index, config, events, stats, baseUrl) {
     <div class="content">
       ${events.length === 0 ? `
         <div class="empty-state">
-          <h2>No Events Yet</h2>
+          <h2>📭 No Events Yet</h2>
           <p>Timeline events will appear here as they occur.</p>
+          <p style="margin-top: 10px; opacity: 0.7;">Try generating a calendar image to see events appear!</p>
         </div>
       ` : `
         <div class="timeline">
@@ -530,7 +878,7 @@ function generateTimelinePageHTML(index, config, events, stats, baseUrl) {
       
       const selectedIP = ipFilterSelect ? ipFilterSelect.value : 'all';
       
-      timelineItems.forEach(item => {
+      timelineItems.forEach((item, index) => {
         const eventType = item.dataset.type;
         const itemIP = item.dataset.ip;
         
@@ -545,9 +893,16 @@ function generateTimelinePageHTML(index, config, events, stats, baseUrl) {
         
         // Show item only if both filters match
         if (typeMatch && ipMatch) {
-          item.style.display = '';
+          setTimeout(() => {
+            item.style.display = '';
+            item.style.animation = 'fadeInSlide 0.4s ease-out';
+          }, index * 20); // Stagger animations
         } else {
-          item.style.display = 'none';
+          item.style.opacity = '0';
+          item.style.transform = 'translateX(-20px)';
+          setTimeout(() => {
+            item.style.display = 'none';
+          }, 300);
         }
       });
     }
@@ -570,18 +925,30 @@ function generateTimelinePageHTML(index, config, events, stats, baseUrl) {
         const eventData = JSON.stringify(events[eventIndex], null, 2);
         navigator.clipboard.writeText(eventData).then(() => {
           const originalText = this.textContent;
-          this.textContent = 'Copied!';
+          this.classList.add('copied');
+          this.textContent = '✓ Copied!';
+          this.style.background = '#28a745';
+          setTimeout(() => {
+            this.classList.remove('copied');
+            this.textContent = originalText;
+            this.style.background = '';
+          }, 2000);
+        }).catch(err => {
+          console.error('Failed to copy:', err);
+          this.textContent = '❌ Failed';
           setTimeout(() => {
             this.textContent = originalText;
-          }, 1500);
+          }, 2000);
         });
       });
     });
     
     // Auto-refresh with localStorage persistence
     let refreshInterval = null;
+    let countdownInterval = null;
     const autoRefreshCheckbox = document.getElementById('auto-refresh');
     const refreshIntervalSelect = document.getElementById('refresh-interval');
+    const loadingIndicator = document.getElementById('loading-indicator');
     const storageKey = 'timeline-autorefresh-${index}';
     
     // Restore saved settings from localStorage
@@ -603,17 +970,64 @@ function generateTimelinePageHTML(index, config, events, stats, baseUrl) {
       }));
     }
     
+    function showLoadingIndicator() {
+      if (loadingIndicator) {
+        loadingIndicator.classList.add('visible');
+      }
+    }
+    
+    function hideLoadingIndicator() {
+      if (loadingIndicator) {
+        setTimeout(() => {
+          loadingIndicator.classList.remove('visible');
+        }, 1000);
+      }
+    }
+    
     function startAutoRefresh() {
       const seconds = parseInt(refreshIntervalSelect.value);
+      let countdown = seconds;
+      
+      // Create countdown display in the auto-refresh section
+      const autoRefreshDiv = document.querySelector('.auto-refresh');
+      let countdownSpan = autoRefreshDiv.querySelector('.refresh-countdown');
+      if (!countdownSpan) {
+        countdownSpan = document.createElement('span');
+        countdownSpan.className = 'refresh-countdown';
+        autoRefreshDiv.appendChild(countdownSpan);
+      }
+      
+      // Update countdown every second
+      countdownInterval = setInterval(() => {
+        countdown--;
+        countdownSpan.textContent = \`Refreshing in \${countdown}s\`;
+        if (countdown <= 0) {
+          countdown = seconds;
+        }
+      }, 1000);
+      
       refreshInterval = setInterval(() => {
-        location.reload();
+        showLoadingIndicator();
+        setTimeout(() => {
+          location.reload();
+        }, 500);
       }, seconds * 1000);
+      
+      countdownSpan.textContent = \`Refreshing in \${countdown}s\`;
     }
     
     function stopAutoRefresh() {
       if (refreshInterval) {
         clearInterval(refreshInterval);
         refreshInterval = null;
+      }
+      if (countdownInterval) {
+        clearInterval(countdownInterval);
+        countdownInterval = null;
+      }
+      const countdownSpan = document.querySelector('.refresh-countdown');
+      if (countdownSpan) {
+        countdownSpan.remove();
       }
     }
     
@@ -672,6 +1086,23 @@ function generateTimelinePageHTML(index, config, events, stats, baseUrl) {
 }
 
 /**
+ * Get emoji icon for event type
+ * @param {string} eventType - Type of event
+ * @returns {string} Emoji icon
+ */
+function getEventIcon(eventType) {
+  const icons = {
+    generation: '🎨',
+    download: '⬇️',
+    ics: '📅',
+    config: '⚙️',
+    system: '💻',
+    error: '❌'
+  };
+  return icons[eventType] || '📋';
+}
+
+/**
  * Generate HTML for a single timeline event
  * @param {Object} event - Timeline event object
  * @param {number} index - Event index
@@ -698,12 +1129,12 @@ function generateEventHTML(event, index) {
       <div class="timeline-content">
         <div class="event-header">
           <span class="event-time">${new Date(event.timestamp).toLocaleString()}</span>
-          <span class="event-badge badge-${event.eventType}">${event.eventType}:${event.eventSubtype}${crc32Indicator}</span>
+          <span class="event-badge badge-${event.eventType}">${getEventIcon(event.eventType)} ${event.eventType}:${event.eventSubtype}${crc32Indicator}</span>
           <span class="event-metadata">${metadataStr}</span>
         </div>
         <div class="event-details">
           <pre>${JSON.stringify(event, null, 2)}</pre>
-          <button class="copy-btn" data-index="${index}">Copy JSON</button>
+          <button class="copy-btn" data-index="${index}">📋 Copy JSON</button>
         </div>
       </div>
     </div>
