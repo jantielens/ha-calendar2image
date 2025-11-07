@@ -95,6 +95,11 @@ function generateTimelinePageHTML(index, config, events, stats, baseUrl) {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Timeline - Config ${index}</title>
   <style>
+    :root {
+      --primary-gradient-start: #667eea;
+      --primary-gradient-end: #764ba2;
+    }
+    
     * {
       margin: 0;
       padding: 0;
@@ -103,7 +108,7 @@ function generateTimelinePageHTML(index, config, events, stats, baseUrl) {
     
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: linear-gradient(135deg, var(--primary-gradient-start) 0%, var(--primary-gradient-end) 100%);
       min-height: 100vh;
       padding: 20px;
       animation: gradientShift 15s ease infinite;
@@ -138,7 +143,7 @@ function generateTimelinePageHTML(index, config, events, stats, baseUrl) {
     }
     
     .header {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: linear-gradient(135deg, var(--primary-gradient-start) 0%, var(--primary-gradient-end) 100%);
       color: white;
       padding: 30px 40px;
       position: relative;
@@ -197,7 +202,7 @@ function generateTimelinePageHTML(index, config, events, stats, baseUrl) {
       display: inline-block;
       margin: 20px 40px;
       padding: 10px 20px;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: linear-gradient(135deg, var(--primary-gradient-start) 0%, var(--primary-gradient-end) 100%);
       color: white;
       text-decoration: none;
       border-radius: 6px;
@@ -251,7 +256,7 @@ function generateTimelinePageHTML(index, config, events, stats, baseUrl) {
       background: white;
       padding: 15px;
       border-radius: 8px;
-      border-left: 4px solid #667eea;
+      border-left: 4px solid var(--primary-gradient-start);
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
       transition: all 0.3s ease;
       cursor: pointer;
@@ -281,7 +286,7 @@ function generateTimelinePageHTML(index, config, events, stats, baseUrl) {
     }
     
     .stat-card h3 {
-      color: #667eea;
+      color: var(--primary-gradient-start);
       font-size: 0.75em;
       text-transform: uppercase;
       letter-spacing: 0.5px;
@@ -351,7 +356,7 @@ function generateTimelinePageHTML(index, config, events, stats, baseUrl) {
     }
     
     .filter-label:hover {
-      border-color: #667eea;
+      border-color: var(--primary-gradient-start);
       transform: translateY(-2px);
       box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
     }
@@ -363,8 +368,8 @@ function generateTimelinePageHTML(index, config, events, stats, baseUrl) {
     }
     
     .filter-label.active {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      border-color: #667eea;
+      background: linear-gradient(135deg, var(--primary-gradient-start) 0%, var(--primary-gradient-end) 100%);
+      border-color: var(--primary-gradient-start);
       color: white;
       transform: translateY(-2px);
       box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
@@ -430,7 +435,7 @@ function generateTimelinePageHTML(index, config, events, stats, baseUrl) {
       overflow: hidden;
       margin: 0;
       padding: 0;
-      transition: all 0.3s ease, height 0.3s ease 0.3s;
+      transition: opacity 0.3s ease, transform 0.3s ease, margin 0.3s ease, padding 0.3s ease, height 0.3s ease 0.3s;
     }
     
     .timeline-item:last-child {
@@ -438,7 +443,7 @@ function generateTimelinePageHTML(index, config, events, stats, baseUrl) {
     }
     
     .timeline-item:hover {
-      border-left-color: #667eea;
+      border-left-color: var(--primary-gradient-start);
     }
     
     .timeline-dot {
@@ -515,7 +520,7 @@ function generateTimelinePageHTML(index, config, events, stats, baseUrl) {
     }
     
     .timeline-content:hover {
-      border-color: #667eea;
+      border-color: var(--primary-gradient-start);
       box-shadow: 0 4px 16px rgba(102, 126, 234, 0.3);
       transform: translateX(5px);
     }
@@ -608,7 +613,7 @@ function generateTimelinePageHTML(index, config, events, stats, baseUrl) {
     
     .copy-btn {
       padding: 5px 10px;
-      background: #667eea;
+      background: var(--primary-gradient-start);
       color: white;
       border: none;
       border-radius: 4px;
@@ -676,7 +681,7 @@ function generateTimelinePageHTML(index, config, events, stats, baseUrl) {
       position: fixed;
       top: 20px;
       right: 20px;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: linear-gradient(135deg, var(--primary-gradient-start) 0%, var(--primary-gradient-end) 100%);
       color: white;
       padding: 12px 20px;
       border-radius: 8px;
@@ -746,7 +751,7 @@ function generateTimelinePageHTML(index, config, events, stats, baseUrl) {
     }
     
     ::-webkit-scrollbar-thumb {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: linear-gradient(135deg, var(--primary-gradient-start) 0%, var(--primary-gradient-end) 100%);
       border-radius: 10px;
     }
     
@@ -774,7 +779,7 @@ function generateTimelinePageHTML(index, config, events, stats, baseUrl) {
     
     <div class="stats-section">
       <div class="stats-grid">
-        <div class="stat-card" style="border-left-color: #667eea;">
+        <div class="stat-card" style="border-left-color: var(--primary-gradient-start);">
           <h3>Total Events</h3>
           <p>${events.length}</p>
         </div>
