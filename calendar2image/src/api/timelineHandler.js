@@ -676,52 +676,6 @@ function generateTimelinePageHTML(index, config, events, stats, baseUrl) {
       }
     }
     
-    /* Loading indicator */
-    .loading-indicator {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      background: linear-gradient(135deg, var(--primary-gradient-start) 0%, var(--primary-gradient-end) 100%);
-      color: white;
-      padding: 12px 20px;
-      border-radius: 8px;
-      box-shadow: 0 4px 16px rgba(102, 126, 234, 0.4);
-      display: none;
-      align-items: center;
-      gap: 10px;
-      z-index: 1000;
-      animation: slideInRight 0.3s ease-out;
-    }
-    
-    @keyframes slideInRight {
-      from {
-        transform: translateX(100%);
-        opacity: 0;
-      }
-      to {
-        transform: translateX(0);
-        opacity: 1;
-      }
-    }
-    
-    .loading-indicator.visible {
-      display: flex;
-    }
-    
-    .spinner {
-      width: 16px;
-      height: 16px;
-      border: 2px solid rgba(255, 255, 255, 0.3);
-      border-top: 2px solid white;
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-    }
-    
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-    
     /* Refresh countdown */
     .refresh-countdown {
       font-size: 0.85em;
@@ -761,11 +715,6 @@ function generateTimelinePageHTML(index, config, events, stats, baseUrl) {
   </style>
 </head>
 <body>
-  <div class="loading-indicator" id="loading-indicator">
-    <div class="spinner"></div>
-    <span>Refreshing timeline...</span>
-  </div>
-  
   <div class="container">
     <div class="header">
       <h1>Timeline - Config ${index}</h1>
@@ -958,7 +907,6 @@ function generateTimelinePageHTML(index, config, events, stats, baseUrl) {
     let countdownInterval = null;
     const autoRefreshCheckbox = document.getElementById('auto-refresh');
     const refreshIntervalSelect = document.getElementById('refresh-interval');
-    const loadingIndicator = document.getElementById('loading-indicator');
     const storageKey = 'timeline-autorefresh-${index}';
     
     // Restore saved settings from localStorage
@@ -980,20 +928,6 @@ function generateTimelinePageHTML(index, config, events, stats, baseUrl) {
       }));
     }
     
-    function showLoadingIndicator() {
-      if (loadingIndicator) {
-        loadingIndicator.classList.add('visible');
-      }
-    }
-    
-    function hideLoadingIndicator() {
-      if (loadingIndicator) {
-        setTimeout(() => {
-          loadingIndicator.classList.remove('visible');
-        }, 1000);
-      }
-    }
-    
     function startAutoRefresh() {
       const seconds = parseInt(refreshIntervalSelect.value);
       let countdown = seconds;
@@ -1010,17 +944,15 @@ function generateTimelinePageHTML(index, config, events, stats, baseUrl) {
       // Update countdown every second
       countdownInterval = setInterval(() => {
         countdown--;
-        countdownSpan.textContent = `Refreshing in ${countdown}s`;
-        if (countdown <= 0) {
+        if (countdown > 0) {
+          countdownSpan.textContent = `Refreshing in ${countdown}s`;
+        } else {
           countdown = seconds;
         }
       }, 1000);
       
       refreshInterval = setInterval(() => {
-        showLoadingIndicator();
-        setTimeout(() => {
-          location.reload();
-        }, 500);
+        location.reload();
       }, seconds * 1000);
       
       countdownSpan.textContent = `Refreshing in ${countdown}s`;
