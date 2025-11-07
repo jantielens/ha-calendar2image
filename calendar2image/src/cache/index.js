@@ -6,6 +6,10 @@ const { addHistoryEntry } = require('./crc32History');
 // Cache directory - use environment variable or default
 const CACHE_DIR = process.env.CACHE_DIR || path.join(process.cwd(), '..', 'data', 'cache');
 
+// In-memory cache for instant reads (eliminates file I/O contention)
+// Map<index, {buffer, metadata}>
+const memoryCache = new Map();
+
 /**
  * Ensure cache directory exists and cleanup orphaned temp files
  */
@@ -125,7 +129,10 @@ async function saveCachedImage(index, buffer, contentType, imageType, options = 
       fs.rename(tempMetadataPath, metadataPath)
     ]);
 
-    console.log(`[Cache] Saved cached image for config ${index}: ${buffer.length} bytes`);
+    // After successful disk write, update memory cache atomically
+    memoryCache.set(index, { buffer, metadata });
+
+    console.log(`[Cache] Saved cached image for config ${index}: ${buffer.length} bytes (memory + disk)`);
     
     // Record in CRC32 history (non-blocking)
     const { trigger = 'unknown', generationDuration = null } = options;
@@ -150,6 +157,18 @@ async function saveCachedImage(index, buffer, contentType, imageType, options = 
  * @returns {Promise<Object|null>} Object with buffer and contentType, or null if not found
  */
 async function loadCachedImage(index) {
+  // Try memory cache first (instant, no I/O)
+  const memoryCached = memoryCache.get(index);
+  if (memoryCached) {
+    console.log(`[Cache] Loaded from memory for config ${index}: ${memoryCached.buffer.length} bytes`);
+    return {
+      buffer: memoryCached.buffer,
+      contentType: memoryCached.metadata.contentType,
+      metadata: memoryCached.metadata
+    };
+  }
+  
+  // Fall back to disk
   try {
     const metadata = await getCacheMetadata(index);
     if (!metadata) {
@@ -159,7 +178,10 @@ async function loadCachedImage(index) {
     const cachePath = getCacheFilePath(index, metadata.imageType);
     const buffer = await fs.readFile(cachePath);
 
-    console.log(`[Cache] Loaded cached image for config ${index}: ${buffer.length} bytes (generated ${metadata.generatedAt})`);
+    console.log(`[Cache] Loaded from disk for config ${index}: ${buffer.length} bytes (generated ${metadata.generatedAt})`);
+    
+    // Populate memory cache for future reads
+    memoryCache.set(index, { buffer, metadata });
     
     return {
       buffer,
@@ -204,6 +226,9 @@ async function preGenerateImage(index) {
  * @param {number} index - Configuration index
  */
 async function deleteCachedImage(index) {
+  // Remove from memory cache first
+  memoryCache.delete(index);
+  
   try {
     const metadata = await getCacheMetadata(index);
     if (metadata) {
@@ -215,11 +240,45 @@ async function deleteCachedImage(index) {
         fs.unlink(metadataPath).catch(() => {})
       ]);
       
-      console.log(`[Cache] Deleted cached image for config ${index}`);
+      console.log(`[Cache] Deleted cached image for config ${index} (memory + disk)`);
     }
   } catch (error) {
     console.warn(`[Cache] Failed to delete cached image for config ${index}: ${error.message}`);
   }
+}
+
+/**
+ * Get memory cache statistics
+ * @returns {Object} Statistics object with entries, totalBytes, and per-config details
+ */
+function getMemoryCacheStats() {
+  const stats = {
+    entries: memoryCache.size,
+    totalBytes: 0,
+    configs: []
+  };
+  
+  for (const [index, cached] of memoryCache.entries()) {
+    const bytes = cached.buffer.length;
+    stats.totalBytes += bytes;
+    stats.configs.push({
+      index,
+      size: bytes,
+      crc32: cached.metadata.crc32,
+      generatedAt: cached.metadata.generatedAt
+    });
+  }
+  
+  return stats;
+}
+
+/**
+ * Clear memory cache (useful for testing or manual maintenance)
+ */
+function clearMemoryCache() {
+  const size = memoryCache.size;
+  memoryCache.clear();
+  console.log(`[Cache] Cleared memory cache (${size} entries)`);
 }
 
 module.exports = {
@@ -230,6 +289,8 @@ module.exports = {
   preGenerateImage,
   setPreGenerateFunction,
   deleteCachedImage,
+  getMemoryCacheStats,
+  clearMemoryCache,
   // Re-export CRC32 history functions
   ...require('./crc32History')
 };
