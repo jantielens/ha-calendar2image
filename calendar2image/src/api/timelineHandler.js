@@ -419,6 +419,18 @@ function generateTimelinePageHTML(index, config, events, stats, baseUrl) {
       margin-bottom: 5px;
       border-left: 2px solid #e9ecef;
       transition: all 0.3s ease;
+      opacity: 1;
+      transform: translateX(0);
+    }
+    
+    .timeline-item.hidden {
+      opacity: 0;
+      transform: translateX(-20px);
+      height: 0;
+      overflow: hidden;
+      margin: 0;
+      padding: 0;
+      transition: all 0.3s ease, height 0.3s ease 0.3s;
     }
     
     .timeline-item:last-child {
@@ -878,7 +890,7 @@ function generateTimelinePageHTML(index, config, events, stats, baseUrl) {
       
       const selectedIP = ipFilterSelect ? ipFilterSelect.value : 'all';
       
-      timelineItems.forEach((item, index) => {
+      timelineItems.forEach(item => {
         const eventType = item.dataset.type;
         const itemIP = item.dataset.ip;
         
@@ -893,16 +905,9 @@ function generateTimelinePageHTML(index, config, events, stats, baseUrl) {
         
         // Show item only if both filters match
         if (typeMatch && ipMatch) {
-          setTimeout(() => {
-            item.style.display = '';
-            item.style.animation = 'fadeInSlide 0.4s ease-out';
-          }, index * 20); // Stagger animations
+          item.classList.remove('hidden');
         } else {
-          item.style.opacity = '0';
-          item.style.transform = 'translateX(-20px)';
-          setTimeout(() => {
-            item.style.display = 'none';
-          }, 300);
+          item.classList.add('hidden');
         }
       });
     }
