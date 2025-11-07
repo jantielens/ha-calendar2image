@@ -67,13 +67,10 @@ function groupEventsByCRC32(events) {
   // We want to group consecutive events with the same CRC32
   events.forEach(event => {
     // Extract CRC32 from event metadata
-    // For generation events, use the new CRC32
-    // For download events, use the CRC32 from metadata
+    // For generation and download events, use the CRC32 from metadata
     let eventCRC32 = 'unknown';
     
-    if (event.eventType === 'generation' && event.metadata?.crc32) {
-      eventCRC32 = event.metadata.crc32;
-    } else if (event.eventType === 'download' && event.metadata?.crc32) {
+    if ((event.eventType === 'generation' || event.eventType === 'download') && event.metadata?.crc32) {
       eventCRC32 = event.metadata.crc32;
     }
     
@@ -717,13 +714,13 @@ function generateTimelinePageHTML(index, config, events, stats, baseUrl) {
           collapsedIndices.push(index);
         }
       });
-      localStorage.setItem('timeline-collapsed-${index}', JSON.stringify(collapsedIndices));
+      localStorage.setItem(\`timeline-collapsed-${index}\`, JSON.stringify(collapsedIndices));
     }
     
     // Restore collapse state from localStorage
     function restoreCollapseState() {
       try {
-        const saved = localStorage.getItem('timeline-collapsed-${index}');
+        const saved = localStorage.getItem(\`timeline-collapsed-${index}\`);
         if (saved) {
           const collapsedIndices = JSON.parse(saved);
           document.querySelectorAll('.crc32-block').forEach((block, index) => {
@@ -821,7 +818,7 @@ function generateTimelinePageHTML(index, config, events, stats, baseUrl) {
     let refreshInterval = null;
     const autoRefreshCheckbox = document.getElementById('auto-refresh');
     const refreshIntervalSelect = document.getElementById('refresh-interval');
-    const storageKey = 'timeline-autorefresh-${index}';
+    const storageKey = \`timeline-autorefresh-${index}\`;
     
     // Restore saved settings from localStorage
     const savedSettings = localStorage.getItem(storageKey);
@@ -987,10 +984,6 @@ function generateEventRowHTML(event, eventIndex, groupIndex) {
   const crc32Indicator = (event.eventType === 'generation' && event.metadata && event.metadata.changed === true)
     ? ' 🆕'
     : '';
-  
-  // Global event index for copy functionality - need to track actual event index in the full events array
-  // For now, use group-local index
-  const globalIndex = `${groupIndex}-${eventIndex}`;
   
   return `
     <tr class="event-row" data-type="${event.eventType}" ${ipAttr}>
