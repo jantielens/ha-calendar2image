@@ -7,15 +7,42 @@ const { addHistoryEntry } = require('./crc32History');
 const CACHE_DIR = process.env.CACHE_DIR || path.join(process.cwd(), '..', 'data', 'cache');
 
 /**
- * Ensure cache directory exists
+ * Ensure cache directory exists and cleanup orphaned temp files
  */
 async function ensureCacheDir() {
   try {
     await fs.mkdir(CACHE_DIR, { recursive: true });
     console.log(`[Cache] Cache directory ready: ${CACHE_DIR}`);
+    
+    // Cleanup orphaned .tmp files from previous crashes
+    await cleanupTempFiles();
   } catch (error) {
     console.error(`[Cache] Failed to create cache directory: ${error.message}`);
     throw error;
+  }
+}
+
+/**
+ * Cleanup orphaned temporary files from previous crashes
+ */
+async function cleanupTempFiles() {
+  try {
+    const files = await fs.readdir(CACHE_DIR);
+    const tempFiles = files.filter(file => file.endsWith('.tmp'));
+    
+    if (tempFiles.length > 0) {
+      console.log(`[Cache] Cleaning up ${tempFiles.length} orphaned temporary file(s)...`);
+      await Promise.all(
+        tempFiles.map(file => 
+          fs.unlink(path.join(CACHE_DIR, file)).catch(err => 
+            console.warn(`[Cache] Failed to delete ${file}: ${err.message}`)
+          )
+        )
+      );
+      console.log(`[Cache] Cleanup complete`);
+    }
+  } catch (error) {
+    console.warn(`[Cache] Failed to cleanup temporary files: ${error.message}`);
   }
 }
 
@@ -69,6 +96,10 @@ async function saveCachedImage(index, buffer, contentType, imageType, options = 
     const cachePath = getCacheFilePath(index, imageType);
     const metadataPath = getMetadataFilePath(index);
     
+    // Use temporary file paths for atomic replacement
+    const tempCachePath = cachePath + '.tmp';
+    const tempMetadataPath = metadataPath + '.tmp';
+    
     // Calculate CRC32 checksum
     const crc32 = calculateCRC32(buffer);
     
@@ -82,10 +113,16 @@ async function saveCachedImage(index, buffer, contentType, imageType, options = 
       cachePath
     };
 
-    // Save image and metadata atomically
+    // Write to temporary files first
     await Promise.all([
-      fs.writeFile(cachePath, buffer),
-      fs.writeFile(metadataPath, JSON.stringify(metadata, null, 2))
+      fs.writeFile(tempCachePath, buffer),
+      fs.writeFile(tempMetadataPath, JSON.stringify(metadata, null, 2))
+    ]);
+
+    // Atomically replace old cache files (this is instant and atomic on POSIX)
+    await Promise.all([
+      fs.rename(tempCachePath, cachePath),
+      fs.rename(tempMetadataPath, metadataPath)
     ]);
 
     console.log(`[Cache] Saved cached image for config ${index}: ${buffer.length} bytes`);
