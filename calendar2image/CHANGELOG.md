@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.8.1] - 2025-11-07
+
+### Timeline UI Improvements
+
+- Enhanced CRC32 display with `0x` prefix and monospace font
+- Added duration display (in minutes) for CRC32 blocks
+- Differentiated download types with color-coded badges (IMAGE: blue, CRC32: yellow)
+- Added download duration tracking with SLOW warning for requests >500ms
+- Improved metadata display with duration first and proper units (ms for downloads, s for generation)
+- Removed collapse/expand state persistence for consistent UX
+- Removed CRC32 History buttons from UI (functionality still available via API)
+
 ## [0.8.0] - 2025-11-06
 
 ### Performance
