@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.8.2] - 2025-11-07
+
+### Fixed
+
+- **Cache Race Condition** - Fixed race condition in cache updates that caused slow responses (6-9 seconds) during pre-generation
+  - Implemented atomic file replacement using write-then-rename pattern
+  - Cache files are now written to temporary files first, then atomically renamed
+  - Eliminates race condition where user requests could read incomplete cache files during pre-generation
+  - Users now always get fast cached responses (~20-50ms) even during image generation
+  - Added cleanup of orphaned `.tmp` files on startup to handle crash recovery
+
 ## [0.8.1] - 2025-11-07
 
 ### Timeline UI Improvements
