@@ -2,6 +2,13 @@
 
 ## [0.8.7] - 2025-11-08
 
+### Added
+- **Version display in web interface and logs**
+  - Version now displayed in web interface header (e.g., "Version 0.8.7")
+  - Startup logs show version in banner (e.g., "Calendar2Image Add-on v0.8.7")
+  - Image generation logs include version for easier troubleshooting
+  - Created `src/utils/version.js` to centrally read version from package.json
+
 ### Fixed
 - **Timeline: Optimized ExtraData cache logging to preserve CRC32 block continuity**
   - Removed `EXTRA_DATA_CACHE_HIT` and `EXTRA_DATA_STALE_SERVE` timeline events
