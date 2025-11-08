@@ -580,11 +580,11 @@ Cache files are stored in the cache directory (`/data/cache/`) with MD5-hashed f
 ### Timeline Events
 
 Monitor cache behavior in the timeline page:
-- `EXTRA_DATA_CACHE_HIT` - Data served from fresh cache
-- `EXTRA_DATA_STALE_SERVE` - Stale data served, background refresh started
-- `EXTRA_DATA_REFRESH` - Background refresh completed
 - `EXTRA_DATA_FETCH` - Fresh data fetched (first request or error recovery)
+- `EXTRA_DATA_REFRESH` - Background refresh completed
 - `EXTRA_DATA_ERROR` - Fetch failed (returns empty object, doesn't break rendering)
+
+**Note:** Cache hits and stale serves are logged to console only (not timeline) to preserve CRC32 block continuity on the timeline page.
 
 ### Force Fresh Data
 
@@ -676,9 +676,10 @@ Generate the image and check what data you're receiving.
    - All benefit from non-blocking cache pattern
 
 4. **Monitor cache behavior:**
-   - Check timeline page for cache hit/miss patterns
-   - Look for `EXTRA_DATA_CACHE_HIT`, `EXTRA_DATA_STALE_SERVE`, `EXTRA_DATA_REFRESH` events
-   - Console logs show cache age and TTL: `[ExtraData] Cache HIT (age: 45s, TTL: 300s)`
+   - Check timeline page for significant cache events
+   - Look for `EXTRA_DATA_FETCH` and `EXTRA_DATA_REFRESH` events in timeline
+   - Console logs show all cache activity: `[ExtraData] Cache HIT (age: 45s, TTL: 300s)`
+   - Console logs also show stale serves and background refreshes
 
 5. **Multi-process safety:**
    - File-based cache works correctly across all worker processes
