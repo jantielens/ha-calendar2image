@@ -6,6 +6,7 @@ const { handleConfigPage } = require('./api/configHandler');
 const { handleTimelinePage } = require('./api/timelineHandler');
 const { ensureCacheDir } = require('./cache');
 const { initializeScheduler, generateAllImagesNow, stopAllSchedules } = require('./scheduler');
+const { getVersion } = require('./utils/version');
 
 const app = express();
 const PORT = 3000; // Fixed internal port (HA handles external port mapping)
@@ -123,8 +124,9 @@ app.use((err, req, res, next) => {
 
 // Start server
 const server = app.listen(PORT, '0.0.0.0', async () => {
+    const version = getVersion();
     console.log('='.repeat(50));
-    console.log('Calendar2Image Add-on');
+    console.log(`Calendar2Image Add-on v${version}`);
     console.log('='.repeat(50));
     console.log(`Server running on port ${PORT}`);
     console.log(`Available endpoints:`);
