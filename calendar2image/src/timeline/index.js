@@ -47,6 +47,7 @@ const EVENT_SUBTYPES = {
   // System subtypes
   SCHEDULER_STARTED: 'scheduler_started',
   SCHEDULER_STOPPED: 'scheduler_stopped',
+  SCHEDULER_SKIPPED: 'scheduler_skipped',
   APP_STARTUP: 'app_startup',
   
   // Error subtypes

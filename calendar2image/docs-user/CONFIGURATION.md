@@ -55,10 +55,12 @@ Each configuration file should contain:
 - **expandRecurringTo** (number, default: `31`): Days from today to stop expanding recurring events
 - **preGenerateInterval** (string, optional): Cron expression for automatic image pre-generation. When set, images are generated in the background on this schedule and served from cache for ultra-fast responses. **When NOT set, images are always generated fresh on each request** to ensure up-to-date calendar data. Examples:
   - `"*/5 * * * *"` - Every 5 minutes (recommended for cached mode)
-  - `"*/1 * * * *"` - Every 1 minute (very frequent)
+  - `"*/1 * * * *"` - Every 1 minute (very frequent) 
   - `"*/15 * * * *"` - Every 15 minutes
   - `"0 * * * *"` - Every hour at :00
   - **(omitted)** - No caching, always generate fresh (ensures real-time calendar data)
+  
+  **⚠️ Queue Protection**: The system automatically prevents duplicate jobs for the same configuration. If a config is already being generated when a new scheduled request arrives, the new request is skipped and logged to both console and timeline view. This prevents infinite queue growth on slower devices (e.g., Raspberry Pi with 25+ second generation times).
 - **locale** (string, default: `"en-US"`): BCP 47 locale code for date/time formatting (e.g., `"en-US"`, `"de-DE"`, `"fr-FR"`)
 - **timezone** (string, optional): IANA timezone name to convert event times (e.g., `"Europe/Berlin"`, `"America/New_York"`)
 - **extraDataUrl** (string or array, optional): URL(s) to fetch additional JSON data for templates. See [Extra Data Guide](EXTRA-DATA.md) for details.

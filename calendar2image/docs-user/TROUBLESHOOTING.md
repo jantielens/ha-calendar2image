@@ -221,6 +221,45 @@ http://homeassistant.local:3000/api/0.jpg  ✗
 
 ---
 
+## Performance Issues
+
+### Queue Buildup Prevention
+
+**Symptoms:**
+- Console warnings: `⚠️ Skipping config X (trigger: scheduled) - already queued for generation`
+- Timeline shows `system:scheduler_skipped` events
+- Generation requests being dropped
+
+**What this means:**
+The system detected that your generation time exceeds your scheduling interval, which would cause infinite queue growth. For example:
+- Generation takes 25 seconds on Raspberry Pi
+- Scheduled every minute (`*/1 * * * *`)
+- Result: Queue would grow by 1 job every minute
+
+**Solutions:**
+
+1. **Increase scheduling interval** (recommended):
+   ```json
+   // Instead of every minute
+   "preGenerateInterval": "*/1 * * * *"
+   
+   // Use every 2-3 minutes for Raspberry Pi
+   "preGenerateInterval": "*/3 * * * *"
+   ```
+
+2. **Stagger multiple configurations:**
+   ```json
+   // Config 0: Generate at :00, :05, :10, etc.
+   "preGenerateInterval": "*/5 * * * *"
+   
+   // Config 1: Generate at :02, :07, :12, etc. 
+   "preGenerateInterval": "2-59/5 * * * *"
+   ```
+
+3. **Monitor timeline view** to track skip frequency and adjust accordingly.
+
+---
+
 ## Calendar Issues
 
 ### SSL Certificate Errors

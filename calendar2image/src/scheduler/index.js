@@ -5,6 +5,7 @@ const { fork } = require('child_process');
 const chokidar = require('chokidar');
 const { loadAllConfigs, loadConfig, CONFIG_DIR } = require('../config/loader');
 const { preGenerateImage, setPreGenerateFunction, saveCachedImage } = require('../cache');
+const { logSystem, EVENT_SUBTYPES } = require('../timeline');
 
 // Store active cron jobs
 const activeJobs = new Map();
@@ -27,7 +28,27 @@ let isWorkerRunning = false;
  * @returns {Promise<boolean>} Success status
  */
 async function generateAndCache(index, trigger = 'scheduled') {
-  return new Promise((resolve) => {
+  return new Promise(async (resolve) => {
+    // Check if this config is already queued to prevent duplicate jobs
+    const alreadyQueued = workerQueue.some(job => job.index === index);
+    if (alreadyQueued) {
+      console.warn(`[Scheduler] ⚠️  Skipping config ${index} (trigger: ${trigger}) - already queued for generation`);
+      
+      // Log to timeline
+      try {
+        await logSystem(index, 'scheduler_skipped', {
+          trigger,
+          reason: 'already_queued',
+          queueLength: workerQueue.length
+        });
+      } catch (timelineErr) {
+        console.warn(`[Scheduler] Failed to log skip event to timeline: ${timelineErr.message}`);
+      }
+      
+      resolve(false);
+      return;
+    }
+    
     // Add to worker queue to prevent concurrent browser instances
     workerQueue.push({ index, trigger, resolve });
     processWorkerQueue();
