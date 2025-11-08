@@ -69,8 +69,11 @@ async function processWorkerQueue() {
         try {
           const generationDuration = Date.now() - startTime;
           
+          // Convert base64 string back to Buffer (IPC serialization workaround)
+          const buffer = Buffer.from(msg.buffer, 'base64');
+          
           // Save to cache
-          await saveCachedImage(index, msg.buffer, msg.contentType, msg.imageType, {
+          await saveCachedImage(index, buffer, msg.contentType, msg.imageType, {
             trigger,
             generationDuration
           });

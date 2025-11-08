@@ -102,11 +102,11 @@ async function generateCalendarImageInWorker(index) {
     
     console.log(`[Worker] Image generation completed for config ${index} in ${duration}ms`);
     
-    // Send result back to parent
+    // Send result back to parent (convert Buffer to base64 for IPC serialization)
     process.send({
       success: true,
       index: index,
-      buffer: result.buffer,
+      buffer: result.buffer.toString('base64'),
       contentType: result.contentType,
       imageType: result.imageType,
       crc32: crc32,

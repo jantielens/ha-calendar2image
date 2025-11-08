@@ -8,9 +8,13 @@
   - Fixed protocol errors: "Session closed. Most likely the page has been closed" during scheduled generation
   - Increased worker timeout from 30s to 60s since workers now run sequentially without resource contention
   - Added worker queue management to ensure reliable image generation under all load conditions
+- **Fixed Buffer serialization issue in IPC communication**
+  - Fixed "data argument must be of type Buffer" error when saving generated images
+  - Worker processes now properly serialize Buffer data as base64 for IPC transport
+  - Scheduler correctly reconstructs Buffer from base64 string before caching
 
 ### Technical Details
-PR #22 introduced a regression where multiple worker processes would launch Puppeteer browsers simultaneously, causing resource exhaustion and timeouts. Each worker creating its own browser instance led to memory/CPU contention. The fix ensures workers execute sequentially, sharing system resources efficiently while maintaining the event loop isolation benefits.
+PR #22 introduced a regression where multiple worker processes would launch Puppeteer browsers simultaneously, causing resource exhaustion and timeouts. Each worker creating its own browser instance led to memory/CPU contention. Additionally, Buffer objects were not properly serialized through IPC, causing cache save failures. The fix ensures workers execute sequentially, sharing system resources efficiently while maintaining the event loop isolation benefits, and properly handles Buffer serialization via base64 encoding.
 
 ## [0.8.4] - 2025-11-08
 
