@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.8.7] - 2025-11-08
+
+### Fixed
+- **Timeline: Optimized ExtraData cache logging to preserve CRC32 block continuity**
+  - Removed `EXTRA_DATA_CACHE_HIT` and `EXTRA_DATA_STALE_SERVE` timeline events
+  - These frequent events were breaking CRC32 block grouping on the timeline page
+  - Cache hits and stale serves are still logged to console for debugging
+  - Only cache refreshes (`EXTRA_DATA_REFRESH`) are logged to timeline, which are significant events
+  - CRC32 blocks now properly group consecutive events with the same image version
+  - Non-CRC32 events (ICS, config, system, errors) continue to display in chronological order
+
+### Technical Details
+- ExtraData cache hits and stale serves no longer create timeline events
+- Timeline page CRC32 grouping now works correctly without interruptions from cache events
+- Console logging still provides full visibility into cache behavior for debugging
+
 ## [0.8.6] - 2025-11-08
 
 ### Added

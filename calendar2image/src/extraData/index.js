@@ -97,28 +97,15 @@ async function fetchExtraData(url, options = {}) {
         // Cache is fresh - return immediately
         console.log(`[ExtraData] Cache HIT for ${url} (age: ${ageSeconds}s, TTL: ${cacheTtl}s)`);
         
-        // Log cache hit to timeline (non-blocking)
-        if (configIndex !== null) {
-          logExtraDataEvent(configIndex, 'EXTRA_DATA_CACHE_HIT', {
-            url,
-            age: ageSeconds,
-            ttl: cacheTtl
-          }).catch(err => console.warn(`[ExtraData] Timeline logging failed: ${err.message}`));
-        }
+        // Note: We don't log cache hits to timeline to avoid breaking CRC32 block continuity
         
         return cached.data;
       } else {
         // Cache is stale - return it immediately but refresh in background
         console.log(`[ExtraData] Cache STALE for ${url} (age: ${ageSeconds}s, TTL: ${cacheTtl}s) - serving stale, refreshing in background`);
         
-        // Log stale serve to timeline (non-blocking)
-        if (configIndex !== null) {
-          logExtraDataEvent(configIndex, 'EXTRA_DATA_STALE_SERVE', {
-            url,
-            age: ageSeconds,
-            ttl: cacheTtl
-          }).catch(err => console.warn(`[ExtraData] Timeline logging failed: ${err.message}`));
-        }
+        // Note: We don't log stale serves to timeline to avoid breaking CRC32 block continuity
+        // Only log when the cache is actually refreshed (see EXTRA_DATA_REFRESH event)
         
         // Start background refresh (only if not already refreshing)
         if (!ongoingRefreshes.has(cacheKey)) {

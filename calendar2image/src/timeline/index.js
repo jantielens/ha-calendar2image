@@ -41,8 +41,6 @@ const EVENT_SUBTYPES = {
   
   // Extra Data subtypes
   EXTRA_DATA_FETCH: 'extra_data_fetch',
-  EXTRA_DATA_CACHE_HIT: 'extra_data_cache_hit',
-  EXTRA_DATA_STALE_SERVE: 'extra_data_stale_serve',
   EXTRA_DATA_REFRESH: 'extra_data_refresh',
   EXTRA_DATA_ERROR: 'extra_data_error',
   
