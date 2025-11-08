@@ -17,8 +17,11 @@ const { logGeneration, logError, EVENT_SUBTYPES } = require('../timeline');
 
 /**
  * Fetch extra data based on config format (string or array)
+ * @param {Object} config - Configuration object
+ * @param {number} configIndex - Configuration index for timeline logging
+ * @returns {Promise<Object|Array>} Extra data
  */
-async function fetchExtraDataForConfig(config) {
+async function fetchExtraDataForConfig(config, configIndex) {
   if (!config.extraDataUrl) {
     return {};
   }
@@ -27,7 +30,8 @@ async function fetchExtraDataForConfig(config) {
   if (typeof config.extraDataUrl === 'string') {
     return fetchExtraData(config.extraDataUrl, {
       cacheTtl: config.extraDataCacheTtl,
-      headers: config.extraDataHeaders || {}
+      headers: config.extraDataHeaders || {},
+      configIndex
     });
   }
 
@@ -50,7 +54,7 @@ async function fetchExtraDataForConfig(config) {
         ? source.cacheTtl 
         : config.extraDataCacheTtl;
 
-      return fetchExtraData(source.url, { cacheTtl, headers });
+      return fetchExtraData(source.url, { cacheTtl, headers, configIndex });
     });
 
     return Promise.all(promises);
@@ -87,7 +91,7 @@ async function generateCalendarImageInWorker(index, trigger = 'unknown') {
         expandRecurringTo: config.expandRecurringTo,
         expandRecurringMax: config.expandRecurringMax
       }),
-      fetchExtraDataForConfig(config)
+      fetchExtraDataForConfig(config, index)
     ]);
     
     // Render template

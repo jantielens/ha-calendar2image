@@ -542,26 +542,62 @@ module.exports = function(data) {
 
 ## Caching Behavior
 
-Extra data is cached independently from image generation:
+Extra data uses a **file-based cache** with **stale-while-revalidate** pattern to ensure fast, non-blocking performance:
 
-1. **First request:** Fetches data, caches for `extraDataCacheTtl` seconds
-2. **Subsequent requests:** Uses cached data if still valid
-3. **Cache expiry:** Automatically fetches fresh data
+### How it works
 
-**Cache is shared across all image generations** for the same URL and headers.
+1. **First request**: Fetches data, caches to disk for `extraDataCacheTtl` seconds
+2. **Subsequent requests (cache fresh)**: Returns cached data immediately (< 1ms)
+3. **Cache expired**: Returns stale cached data immediately + refreshes in background
+4. **No blocking**: ExtraData fetches never delay image generation or downloads
 
-**Example timeline:**
+### Key Benefits
+
+- ✅ **Never blocks**: Image generation and downloads proceed without waiting
+- ✅ **Multi-process safe**: Cache shared across all worker processes
+- ✅ **Survives restarts**: Cache persists on disk
+- ✅ **Background refresh**: Stale data served instantly while fresh data fetches
+- ✅ **Timeline monitoring**: All cache events logged for visibility
+
+### Cache Lifecycle Example
+
 ```
-00:00 - Request 1: Fetch data, cache for 300s
-00:05 - Request 2: Use cached data (295s remaining)
-00:10 - Request 3: Use cached data (290s remaining)
-05:00 - Request 4: Cache expired, fetch fresh data
+00:00 - Request 1: Fetch data, cache for 300s (fresh)
+00:05 - Request 2: Cache HIT (295s remaining) - instant
+00:10 - Request 3: Cache HIT (290s remaining) - instant
+05:00 - Request 4: Cache STALE - serve stale instantly + refresh in background
+05:01 - Background refresh completes, cache updated
+05:05 - Request 5: Cache HIT (fresh) - instant
 ```
 
-**Force fresh data:**
-- Set `extraDataCacheTtl: 0`
-- Or wait for cache to expire
-- Or restart the add-on (clears cache)
+### Cache Storage
+
+Cache files are stored in the cache directory (`/data/cache/`) with MD5-hashed filenames:
+- Format: `extradata-{md5hash}.json`
+- Each unique URL+headers combination gets its own cache file
+- Shared across main process and all worker processes
+
+### Timeline Events
+
+Monitor cache behavior in the timeline page:
+- `EXTRA_DATA_CACHE_HIT` - Data served from fresh cache
+- `EXTRA_DATA_STALE_SERVE` - Stale data served, background refresh started
+- `EXTRA_DATA_REFRESH` - Background refresh completed
+- `EXTRA_DATA_FETCH` - Fresh data fetched (first request or error recovery)
+- `EXTRA_DATA_ERROR` - Fetch failed (returns empty object, doesn't break rendering)
+
+### Force Fresh Data
+
+**Option 1**: Set `extraDataCacheTtl: 0` (no caching)
+```json
+{
+  "extraDataCacheTtl": 0
+}
+```
+
+**Option 2**: Wait for background refresh (after TTL expires)
+
+**Option 3**: Restart the add-on (cache persists, but you can manually delete cache files if needed)
 
 ---
 
@@ -624,23 +660,30 @@ Generate the image and check what data you're receiving.
 ## Performance Tips
 
 1. **Set appropriate cache TTL:**
-   - Weather: 300-600s (5-10 minutes)
-   - Slowly changing data: 3600s (1 hour)
-   - Real-time data: 60s (1 minute)
+   - Weather: 300-600s (5-10 minutes) - good balance
+   - Slowly changing data: 1800-3600s (30-60 minutes)
+   - Frequently changing data: 60-120s (1-2 minutes)
+   - Note: With stale-while-revalidate, even low TTLs don't block performance
 
 2. **Keep payloads small:**
    - Filter data server-side if possible
-   - Only fetch what you need
+   - Only fetch what you need in templates
+   - Smaller payloads = faster parsing and caching
 
-3. **Use fast endpoints:**
-   - Local Home Assistant sensors are fastest
-   - External APIs may be slower
+3. **Use local endpoints when possible:**
+   - Local Home Assistant sensors are fastest (< 10ms)
+   - External APIs may be slower (50-500ms)
+   - All benefit from non-blocking cache pattern
 
-4. **Monitor logs:**
-   ```
-   [ExtraData] Fetching data from http://... (123ms)
-   [ExtraData] Using cached data (age: 45s)
-   ```
+4. **Monitor cache behavior:**
+   - Check timeline page for cache hit/miss patterns
+   - Look for `EXTRA_DATA_CACHE_HIT`, `EXTRA_DATA_STALE_SERVE`, `EXTRA_DATA_REFRESH` events
+   - Console logs show cache age and TTL: `[ExtraData] Cache HIT (age: 45s, TTL: 300s)`
+
+5. **Multi-process safety:**
+   - File-based cache works correctly across all worker processes
+   - No risk of cache inconsistency or race conditions
+   - Background refreshes prevent duplicate fetches
 
 ---
 

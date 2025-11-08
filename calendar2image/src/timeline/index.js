@@ -14,6 +14,7 @@ const EVENT_TYPES = {
   GENERATION: 'generation',
   DOWNLOAD: 'download',
   ICS: 'ics',
+  EXTRA_DATA: 'extra_data',
   CONFIG: 'config',
   SYSTEM: 'system',
   ERROR: 'error'
@@ -37,6 +38,13 @@ const EVENT_SUBTYPES = {
   FETCH_SUCCESS: 'fetch_success',
   FETCH_ERROR: 'fetch_error',
   PARSE_ERROR: 'parse_error',
+  
+  // Extra Data subtypes
+  EXTRA_DATA_FETCH: 'extra_data_fetch',
+  EXTRA_DATA_CACHE_HIT: 'extra_data_cache_hit',
+  EXTRA_DATA_STALE_SERVE: 'extra_data_stale_serve',
+  EXTRA_DATA_REFRESH: 'extra_data_refresh',
+  EXTRA_DATA_ERROR: 'extra_data_error',
   
   // Config subtypes
   FILE_CHANGED: 'file_changed',

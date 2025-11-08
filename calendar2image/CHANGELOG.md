@@ -1,5 +1,25 @@
 # Changelog
 
+## [0.8.6] - 2025-11-08
+
+### Added
+- **File-based ExtraData caching** - ExtraData cache now stored on disk (survives restarts, works across worker processes)
+- **Stale-while-revalidate pattern** - ExtraData never blocks image generation or downloads
+  - Returns cached data immediately, even if expired
+  - Refreshes data in background without blocking
+- **Enhanced timeline logging for ExtraData** - Track cache hits, misses, stale serves, and background refreshes
+- **Multi-process support** - Cache shared between main process and all worker processes (critical for PR #22 architecture)
+
+### Fixed
+- ExtraData cache now compatible with multi-process worker architecture from PR #22
+- ExtraData downloads never delay image generation or CRC32/image downloads
+
+### Technical Details
+- ExtraData cache files stored in cache directory with MD5-hashed filenames
+- Background refresh prevents duplicate fetches with tracking
+- Comprehensive logging: cache hits, stale serves, refreshes, and errors
+- Timeline events: `EXTRA_DATA_FETCH`, `EXTRA_DATA_CACHE_HIT`, `EXTRA_DATA_STALE_SERVE`, `EXTRA_DATA_REFRESH`, `EXTRA_DATA_ERROR`
+
 ## [0.8.5] - 2025-11-08
 
 ### Fixed

@@ -11,9 +11,10 @@ const { logGeneration, logDownload, logICS, logError, EVENT_SUBTYPES } = require
  * Fetch extra data based on config format (string or array)
  * 
  * @param {Object} config - Configuration object
+ * @param {number} configIndex - Configuration index for timeline logging
  * @returns {Promise<Object|Array>} Extra data as object (string format) or array (array format)
  */
-async function fetchExtraDataForConfig(config) {
+async function fetchExtraDataForConfig(config, configIndex) {
   if (!config.extraDataUrl) {
     return {};
   }
@@ -22,7 +23,8 @@ async function fetchExtraDataForConfig(config) {
   if (typeof config.extraDataUrl === 'string') {
     return fetchExtraData(config.extraDataUrl, {
       cacheTtl: config.extraDataCacheTtl,
-      headers: config.extraDataHeaders || {}
+      headers: config.extraDataHeaders || {},
+      configIndex
     });
   }
 
@@ -52,7 +54,7 @@ async function fetchExtraDataForConfig(config) {
         ? source.cacheTtl 
         : config.extraDataCacheTtl;
 
-      return fetchExtraData(source.url, { cacheTtl, headers });
+      return fetchExtraData(source.url, { cacheTtl, headers, configIndex });
     });
 
     return Promise.all(promises);
@@ -101,7 +103,7 @@ async function generateCalendarImage(index, options = {}) {
         expandRecurringTo: config.expandRecurringTo,
         timezone: config.timezone
       }),
-      fetchExtraDataForConfig(config)
+      fetchExtraDataForConfig(config, index)
     ]);
     
     const fetchDuration = Date.now() - startFetch;
