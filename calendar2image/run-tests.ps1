@@ -15,6 +15,4 @@ Write-Host "Test run complete!" -ForegroundColor Green
 # Usage instructions
 Write-Host ""
 Write-Host "Usage:" -ForegroundColor Cyan
-Write-Host "  ./run-tests.ps1                    - Run all tests" 
-Write-Host "  ./run-tests.ps1 --coverage         - Run with coverage"
-Write-Host "  ./run-tests.ps1 --integration      - Run integration tests"
+Write-Host "  ./run-tests.ps1                    - Run all tests (no parameters supported)"
