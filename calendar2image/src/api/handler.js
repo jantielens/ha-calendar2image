@@ -6,6 +6,7 @@ const { loadCachedImage, saveCachedImage, getCacheMetadata } = require('../cache
 const { calculateCRC32 } = require('../utils/crc32');
 const { fetchExtraData } = require('../extraData');
 const { logGeneration, logDownload, logICS, logError, EVENT_SUBTYPES } = require('../timeline');
+const { getVersion } = require('../utils/version');
 
 /**
  * Fetch extra data based on config format (string or array)
@@ -76,8 +77,9 @@ async function fetchExtraDataForConfig(config, configIndex) {
  */
 async function generateCalendarImage(index, options = {}) {
   const { saveCache = false, trigger = 'unknown' } = options;
+  const version = getVersion();
   
-  console.log(`[API] Starting image generation for config index ${index}`);
+  console.log(`[API] Starting image generation for config index ${index} (v${version})`);
   const generationStart = Date.now();
   
   try {

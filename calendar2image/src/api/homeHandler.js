@@ -1,6 +1,7 @@
 const { loadAllConfigs, CONFIG_DIR } = require('../config/loader');
 const fs = require('fs').promises;
 const path = require('path');
+const { getVersion } = require('../utils/version');
 
 /**
  * Express middleware handler for the home page (/)
@@ -126,6 +127,7 @@ async function handleConfigAPI(req, res) {
  * @returns {string} HTML content
  */
 function generateHomePageHTML(configs, baseUrl) {
+  const version = getVersion();
   const configRows = configs.map(({ index, config }) => {
     const ext = config.imageType;
     const imageUrl = `${baseUrl}/api/${index}.${ext}`;
@@ -196,6 +198,12 @@ function generateHomePageHTML(configs, baseUrl) {
     .header p {
       font-size: 1.1em;
       opacity: 0.9;
+    }
+    
+    .version {
+      font-size: 0.9em;
+      opacity: 0.8;
+      margin-top: 5px;
     }
     
     .info-section {
@@ -409,6 +417,7 @@ function generateHomePageHTML(configs, baseUrl) {
     <div class="header">
       <h1>📅 Calendar2Image</h1>
       <p>Configuration Dashboard & API Documentation</p>
+      <p class="version">Version ${escapeHtml(version)}</p>
     </div>
     
     <div class="info-section">
