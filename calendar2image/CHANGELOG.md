@@ -1,5 +1,45 @@
 # Changelog
 
+## [0.8.5] - 2025-11-08
+
+### Fixed
+- **Critical: Fixed worker process browser resource conflicts causing generation timeouts**
+  - Implemented sequential worker processing to prevent multiple Puppeteer browsers from competing for resources
+  - Fixed protocol errors: "Session closed. Most likely the page has been closed" during scheduled generation
+  - Increased worker timeout from 30s to 60s since workers now run sequentially without resource contention
+  - Added worker queue management to ensure reliable image generation under all load conditions
+- **Critical: Fixed "[object Object]" display issue in generated calendar images**
+  - Fixed missing `await` keyword when calling `renderTemplate()` in worker process
+  - Template system was returning Promise objects instead of rendered HTML strings
+  - Images now display proper calendar content instead of "[object Object]" placeholder
+- **Fixed Buffer serialization issue in IPC communication**
+  - Fixed "data argument must be of type Buffer" error when saving generated images
+  - Worker processes now properly serialize Buffer data as base64 for IPC transport
+  - Scheduler correctly reconstructs Buffer from base64 string before caching
+- **Fixed missing timeline events for scheduled generations**
+  - Worker processes now properly log generation events to timeline
+  - Added support for passing trigger type from scheduler to worker
+  - Timeline now shows all scheduled generation events with proper metadata
+  - Template `console.log()` statements now appear in Home Assistant logs for debugging
+- **Improved test coverage for scheduler and worker processes**
+  - Fixed scheduler unit tests to properly simulate IPC Buffer serialization
+  - Added comprehensive scheduler integration tests that validate end-to-end worker communication
+  - Tests now catch Buffer serialization issues that were previously missed
+
+### Added
+- **Queue Protection: Automatic prevention of duplicate scheduled jobs**
+  - System now skips generation requests if the same configuration is already queued for processing
+  - Prevents infinite queue growth when generation time exceeds scheduling interval (e.g., 25s generation with 1min schedule)
+  - Logs warning messages to console: `⚠️ Skipping config X (trigger: scheduled) - already queued for generation`
+  - Timeline logging captures skipped jobs with metadata (trigger, reason, queue length) for monitoring
+  - Per-configuration protection ensures each config can have max 1 queued job while allowing other configs to proceed
+  - Essential for Raspberry Pi deployments where generation can take 20+ seconds
+
+### Technical Details
+PR #22 introduced a regression where multiple worker processes would launch Puppeteer browsers simultaneously, causing resource exhaustion and timeouts. Each worker creating its own browser instance led to memory/CPU contention. Additionally, Buffer objects were not properly serialized through IPC, causing cache save failures. The fix ensures workers execute sequentially, sharing system resources efficiently while maintaining the event loop isolation benefits, and properly handles Buffer serialization via base64 encoding.
+
+The queue protection feature prevents a critical issue where frequent scheduling (e.g., every minute) combined with slow generation times (25+ seconds on Raspberry Pi) would cause exponential queue growth, eventually consuming all available memory. The per-config duplicate detection ensures that while Config A waits for generation, Config B can still be processed normally.
+
 ## [0.8.4] - 2025-11-08
 
 ### Fixed

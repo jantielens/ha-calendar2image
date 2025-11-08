@@ -5,6 +5,7 @@ const { fork } = require('child_process');
 const chokidar = require('chokidar');
 const { loadAllConfigs, loadConfig, CONFIG_DIR } = require('../config/loader');
 const { preGenerateImage, setPreGenerateFunction, saveCachedImage } = require('../cache');
+const { logSystem, EVENT_SUBTYPES } = require('../timeline');
 
 // Store active cron jobs
 const activeJobs = new Map();
@@ -15,6 +16,10 @@ let configWatcher = null;
 // Store file modification times for manual polling
 const fileStats = new Map();
 
+// Worker queue to prevent concurrent browser instances
+const workerQueue = [];
+let isWorkerRunning = false;
+
 /**
  * Internal function to generate and cache an image using child process
  * This is passed to the cache module to avoid circular dependencies
@@ -23,15 +28,52 @@ const fileStats = new Map();
  * @returns {Promise<boolean>} Success status
  */
 async function generateAndCache(index, trigger = 'scheduled') {
-  console.log(`[Scheduler] Starting generation for config ${index} in child process (trigger: ${trigger})...`);
+  return new Promise(async (resolve) => {
+    // Check if this config is already queued to prevent duplicate jobs
+    const alreadyQueued = workerQueue.some(job => job.index === index);
+    if (alreadyQueued) {
+      console.warn(`[Scheduler] ⚠️  Skipping config ${index} (trigger: ${trigger}) - already queued for generation`);
+      
+      // Log to timeline
+      try {
+        await logSystem(index, 'scheduler_skipped', {
+          trigger,
+          reason: 'already_queued',
+          queueLength: workerQueue.length
+        });
+      } catch (timelineErr) {
+        console.warn(`[Scheduler] Failed to log skip event to timeline: ${timelineErr.message}`);
+      }
+      
+      resolve(false);
+      return;
+    }
+    
+    // Add to worker queue to prevent concurrent browser instances
+    workerQueue.push({ index, trigger, resolve });
+    processWorkerQueue();
+  });
+}
+
+/**
+ * Process worker queue sequentially to prevent browser resource conflicts
+ */
+async function processWorkerQueue() {
+  if (isWorkerRunning || workerQueue.length === 0) {
+    return;
+  }
+
+  isWorkerRunning = true;
+  const { index, trigger, resolve } = workerQueue.shift();
+
+  console.log(`[Scheduler] Starting generation for config ${index} in child process (trigger: ${trigger})... (queue: ${workerQueue.length} remaining)`);
   const startTime = Date.now();
-  
-  return new Promise((resolve) => {
-    // Fork worker process
-    const workerPath = path.join(__dirname, '../image/worker.js');
-    const worker = fork(workerPath, [], {
-      stdio: ['pipe', 'pipe', 'pipe', 'ipc']
-    });
+
+  // Fork worker process
+  const workerPath = path.join(__dirname, '../image/worker.js');
+  const worker = fork(workerPath, [], {
+    stdio: ['pipe', 'pipe', 'pipe', 'ipc']
+  });
     
     // Handle worker output
     worker.stdout.on('data', (data) => {
@@ -48,8 +90,11 @@ async function generateAndCache(index, trigger = 'scheduled') {
         try {
           const generationDuration = Date.now() - startTime;
           
+          // Convert base64 string back to Buffer (IPC serialization workaround)
+          const buffer = Buffer.from(msg.buffer, 'base64');
+          
           // Save to cache
-          await saveCachedImage(index, msg.buffer, msg.contentType, msg.imageType, {
+          await saveCachedImage(index, buffer, msg.contentType, msg.imageType, {
             trigger,
             generationDuration
           });
@@ -84,12 +129,13 @@ async function generateAndCache(index, trigger = 'scheduled') {
       }
     });
     
-    // Timeout protection (30 seconds)
+    // Timeout protection (60 seconds - increased since workers run sequentially)
     const timeout = setTimeout(() => {
-      console.error(`[Scheduler] Generation timeout for config ${index}, killing worker`);
+      const duration = Date.now() - startTime;
+      console.error(`[Scheduler] Generation timeout for config ${index} after ${duration}ms, killing worker`);
       worker.kill('SIGTERM');
       resolve(false);
-    }, 30000);
+    }, 60000);
     
     // Clear timeout when worker exits
     worker.on('exit', () => {
@@ -97,8 +143,16 @@ async function generateAndCache(index, trigger = 'scheduled') {
     });
     
     // Send generation request to worker
-    worker.send({ action: 'generate', index });
-  });
+    worker.send({ action: 'generate', index, trigger });
+
+    // When worker finishes (success or failure), process next in queue
+    const finishWorker = () => {
+      isWorkerRunning = false;
+      setImmediate(() => processWorkerQueue()); // Process next worker
+    };
+
+    worker.on('exit', finishWorker);
+    worker.on('error', finishWorker);
 }
 
 // Set the pre-generate function in cache module
@@ -504,6 +558,11 @@ async function stopAllSchedules() {
     console.log(`[Scheduler] Stopped job for config ${index}`);
   }
   activeJobs.clear();
+
+  // Clear worker queue and mark as not running
+  workerQueue.length = 0;
+  isWorkerRunning = false;
+  
   console.log('[Scheduler] All jobs stopped');
 }
 

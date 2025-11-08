@@ -203,9 +203,24 @@ const generateStyles = () => `
 // ============================================================================
 module.exports = function weekView(data) {
   const { events, now, locale } = data;
+  
+  // Basic validation logging
+  console.log(`[Template] Rendering week view with ${events ? events.length : 0} events`);
+  if (!events || !Array.isArray(events)) {
+    console.warn('[Template] Warning: events is not an array:', typeof events);
+  }
+  
   const todayStart = getDayStart(now);
   const days = createDaysArray(todayStart, CONFIG.daysToShow, locale);
   const eventsByDay = groupEventsByDay(events, days);
+  
+  // Optional debug info (only show if needed for troubleshooting)
+  const showDebug = false; // Set to true if debugging needed
+  const debugInfo = showDebug ? `
+    Debug: ${events ? events.length : 0} events loaded
+  ` : '';
+
+
   
   return `
 <!DOCTYPE html>
@@ -217,6 +232,7 @@ module.exports = function weekView(data) {
 <body>
   <div class="calendar">
     <div class="calendar-title">${CONFIG.symbols.title}</div>
+    ${debugInfo ? `<div style="background: #f0f0f0; padding: 10px; margin: 10px; font-family: monospace; font-size: 12px; white-space: pre-line;">${debugInfo}</div>` : ''}
   ${days.map(day => renderDay(day, eventsByDay[day.dayKey], locale)).join('')}
   </div>
 </body>

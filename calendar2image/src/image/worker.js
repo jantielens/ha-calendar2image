@@ -13,6 +13,7 @@ const { getCalendarEvents } = require('../calendar');
 const { loadConfig } = require('../config');
 const { fetchExtraData } = require('../extraData');
 const { calculateCRC32 } = require('../utils/crc32');
+const { logGeneration, logError, EVENT_SUBTYPES } = require('../timeline');
 
 /**
  * Fetch extra data based on config format (string or array)
@@ -61,13 +62,23 @@ async function fetchExtraDataForConfig(config) {
 /**
  * Generate calendar image in worker process
  */
-async function generateCalendarImageInWorker(index) {
-  console.log(`[Worker] Starting image generation for config ${index}`);
+async function generateCalendarImageInWorker(index, trigger = 'unknown') {
+  console.log(`[Worker] Starting image generation for config ${index} (trigger: ${trigger})`);
   const startTime = Date.now();
   
   try {
     // Load configuration
     const config = await loadConfig(index);
+    
+    // Get previous CRC32 for change detection
+    const { getCacheMetadata } = require('../cache');
+    let previousCrc32 = null;
+    try {
+      const oldMetadata = await getCacheMetadata(index);
+      previousCrc32 = oldMetadata ? oldMetadata.crc32 : null;
+    } catch (err) {
+      // Ignore errors getting previous metadata
+    }
     
     // Fetch calendar events and extra data in parallel
     const [events, extraData] = await Promise.all([
@@ -80,10 +91,13 @@ async function generateCalendarImageInWorker(index) {
     ]);
     
     // Render template
-    const html = renderTemplate(config.template, {
+    console.log(`[Worker] Rendering template with ${events.length} events`);
+    console.log(`[Worker] First event sample:`, events[0] ? JSON.stringify(events[0], null, 2) : 'No events');
+    
+    const html = await renderTemplate(config.template, {
       events,
       config,
-      extraData
+      extraData // Note: renderTemplate will normalize this to 'extra' and add now/locale/timezone
     });
     
     // Generate image
@@ -99,14 +113,36 @@ async function generateCalendarImageInWorker(index) {
     // Calculate CRC32
     const crc32 = calculateCRC32(result.buffer);
     const duration = Date.now() - startTime;
+    const durationSeconds = duration / 1000; // Convert to seconds for timeline
+    const crc32Changed = !previousCrc32 || previousCrc32 !== crc32;
     
     console.log(`[Worker] Image generation completed for config ${index} in ${duration}ms`);
     
-    // Send result back to parent
+    // Log generation event to timeline
+    const generationSubtype = trigger === 'scheduled' ? EVENT_SUBTYPES.SCHEDULED :
+                              trigger === 'boot' ? EVENT_SUBTYPES.BOOT :
+                              EVENT_SUBTYPES.ON_DEMAND;
+    
+    try {
+      await logGeneration(index, generationSubtype, {
+        crc32: crc32,
+        previousCrc32: previousCrc32,
+        changed: crc32Changed,
+        duration: durationSeconds,
+        template: config.template,
+        imageSize: result.buffer.length,
+        eventCount: events.length
+      });
+      console.log(`[Worker] Timeline generation event logged for config ${index} (changed: ${crc32Changed})`);
+    } catch (err) {
+      console.warn(`[Worker] Failed to log generation to timeline: ${err.message}`);
+    }
+    
+    // Send result back to parent (convert Buffer to base64 for IPC serialization)
     process.send({
       success: true,
       index: index,
-      buffer: result.buffer,
+      buffer: result.buffer.toString('base64'),
       contentType: result.contentType,
       imageType: result.imageType,
       crc32: crc32,
@@ -119,7 +155,19 @@ async function generateCalendarImageInWorker(index) {
     
   } catch (error) {
     const duration = Date.now() - startTime;
+    const durationSeconds = duration / 1000;
     console.error(`[Worker] Image generation failed for config ${index} after ${duration}ms: ${error.message}`);
+    
+    // Log error to timeline
+    try {
+      await logError(index, EVENT_SUBTYPES.GENERATION_ERROR, {
+        error: error.message,
+        trigger,
+        duration: durationSeconds
+      });
+    } catch (timelineErr) {
+      console.warn(`[Worker] Failed to log error to timeline: ${timelineErr.message}`);
+    }
     
     // Send error back to parent
     process.send({
@@ -137,7 +185,7 @@ async function generateCalendarImageInWorker(index) {
 // Handle messages from parent process
 process.on('message', async (msg) => {
   if (msg.action === 'generate') {
-    await generateCalendarImageInWorker(msg.index);
+    await generateCalendarImageInWorker(msg.index, msg.trigger);
   }
 });
 

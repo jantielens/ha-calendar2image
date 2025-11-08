@@ -520,13 +520,23 @@ download_calendar(0, 'calendar.png')
 
 ---
 
-## Rate Limiting
+## Rate Limiting & Queue Protection
 
 Currently, there is **no rate limiting**. However:
 
 - Fresh generation takes ~8 seconds on Raspberry Pi
 - Multiple simultaneous requests may slow down the server
 - Use caching (`preGenerateInterval`) for high-traffic scenarios
+
+### Automatic Queue Protection
+
+The system includes **automatic queue protection** to prevent infinite queue growth:
+
+- **Per-config duplicate prevention**: If a configuration is already queued for generation, new requests for that same config are automatically skipped
+- **Timeline logging**: Skipped requests are logged to both console and timeline view for monitoring
+- **Warning indicators**: Console shows `⚠️ Skipping config X (trigger: scheduled) - already queued for generation`
+
+This prevents queue buildup when generation time exceeds scheduling interval (e.g., 25-second generation with 1-minute scheduling).
 
 ---
 
