@@ -834,34 +834,6 @@ function generateTimelinePageHTML(index, config, events, stats, baseUrl) {
     if (autoRefreshCheckbox.checked) {
       startAutoRefresh();
     }
-    
-    // Format relative time
-    function formatRelativeTime(timestamp) {
-      const now = new Date();
-      const then = new Date(timestamp);
-      const diffMs = now - then;
-      const diffSecs = Math.floor(diffMs / 1000);
-      const diffMins = Math.floor(diffSecs / 60);
-      const diffHours = Math.floor(diffMins / 60);
-      
-      if (diffSecs < 60) return \`\${diffSecs}s ago\`;
-      if (diffMins < 60) return \`\${diffMins}m ago\`;
-      if (diffHours < 24) return \`\${diffHours}h ago\`;
-      return then.toLocaleString();
-    }
-    
-    // Update relative times
-    function updateRelativeTimes() {
-      document.querySelectorAll('.event-time').forEach((el, index) => {
-        if (events[index]) {
-          el.textContent = formatRelativeTime(events[index].timestamp);
-        }
-      });
-    }
-    
-    // Update times every 10 seconds
-    setInterval(updateRelativeTimes, 10000);
-    updateRelativeTimes();
   </script>
 </body>
 </html>`;
