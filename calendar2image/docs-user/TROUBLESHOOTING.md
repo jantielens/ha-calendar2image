@@ -633,12 +633,12 @@ SyntaxError: Unexpected token
    - Response is not valid JSON
    - Request timeout (>5 seconds)
 
-3. **Debug in template:**
+4. **Debug in template:**
    ```javascript
    return `<pre>${JSON.stringify(extraData, null, 2)}</pre>`;
    ```
 
-4. **Check Home Assistant logs for template debug info:**
+5. **Check Home Assistant logs for template debug info:**
    Templates can use `console.log()` for debugging - output appears in HA logs:
    ```javascript
    console.log('[Template] Processing', events.length, 'events');
