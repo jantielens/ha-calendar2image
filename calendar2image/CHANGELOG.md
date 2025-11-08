@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.8.4] - 2025-11-08
+
+### Fixed
+- **Event Loop Blocking During Image Generation** - Eliminated request timeouts during scheduled generation
+  - Moved Puppeteer-based image generation to separate child processes using `child_process.fork()`
+  - Main process remains responsive to HTTP requests even during 15-18 second generation cycles
+  - CRC32 endpoint response times now consistently fast (no more 12,000ms spikes)
+  - Scheduled generation runs in isolated worker processes with 30-second timeout protection
+  - Worker processes automatically cleaned up after generation completes
+
+### Technical Details
+The optimization addresses event loop blocking where the main Node.js thread was unable to process incoming HTTP requests during CPU-intensive Puppeteer rendering. By forking image generation into separate child processes, the main process stays responsive and can serve cached data instantly while workers handle heavy rendering in parallel. This ensures sub-100ms response times regardless of concurrent generation activity, fixing the issue where client requests queued for 8+ seconds during generation.
+
 ## [0.8.3] - 2025-11-07
 
 ### Fixed

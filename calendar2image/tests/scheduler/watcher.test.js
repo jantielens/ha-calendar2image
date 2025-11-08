@@ -5,6 +5,12 @@ const path = require('path');
 const testConfigDir = path.join(__dirname, '../fixtures/scheduler-watcher');
 process.env.CONFIG_DIR = testConfigDir;
 
+// Mock child_process.fork before requiring scheduler
+const mockFork = jest.fn();
+jest.mock('child_process', () => ({
+  fork: mockFork
+}));
+
 const {
   initializeScheduler,
   stopAllSchedules,
@@ -19,21 +25,47 @@ jest.mock('../../src/cache', () => ({
   saveCachedImage: jest.fn().mockResolvedValue(true)
 }));
 
-jest.mock('../../src/api/handler', () => ({
-  generateCalendarImage: jest.fn().mockResolvedValue({
-    buffer: Buffer.from('mock-image'),
-    contentType: 'image/png',
-    imageType: 'png'
-  })
-}));
-
-const { preGenerateImage } = require('../../src/cache');
-const { generateCalendarImage } = require('../../src/api/handler');
+const { saveCachedImage } = require('../../src/cache');
 
 describe('Scheduler Config Watcher', () => {
+  // Mock worker process for all tests
+  let mockWorker;
+  
   beforeAll(async () => {
     // Create test config directory
     await fs.mkdir(testConfigDir, { recursive: true });
+  });
+
+  beforeEach(() => {
+    // Setup mock worker that simulates successful generation
+    mockWorker = {
+      on: jest.fn((event, handler) => {
+        if (event === 'message') {
+          // Simulate successful message after a short delay
+          setTimeout(() => {
+            handler({
+              success: true,
+              index: 0,
+              buffer: Buffer.from('mock-image'),
+              contentType: 'image/png',
+              imageType: 'png',
+              crc32: 'abc123',
+              duration: 100
+            });
+          }, 100);
+        } else if (event === 'exit') {
+          // Simulate clean exit
+          setTimeout(() => handler(0, null), 150);
+        }
+        return mockWorker;
+      }),
+      send: jest.fn(),
+      kill: jest.fn(),
+      stdout: { on: jest.fn() },
+      stderr: { on: jest.fn() }
+    };
+    
+    mockFork.mockReturnValue(mockWorker);
   });
 
   afterAll(async () => {
@@ -116,8 +148,8 @@ describe('Scheduler Config Watcher', () => {
     expect(status).toHaveLength(2);
     expect(status.map(s => s.index).sort()).toEqual([0, 1]);
     
-    // Verify pre-generation was triggered by checking generateCalendarImage was called
-    expect(generateCalendarImage).toHaveBeenCalled();
+    // Verify pre-generation was triggered by checking fork was called
+    expect(mockFork).toHaveBeenCalled();
   }, 15000);
 
   test('should remove schedule when config file is deleted', async () => {
