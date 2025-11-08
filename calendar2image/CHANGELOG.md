@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.8.9] - 2025-11-08
+
+### Fixed
+- **Timeline Page: Display absolute timestamps instead of relative times**
+  - Removed JavaScript code that converted timestamps to relative format ("25s ago", "3m ago")
+  - Events now display precise, locale-aware timestamps (e.g., "11/8/2025, 5:44:31 PM")
+  - Timestamps remain accurate and don't require periodic client-side updates
+  - Improves debugging, troubleshooting, and historical event tracking
+
 ## [0.8.8] - 2025-11-08
 
 ### Added
