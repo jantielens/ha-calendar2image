@@ -20,6 +20,7 @@
   - Worker processes now properly log generation events to timeline
   - Added support for passing trigger type from scheduler to worker
   - Timeline now shows all scheduled generation events with proper metadata
+  - Template `console.log()` statements now appear in Home Assistant logs for debugging
 - **Improved test coverage for scheduler and worker processes**
   - Fixed scheduler unit tests to properly simulate IPC Buffer serialization
   - Added comprehensive scheduler integration tests that validate end-to-end worker communication

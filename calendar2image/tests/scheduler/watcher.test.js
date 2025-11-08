@@ -42,11 +42,12 @@ describe('Scheduler Config Watcher', () => {
       on: jest.fn((event, handler) => {
         if (event === 'message') {
           // Simulate successful message after a short delay
+          // Simulate IPC serialization where Buffer becomes base64 string
           setTimeout(() => {
             handler({
               success: true,
               index: 0,
-              buffer: Buffer.from('mock-image'),
+              buffer: Buffer.from('mock-image').toString('base64'), // Simulate IPC serialization
               contentType: 'image/png',
               imageType: 'png',
               crc32: 'abc123',

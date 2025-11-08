@@ -490,7 +490,31 @@ return `
 `;
 ```
 
-### 7. Use Helper Functions
+### 7. Debug with Console Logging
+
+Use `console.log()` in your templates - output appears in Home Assistant logs:
+
+```javascript
+module.exports = function(data) {
+  const { events, config, now, locale, timezone, extra } = data;
+  
+  // Debug logging - appears in HA logs
+  console.log('[Template] Processing', events.length, 'events');
+  console.log('[Template] Config:', config.template);
+  console.log('[Template] Extra data keys:', Object.keys(extra));
+  
+  // Your template logic...
+  return `<html>...</html>`;
+};
+```
+
+**Benefits:**
+- Real-time debugging without modifying image output
+- Visible in Home Assistant add-on logs
+- Helps troubleshoot data processing issues
+- No need to add visual debug elements to images
+
+### 8. Use Helper Functions
 
 Keep your template code clean with helper functions:
 
