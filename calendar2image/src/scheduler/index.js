@@ -122,7 +122,7 @@ async function processWorkerQueue() {
     });
     
     // Send generation request to worker
-    worker.send({ action: 'generate', index });
+    worker.send({ action: 'generate', index, trigger });
 
     // When worker finishes (success or failure), process next in queue
     const finishWorker = () => {
