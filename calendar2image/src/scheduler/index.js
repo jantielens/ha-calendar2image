@@ -1,6 +1,7 @@
 const cron = require('node-cron');
 const fs = require('fs');
 const path = require('path');
+const { fork } = require('child_process');
 const chokidar = require('chokidar');
 const { loadAllConfigs, loadConfig, CONFIG_DIR } = require('../config/loader');
 const { preGenerateImage, setPreGenerateFunction, saveCachedImage } = require('../cache');
@@ -15,40 +16,89 @@ let configWatcher = null;
 const fileStats = new Map();
 
 /**
- * Internal function to generate and cache an image
+ * Internal function to generate and cache an image using child process
  * This is passed to the cache module to avoid circular dependencies
  * @param {number} index - Configuration index
  * @param {string} trigger - Trigger type for history tracking
  * @returns {Promise<boolean>} Success status
  */
 async function generateAndCache(index, trigger = 'scheduled') {
-  console.log(`[Scheduler] Pre-generating image for config ${index} (trigger: ${trigger})...`);
+  console.log(`[Scheduler] Starting generation for config ${index} in child process (trigger: ${trigger})...`);
   const startTime = Date.now();
   
-  try {
-    // Import here to avoid circular dependency at module load time
-    const { generateCalendarImage } = require('../api/handler');
-    
-    const result = await generateCalendarImage(index, { 
-      saveCache: false,  // We'll save manually to pass trigger
-      trigger: trigger   // Pass the actual trigger parameter
+  return new Promise((resolve) => {
+    // Fork worker process
+    const workerPath = path.join(__dirname, '../image/worker.js');
+    const worker = fork(workerPath, [], {
+      stdio: ['pipe', 'pipe', 'pipe', 'ipc']
     });
     
-    const generationDuration = Date.now() - startTime;
-    
-    await saveCachedImage(index, result.buffer, result.contentType, result.imageType || 'png', {
-      trigger,
-      generationDuration
+    // Handle worker output
+    worker.stdout.on('data', (data) => {
+      process.stdout.write(data);
     });
     
-    console.log(`[Scheduler] Successfully pre-generated image for config ${index} in ${generationDuration}ms`);
-    return true;
-  } catch (error) {
-    const duration = Date.now() - startTime;
-    console.error(`[Scheduler] Failed to pre-generate image for config ${index} after ${duration}ms: ${error.message}`);
-    // Don't throw - we want to keep old cache and continue scheduling
-    return false;
-  }
+    worker.stderr.on('data', (data) => {
+      process.stderr.write(data);
+    });
+    
+    // Handle message from worker
+    worker.on('message', async (msg) => {
+      if (msg.success) {
+        try {
+          const generationDuration = Date.now() - startTime;
+          
+          // Save to cache
+          await saveCachedImage(index, msg.buffer, msg.contentType, msg.imageType, {
+            trigger,
+            generationDuration
+          });
+          
+          console.log(`[Scheduler] Successfully pre-generated image for config ${index} in ${generationDuration}ms`);
+          resolve(true);
+        } catch (error) {
+          console.error(`[Scheduler] Failed to save cached image for config ${index}: ${error.message}`);
+          resolve(false);
+        }
+      } else {
+        const duration = Date.now() - startTime;
+        console.error(`[Scheduler] Worker failed for config ${index} after ${duration}ms: ${msg.error}`);
+        resolve(false);
+      }
+    });
+    
+    // Handle worker errors
+    worker.on('error', (error) => {
+      const duration = Date.now() - startTime;
+      console.error(`[Scheduler] Worker error for config ${index} after ${duration}ms: ${error.message}`);
+      resolve(false);
+    });
+    
+    // Handle worker exit
+    worker.on('exit', (code, signal) => {
+      if (code !== 0 && code !== null) {
+        console.error(`[Scheduler] Worker exited with code ${code} for config ${index}`);
+      }
+      if (signal) {
+        console.error(`[Scheduler] Worker killed with signal ${signal} for config ${index}`);
+      }
+    });
+    
+    // Timeout protection (30 seconds)
+    const timeout = setTimeout(() => {
+      console.error(`[Scheduler] Generation timeout for config ${index}, killing worker`);
+      worker.kill('SIGTERM');
+      resolve(false);
+    }, 30000);
+    
+    // Clear timeout when worker exits
+    worker.on('exit', () => {
+      clearTimeout(timeout);
+    });
+    
+    // Send generation request to worker
+    worker.send({ action: 'generate', index });
+  });
 }
 
 // Set the pre-generate function in cache module
