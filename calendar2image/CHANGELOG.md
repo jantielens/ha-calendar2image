@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.8.5] - 2025-11-08
+
+### Fixed
+- **Critical: Fixed worker process browser resource conflicts causing generation timeouts**
+  - Implemented sequential worker processing to prevent multiple Puppeteer browsers from competing for resources
+  - Fixed protocol errors: "Session closed. Most likely the page has been closed" during scheduled generation
+  - Increased worker timeout from 30s to 60s since workers now run sequentially without resource contention
+  - Added worker queue management to ensure reliable image generation under all load conditions
+
+### Technical Details
+PR #22 introduced a regression where multiple worker processes would launch Puppeteer browsers simultaneously, causing resource exhaustion and timeouts. Each worker creating its own browser instance led to memory/CPU contention. The fix ensures workers execute sequentially, sharing system resources efficiently while maintaining the event loop isolation benefits.
+
 ## [0.8.4] - 2025-11-08
 
 ### Fixed
