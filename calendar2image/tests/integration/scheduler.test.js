@@ -96,11 +96,21 @@ const makeRequest = (path, method = 'GET') => {
 
 describe('Scheduler Integration Tests', () => {
   beforeAll(async () => {
-    // Clean up any existing test containers
+    // Clean up any existing test containers and wait for port to be released
     try {
       execSync(`docker rm -f ${CONTAINER_NAME}`, { stdio: 'ignore' });
+      // Wait a moment for the port to be released
+      await new Promise(resolve => setTimeout(resolve, 2000));
     } catch (error) {
       // Ignore if container doesn't exist
+    }
+
+    // Also kill any process using the test port as a safety measure
+    try {
+      // On Linux, use lsof or fuser to find and kill processes using the port
+      execSync(`lsof -ti:${HOST_PORT} | xargs kill -9 2>/dev/null || true`, { stdio: 'ignore' });
+    } catch (error) {
+      // Ignore if no process is using the port
     }
 
     // Build Docker image if not already built
