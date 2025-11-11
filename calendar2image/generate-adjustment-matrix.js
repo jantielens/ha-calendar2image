@@ -35,7 +35,9 @@ const MATRIX_CONFIGS = [
   { name: 'color', format: 'png', bitDepth: null },
   { name: 'grayscale-8bit', format: 'png', bitDepth: null, grayscale: true },
   { name: 'grayscale-4bit', format: 'png', bitDepth: 4, grayscale: true },
-  { name: 'grayscale-2bit', format: 'png', bitDepth: 2, grayscale: true }
+  { name: 'grayscale-2bit', format: 'png', bitDepth: 2, grayscale: true },
+  { name: 'color-2bit-dithered', format: 'png', bitDepth: 2, forceDither: true },
+  { name: 'grayscale-2bit-dithered', format: 'png', bitDepth: 2, grayscale: true, forceDither: true }
 ];
 
 // Define adjustment parameters to test
@@ -121,6 +123,11 @@ async function generateAdjustedImage(adjustmentName, adjustmentValue, matrixConf
   const adjustments = {
     [adjustmentName]: adjustmentValue
   };
+  
+  // Force dithering for specific matrix configs
+  if (matrixConfig.forceDither && adjustmentName !== 'dither') {
+    adjustments.dither = 'floyd-steinberg';
+  }
   
   // Generate image
   const result = await generateImage(html, {
@@ -337,13 +344,11 @@ async function generateMatrix() {
   // Create output directories
   await fs.mkdir(MATRIX_OUTPUT_DIR, { recursive: true });
   
-  const results = [];
-  
-  // Generate each matrix configuration
-  for (const matrixConfig of MATRIX_CONFIGS) {
-    const result = await generateSingleMatrix(matrixConfig);
-    results.push(result);
-  }
+  // Generate all matrices in parallel
+  console.log(`\nGenerating ${MATRIX_CONFIGS.length} matrices in parallel...\n`);
+  const results = await Promise.all(
+    MATRIX_CONFIGS.map(config => generateSingleMatrix(config))
+  );
   
   console.log('\n' + '='.repeat(60));
   console.log('✅ All matrices generated successfully!');

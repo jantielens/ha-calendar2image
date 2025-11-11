@@ -24,6 +24,14 @@ The following matrices demonstrate the effect of each adjustment parameter on a 
 ![Adjustment Matrix - Grayscale 2-bit](images/adjustment-matrix-grayscale-2bit.png)
 *E-ink simulation with 4 gray levels (black, dark gray, light gray, white)*
 
+### Color 2-bit with Dithering
+![Adjustment Matrix - Color 2-bit Dithered](images/adjustment-matrix-color-2bit-dithered.png)
+*RGB color with 2-bit depth and Floyd-Steinberg dithering always applied (except dither row)*
+
+### Grayscale 2-bit with Dithering
+![Adjustment Matrix - Grayscale 2-bit Dithered](images/adjustment-matrix-grayscale-2bit-dithered.png)
+*Grayscale with 2-bit depth (4 shades) and Floyd-Steinberg dithering always applied (except dither row)*
+
 Each matrix shows 10 adjustment parameters with varying values from left to right. See [ADJUSTMENT-MATRICES.md](ADJUSTMENT-MATRICES.md) for detailed matrix structure and generation information.
 
 ---

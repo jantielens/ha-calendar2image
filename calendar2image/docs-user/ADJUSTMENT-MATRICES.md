@@ -6,7 +6,7 @@ Comprehensive visual comparison matrices showing the effects of different image 
 
 ## Matrix Configurations
 
-Four matrix variations demonstrate adjustments across different output formats:
+Six matrix variations demonstrate adjustments across different output formats:
 
 | Matrix | Description | File Size | Use Case |
 |--------|-------------|-----------|----------|
@@ -14,6 +14,8 @@ Four matrix variations demonstrate adjustments across different output formats:
 | **Grayscale 8-bit** | Full grayscale (256 levels) | ~1.3 MB | Monochrome displays |
 | **Grayscale 4-bit** | 16 gray levels | ~0.5 MB | Limited grayscale displays |
 | **Grayscale 2-bit** | 4 gray levels | ~0.4 MB | E-ink displays (4 levels) |
+| **Color 2-bit Dithered** | RGB with 2-bit depth + dithering | ~0.6 MB | Color e-ink with limited palette |
+| **Grayscale 2-bit Dithered** | 4 gray levels + dithering | ~0.4 MB | E-ink displays with dithering |
 
 All matrices: **3795 × 3345 pixels**
 
@@ -56,7 +58,7 @@ DITHER       |   Off   | Floyd-S | Atkin.  |     |
 ### Dithering (3 values)
 - Off, Floyd-Steinberg (7/16 diffusion), Atkinson (1/8 to 6 neighbors)
 
-**Total**: 61 adjustments × 4 configurations = **244 images**
+**Total**: 61 adjustments × 6 configurations = **366 images**
 
 ## Generation
 
@@ -66,7 +68,7 @@ npm run test:matrix
 ```
 
 Dedicated matrix test suite that:
-- Generates all 4 configurations
+- Generates all 6 configurations in parallel
 - Validates dimensions and file integrity
 - Requires Docker with Chromium
 
@@ -83,6 +85,8 @@ Located in `docs-user/images/`:
 - `adjustment-matrix-grayscale-8bit.png`
 - `adjustment-matrix-grayscale-4bit.png`
 - `adjustment-matrix-grayscale-2bit.png`
+- `adjustment-matrix-color-2bit-dithered.png`
+- `adjustment-matrix-grayscale-2bit-dithered.png`
 
 ## Purpose
 

@@ -43,12 +43,14 @@ describe('Adjustment Matrix Generation', () => {
       .catch(() => false);
     expect(dirExists).toBe(true);
 
-    // Check for expected matrix files
+    // Verify all expected matrix files exist
     const expectedFiles = [
       'adjustment-matrix-color.png',
       'adjustment-matrix-grayscale-8bit.png',
       'adjustment-matrix-grayscale-4bit.png',
-      'adjustment-matrix-grayscale-2bit.png'
+      'adjustment-matrix-grayscale-2bit.png',
+      'adjustment-matrix-color-2bit-dithered.png',
+      'adjustment-matrix-grayscale-2bit-dithered.png'
     ];
     
     for (const file of expectedFiles) {
@@ -71,7 +73,7 @@ describe('Adjustment Matrix Generation', () => {
     const files = await fs.readdir(MATRIX_OUTPUT_DIR);
     const matrixFiles = files.filter(f => f.startsWith('adjustment-matrix-') && f.endsWith('.png'));
     
-    expect(matrixFiles.length).toBe(4);
+    expect(matrixFiles.length).toBe(5);
     
     // Get dimensions of all matrices
     const dimensions = await Promise.all(
