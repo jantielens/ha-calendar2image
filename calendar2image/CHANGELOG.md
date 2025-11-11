@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.12.1] - 2025-11-11
+
+### Fixed
+- **Levels Gamma Correction** - Fixed gamma correction to match Paint.NET behavior
+  - Replaced Sharp's `gamma()` function with LUT-based pixel manipulation
+  - Sharp's `gamma()` is designed for resize operations and doesn't apply simple value^gamma transformation
+  - Implemented `createGammaLUT()` to generate 256-element lookup table for any gamma 0.1-8.0
+  - Implemented `applyLUT()` to apply lookup table to pixel data (skips alpha channel)
+  - Gamma correction now produces mathematically correct output matching Paint.NET
+  - All 256 tests pass with the corrected implementation
+  - Regenerated all documentation matrix images with correct gamma behavior
+
+### Technical Details
+Sharp's built-in `gamma()` function is optimized for image resize operations and doesn't perform standalone gamma correction as expected. It also clamps values above 3.0. The fix implements a lookup table (LUT) approach that correctly applies the formula: `output = 255 * (input/255)^gamma` for each pixel value, matching Paint.NET's Levels adjustment behavior exactly.
+
 ## [0.12.0] - 2025-11-11
 
 ### Added
