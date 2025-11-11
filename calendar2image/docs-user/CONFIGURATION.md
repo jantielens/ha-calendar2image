@@ -72,6 +72,107 @@ Each configuration file should contain:
   - **Array format** (advanced): Array of data source objects with per-source configuration
 - **extraDataHeaders** (object, optional): Global HTTP headers for extra data requests (e.g., Authorization for Home Assistant)
 - **extraDataCacheTtl** (number, default: `300`): Global cache TTL in seconds for extra data
+- **adjustments** (object, optional): Image adjustments for display optimization. See [IMAGE-ADJUSTMENTS.md](IMAGE-ADJUSTMENTS.md) for detailed documentation and visual examples.
+
+## Image Adjustments
+
+The `adjustments` field allows you to optimize images for specific display hardware (e-ink, LCD, OLED, outdoor displays). All adjustment parameters are optional.
+
+**For complete documentation with visual examples**, see **[IMAGE-ADJUSTMENTS.md](IMAGE-ADJUSTMENTS.md)**.
+
+### Quick Reference
+
+| Parameter | Type | Range | Description |
+|-----------|------|-------|-------------|
+| `brightness` | number | -100 to +100 | Adjust overall brightness. Negative values darken, positive values brighten. |
+| `contrast` | number | -100 to +100 | Adjust contrast. Negative values flatten, positive values enhance. |
+| `saturation` | number | -100 to +100 | Adjust color saturation. No effect on grayscale images. |
+| `gamma` | number | 0.1 to 3.0 | Gamma correction for mid-tones. Values < 1.0 brighten mid-tones, > 1.0 darken. |
+| `sharpen` | boolean | - | Apply sharpening filter to improve text readability. |
+| `invert` | boolean | - | Invert colors (useful for dark mode or specific e-ink displays). |
+| `hue` | number | -180 to +180 | Shift color hue in degrees. No effect on grayscale images. |
+| `normalize` | boolean | - | Auto-enhance contrast via histogram normalization. |
+| `threshold` | number | 0 to 255 | Black/white threshold for 1-bit displays (default: 127). |
+| `dither` | boolean or string | `false`, `true`, `"floyd-steinberg"`, `"atkinson"` | Apply dithering for low bit-depth displays. `true` uses Floyd-Steinberg, `"atkinson"` uses lighter Atkinson pattern (better for e-ink). |
+
+### When to Use Adjustments
+
+- **E-ink displays**: Often show washed-out images → increase `contrast` and `gamma`, enable `sharpen`, use `dither: "atkinson"`
+- **Outdoor LCD**: Sunlight readability → increase `brightness` and `contrast`, enable `normalize`
+- **OLED displays**: Enhance colors → increase `saturation`, adjust `hue` for color preference
+- **Dark mode**: Use `invert: true` to flip black/white for better display compatibility
+
+### Adjustment Examples
+
+#### E-ink Display (Waveshare 4-bit grayscale)
+```json
+{
+  "icsUrl": "https://calendar.example.com/feed.ics",
+  "template": "week-view",
+  "grayscale": true,
+  "bitDepth": 4,
+  "adjustments": {
+    "contrast": 30,
+    "gamma": 1.3,
+    "sharpen": true,
+    "dither": "atkinson"
+  }
+}
+```
+**Purpose**: Enhance contrast for washed-out e-ink displays, apply Atkinson dithering for smooth gradients on limited palette.
+
+#### Outdoor LCD (bright sunlight)
+```json
+{
+  "icsUrl": "https://calendar.example.com/feed.ics",
+  "template": "today-view",
+  "adjustments": {
+    "brightness": 15,
+    "contrast": 25,
+    "normalize": true,
+    "sharpen": true
+  }
+}
+```
+**Purpose**: Boost brightness and contrast for sunlight readability, normalize for auto-enhancement.
+
+**Note**: For complete parameter descriptions, use cases, performance considerations, and visual comparison matrices, see **[IMAGE-ADJUSTMENTS.md](IMAGE-ADJUSTMENTS.md)**.
+
+#### OLED Dashboard (vibrant colors)
+```json
+{
+  "icsUrl": "https://calendar.example.com/feed.ics",
+  "template": "month-view",
+  "adjustments": {
+    "saturation": 20,
+    "hue": 10,
+    "contrast": 15
+  }
+}
+```
+**Purpose**: Enhance color vibrancy and contrast for OLED displays.
+
+### Dithering Explained
+
+Dithering improves visual quality on low bit-depth displays (1-bit, 2-bit, 4-bit) by creating smooth gradients using error diffusion:
+
+- **Without dithering**: Sharp color bands (posterization)
+- **With dithering**: Smooth gradients using patterns of available colors
+
+**Floyd-Steinberg** (default): More aggressive pattern, good for general use
+**Atkinson**: Lighter pattern, better for e-ink displays (less ghosting)
+
+**Note**: Dithering only applies when `bitDepth <= 8`. It works with existing bit-depth quantization.
+
+### Performance Impact
+
+- Basic adjustments (brightness, contrast, gamma): ~10-30ms
+- Normalize: ~20-40ms  
+- Sharpen: ~30-50ms
+- Dithering (800×480 image): ~100-150ms
+- **Total worst case**: ~250ms
+
+When adjustments are not configured, there is no performance impact.
 
 ## Example Configurations
 

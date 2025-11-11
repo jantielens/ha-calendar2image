@@ -1,6 +1,6 @@
 {
   "name": "ha-calendar2image",
-  "version": "0.10.0",
+  "version": "0.11.0",
   "description": "Home Assistant add-on that transforms ICS calendar feeds into customizable images with optional extra data sources (weather, tasks, etc.) - perfect for e-ink displays and dashboards. Features multiple calendar support, REST API, intelligent caching, custom JavaScript templates, and optimized rendering.",
   "main": "src/index.js",
   "scripts": {
@@ -10,7 +10,8 @@
     "test:local": "jest",
     "test:coverage": "jest --coverage",
     "test:ci": "jest --config=jest.integration.config.js --runInBand",
-    "test:all": "npm run test:local && npm run test:coverage && npm run test:ci"
+    "test:all": "npm run test:local && npm run test:coverage && npm run test:ci",
+    "test:matrix": "jest --config=jest.matrix.config.js --runInBand"
   },
   "keywords": [
     "home-assistant",
