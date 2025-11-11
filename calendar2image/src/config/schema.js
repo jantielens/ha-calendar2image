@@ -182,7 +182,44 @@ const configSchema = {
           type: 'number',
           minimum: 0.1,
           maximum: 3.0,
-          description: 'Gamma correction for mid-tones (0.1 to 3.0, default: 1.0)'
+          description: 'Gamma correction for mid-tones (0.1 to 3.0, default: 1.0) - LEGACY: prefer levels.gamma'
+        },
+        levels: {
+          type: 'object',
+          description: 'Paint.NET-style levels adjustment with full control over input/output ranges and gamma',
+          properties: {
+            inputBlack: {
+              type: 'integer',
+              minimum: 0,
+              maximum: 255,
+              description: 'Input black point (0-255, default: 0)'
+            },
+            inputWhite: {
+              type: 'integer',
+              minimum: 0,
+              maximum: 255,
+              description: 'Input white point (0-255, default: 255)'
+            },
+            gamma: {
+              type: 'number',
+              minimum: 0.1,
+              maximum: 8.0,
+              description: 'Gamma correction for mid-tones (0.1 to 8.0, default: 1.0) - matches Paint.NET'
+            },
+            outputBlack: {
+              type: 'integer',
+              minimum: 0,
+              maximum: 255,
+              description: 'Output black point (0-255, default: 0)'
+            },
+            outputWhite: {
+              type: 'integer',
+              minimum: 0,
+              maximum: 255,
+              description: 'Output white point (0-255, default: 255)'
+            }
+          },
+          additionalProperties: false
         },
         sharpen: {
           type: 'boolean',

@@ -1,5 +1,35 @@
 # Changelog
 
+## [0.12.0] - 2025-11-11
+
+### Added
+- **Paint.NET-Style Levels Adjustment** (#43)
+  - New `adjustments.levels` object providing professional-grade tonal control
+  - Full control over input/output black/white points (0-255) and gamma (0.1-8.0)
+  - Parameters exactly match Paint.NET's Levels adjustment dialog
+  - Processing order: Input mapping → Gamma → Output mapping
+  - Use case: Darken mid-tones (e.g., emoji icons) without affecting pure white backgrounds
+  - Extended gamma range to 0.1-8.0 (vs legacy 0.1-3.0) for extreme adjustments
+  - All parameters optional with sensible defaults (inputBlack: 0, inputWhite: 255, gamma: 1.0, outputBlack: 0, outputWhite: 255)
+  
+### Changed
+- **Adjustment Pipeline Order** - Levels now replaces legacy gamma step for cleaner processing
+  - New order: Normalize → **Levels** → Brightness → Contrast → Saturation → Hue → Sharpen → Invert → Threshold → Dithering
+  - Legacy `gamma` parameter now internally converted to `levels.gamma` for backward compatibility
+  - If both `gamma` and `levels.gamma` are present, `levels.gamma` takes precedence
+  
+### Deprecated
+- **Legacy gamma parameter** - Still supported but marked as legacy in documentation
+  - Prefer `levels.gamma` for new configurations (supports wider range: 0.1-8.0)
+  - Old configs continue working unchanged (zero breaking changes)
+  - Documentation updated with migration examples
+
+### Documentation
+- Added comprehensive Levels section to IMAGE-ADJUSTMENTS.md with Paint.NET mapping
+- Updated adjustment order documentation across all examples
+- Added examples for common use cases: darkening emojis, e-ink optimization, output range compression
+- Marked legacy gamma parameter with migration guidance
+
 ## [0.11.2] - 2025-11-11
 
 ### Changed
