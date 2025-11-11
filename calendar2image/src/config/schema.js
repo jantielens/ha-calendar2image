@@ -157,7 +157,7 @@ const configSchema = {
       additionalProperties: { type: 'string' }
     }
   },
-  required: ['icsUrl', 'template'],
+  required: ['template'],
   additionalProperties: false
 };
 

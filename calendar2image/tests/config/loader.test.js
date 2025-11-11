@@ -81,8 +81,8 @@ describe('config loader', () => {
 
     it('should throw error for config missing required fields', async () => {
       const config = {
-        template: 'week-view'
-        // Missing icsUrl
+        icsUrl: 'https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics'
+        // Missing template (now the only required field)
       };
 
       await fs.writeFile(
@@ -209,8 +209,8 @@ describe('config loader', () => {
         template: 'week-view'
       };
       const invalidConfig = {
-        template: 'week-view'
-        // Missing icsUrl
+        icsUrl: 'https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics'
+        // Missing template (now the only required field)
       };
 
       await fs.writeFile(path.join(tempDir, '0.json'), JSON.stringify(config0));
@@ -220,17 +220,16 @@ describe('config loader', () => {
     });
 
     it('should report all invalid configs in error message', async () => {
-      const invalidConfig1 = { template: 'week-view' }; // Missing icsUrl
-      const invalidConfig2 = { icsUrl: 'https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics' }; // Missing template
+      const validConfig = { template: 'week-view' }; // Valid - icsUrl is now optional
+      const invalidConfig = { icsUrl: 'https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics' }; // Missing template
 
-      await fs.writeFile(path.join(tempDir, '0.json'), JSON.stringify(invalidConfig1));
-      await fs.writeFile(path.join(tempDir, '1.json'), JSON.stringify(invalidConfig2));
+      await fs.writeFile(path.join(tempDir, '0.json'), JSON.stringify(validConfig));
+      await fs.writeFile(path.join(tempDir, '1.json'), JSON.stringify(invalidConfig));
 
       try {
         await loadAllConfigs(tempDir);
         fail('Should have thrown an error');
       } catch (error) {
-        expect(error.message).toContain('Config 0');
         expect(error.message).toContain('Config 1');
       }
     });
@@ -259,8 +258,8 @@ describe('config loader', () => {
 
     it('should throw error for invalid configs', async () => {
       const invalidConfig = {
-        template: 'week-view'
-        // Missing icsUrl
+        icsUrl: 'https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics'
+        // Missing template (now the only required field)
       };
 
       await fs.writeFile(path.join(tempDir, '0.json'), JSON.stringify(invalidConfig));

@@ -38,16 +38,17 @@ Each configuration file should contain:
 
 ### Required Fields
 
-- **icsUrl** (string or array): Calendar source configuration. Must start with `http://` or `https://`
+- **template** (string): Name of the template to use (e.g., "week-view", "today-view", "today-weather")
+
+### Optional Fields
+
+- **icsUrl** (string or array, optional): Calendar source configuration. Must start with `http://` or `https://`
   - **String format**: Single ICS URL (e.g., `"https://calendar.example.com/feed.ics"`)
   - **Array format**: Multiple calendar sources with optional names
     - `url` (string, required): ICS URL to fetch
     - `sourceName` (string, optional): Human-readable name for the calendar source
     - `rejectUnauthorized` (boolean, optional, default: `true`): Verify SSL certificates. Set to `false` only for trusted sources with certificate issues.
-- **template** (string): Name of the template to use (e.g., "week-view", "today-view")
-
-### Optional Fields
-
+  - **When omitted**: Templates receive an empty events array `[]`. Useful for templates that only use `extraData` (e.g., weather dashboards, info screens).
 - **grayscale** (boolean, default: `false`): Convert image to grayscale
 - **bitDepth** (number, default: `8`): Color bit depth (1-32)
 - **imageType** (string, default: `"png"`): Output image format. Options: `"jpg"`, `"png"`, `"bmp"`
@@ -160,6 +161,25 @@ This configuration combines events from multiple calendars into a single view. E
 }
 ```
 Without `preGenerateInterval`, images are **always generated fresh** on each request, ensuring real-time calendar data at the cost of slower response times (~8 seconds).
+
+### Weather Dashboard (No Calendar)
+```json
+{
+  "template": "today-weather",
+  "extraDataUrl": "https://api.open-meteo.com/v1/forecast?latitude=50.8505&longitude=4.3488&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&hourly=temperature_2m,weather_code,rain,showers,snowfall,precipitation_probability&timezone=Europe/Brussels",
+  "width": 800,
+  "height": 480,
+  "imageType": "png",
+  "grayscale": true,
+  "bitDepth": 8,
+  "preGenerateInterval": "*/15 * * * *"
+}
+```
+This configuration demonstrates a template that **doesn't require calendar data**. The `icsUrl` field is omitted, and the template receives an empty events array. The `today-weather` built-in template displays weather information from the Open-Meteo API. Perfect for info screens, dashboards, or e-ink displays that need data visualization without calendar events.
+
+**Update the coordinates** in the `extraDataUrl` to match your location:
+- Replace `latitude=50.8505&longitude=4.3488` with your coordinates
+- Replace `timezone=Europe/Brussels` with your timezone
 
 ### Configuration with Extra Data (Single Source)
 ```json

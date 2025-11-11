@@ -524,6 +524,147 @@ describe('API Handler', () => {
         });
       });
     });
+
+    describe('config without icsUrl (extraData-only)', () => {
+      it('should successfully generate image without icsUrl', async () => {
+        const configWithoutIcsUrl = {
+          template: 'today-weather',
+          width: 800,
+          height: 480,
+          imageType: 'png',
+          grayscale: true,
+          bitDepth: 8
+        };
+
+        loadConfig.mockResolvedValue(configWithoutIcsUrl);
+        renderTemplate.mockResolvedValue(mockHtml);
+        generateImage.mockResolvedValue(mockImageResult);
+
+        const result = await generateCalendarImage(0);
+
+        expect(loadConfig).toHaveBeenCalledWith(0);
+        expect(getCalendarEvents).not.toHaveBeenCalled();
+        expect(renderTemplate).toHaveBeenCalledWith(configWithoutIcsUrl.template, {
+          events: [],
+          config: configWithoutIcsUrl,
+          extraData: {}
+        });
+        expect(generateImage).toHaveBeenCalledWith(mockHtml, {
+          width: configWithoutIcsUrl.width,
+          height: configWithoutIcsUrl.height,
+          imageType: configWithoutIcsUrl.imageType,
+          grayscale: configWithoutIcsUrl.grayscale,
+          bitDepth: configWithoutIcsUrl.bitDepth,
+          rotate: undefined
+        });
+        expect(result).toEqual(mockImageResult);
+      });
+
+      it('should pass empty events array when icsUrl is absent', async () => {
+        const configWithoutIcsUrl = {
+          template: 'today-weather',
+          width: 800,
+          height: 480
+        };
+
+        loadConfig.mockResolvedValue(configWithoutIcsUrl);
+        renderTemplate.mockResolvedValue(mockHtml);
+        generateImage.mockResolvedValue(mockImageResult);
+
+        await generateCalendarImage(0);
+
+        expect(renderTemplate).toHaveBeenCalledWith(
+          configWithoutIcsUrl.template,
+          expect.objectContaining({ events: [] })
+        );
+      });
+
+      it('should fetch extraData even when icsUrl is absent', async () => {
+        const configWithoutIcsUrl = {
+          template: 'today-weather',
+          extraDataUrl: 'https://api.open-meteo.com/v1/forecast?latitude=50.8505&longitude=4.3488&current=temperature_2m',
+          extraDataCacheTtl: 300,
+          width: 800,
+          height: 480
+        };
+        const mockWeatherData = {
+          current: { temperature_2m: 22, weather_code: 0 }
+        };
+
+        loadConfig.mockResolvedValue(configWithoutIcsUrl);
+        fetchExtraData.mockResolvedValue(mockWeatherData);
+        renderTemplate.mockResolvedValue(mockHtml);
+        generateImage.mockResolvedValue(mockImageResult);
+
+        await generateCalendarImage(0);
+
+        expect(getCalendarEvents).not.toHaveBeenCalled();
+        expect(fetchExtraData).toHaveBeenCalledWith(
+          configWithoutIcsUrl.extraDataUrl,
+          expect.objectContaining({
+            cacheTtl: 300,
+            headers: {}
+          })
+        );
+        expect(renderTemplate).toHaveBeenCalledWith(configWithoutIcsUrl.template, {
+          events: [],
+          config: configWithoutIcsUrl,
+          extraData: mockWeatherData
+        });
+      });
+
+      it('should work with array format extraDataUrl without icsUrl', async () => {
+        const configWithoutIcsUrl = {
+          template: 'today-weather',
+          extraDataUrl: [
+            { url: 'https://api.open-meteo.com/v1/forecast?latitude=50.8505&longitude=4.3488&current=temperature_2m' }
+          ],
+          width: 800,
+          height: 480
+        };
+        const mockWeatherData = {
+          current: { temperature_2m: 22, weather_code: 0 }
+        };
+
+        loadConfig.mockResolvedValue(configWithoutIcsUrl);
+        fetchExtraData.mockResolvedValue(mockWeatherData);
+        renderTemplate.mockResolvedValue(mockHtml);
+        generateImage.mockResolvedValue(mockImageResult);
+
+        await generateCalendarImage(0);
+
+        expect(getCalendarEvents).not.toHaveBeenCalled();
+        expect(fetchExtraData).toHaveBeenCalledTimes(1);
+        expect(renderTemplate).toHaveBeenCalledWith(configWithoutIcsUrl.template, {
+          events: [],
+          config: configWithoutIcsUrl,
+          extraData: [mockWeatherData]
+        });
+      });
+
+      it('should handle minimal config with only template field', async () => {
+        const minimalConfig = {
+          template: 'today-weather',
+          width: 800,
+          height: 600,
+          imageType: 'png'
+        };
+
+        loadConfig.mockResolvedValue(minimalConfig);
+        renderTemplate.mockResolvedValue(mockHtml);
+        generateImage.mockResolvedValue(mockImageResult);
+
+        await generateCalendarImage(0);
+
+        expect(getCalendarEvents).not.toHaveBeenCalled();
+        expect(fetchExtraData).not.toHaveBeenCalled();
+        expect(renderTemplate).toHaveBeenCalledWith(minimalConfig.template, {
+          events: [],
+          config: minimalConfig,
+          extraData: {}
+        });
+      });
+    });
   });
 
   describe('handleImageRequest', () => {

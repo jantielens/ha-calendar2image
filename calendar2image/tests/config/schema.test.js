@@ -31,15 +31,27 @@ describe('config schema', () => {
       expect(result.errors).toEqual([]);
     });
 
-    it('should reject configuration missing icsUrl', () => {
+    it('should accept configuration without icsUrl (template only)', () => {
       const config = {
-        template: 'week-view'
+        template: 'today-weather'
       };
 
       const result = validateConfig(config);
       
-      expect(result.valid).toBe(false);
-      expect(result.errors.length).toBeGreaterThan(0);
+      expect(result.valid).toBe(true);
+      expect(result.errors).toEqual([]);
+    });
+
+    it('should accept configuration with template and extraDataUrl but no icsUrl', () => {
+      const config = {
+        template: 'today-weather',
+        extraDataUrl: 'https://api.open-meteo.com/v1/forecast?latitude=50.8505&longitude=4.3488&current=temperature_2m'
+      };
+
+      const result = validateConfig(config);
+      
+      expect(result.valid).toBe(true);
+      expect(result.errors).toEqual([]);
     });
 
     it('should reject configuration missing template', () => {
@@ -613,6 +625,28 @@ describe('config schema', () => {
   });
 
   describe('applyDefaults', () => {
+    it('should apply all default values to config without icsUrl', () => {
+      const config = {
+        template: 'today-weather'
+      };
+
+      const result = applyDefaults(config);
+      
+      expect(result).toEqual({
+        template: 'today-weather',
+        width: 800,
+        height: 600,
+        grayscale: false,
+        bitDepth: 8,
+        imageType: 'png',
+        rotate: 0,
+        expandRecurringFrom: -31,
+        expandRecurringTo: 31,
+        locale: 'en-US',
+        extraDataCacheTtl: 300
+      });
+    });
+
     it('should apply all default values to minimal config', () => {
       const config = {
         icsUrl: 'https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics',

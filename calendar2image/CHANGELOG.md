@@ -1,5 +1,39 @@
 # Changelog
 
+## [0.10.0] - 2025-11-11
+
+### Added
+- **Optional icsUrl for extraData-only templates**
+  - The `icsUrl` field is now optional in configuration files
+  - Templates receive an empty events array `[]` when `icsUrl` is not provided
+  - Enables new use cases: weather dashboards, info screens, data visualizations without calendar events
+  - Maintains full backward compatibility - existing configurations with `icsUrl` work unchanged
+- **New built-in template: today-weather**
+  - Weather dashboard template using Open-Meteo API data
+  - Displays current temperature, weather conditions, humidity, wind speed
+  - Shows 12-hour forecast with temperature and precipitation
+  - Clean design optimized for e-ink displays
+  - Example of extraData-only template usage (no calendar required)
+- **Sample weather configuration**
+  - Added `sample-weather.json` demonstrating weather dashboard setup
+  - Uses Open-Meteo API for Brussels, Belgium coordinates
+  - Pre-generation enabled for fast responses (every 15 minutes)
+  - Grayscale PNG format optimized for e-ink displays
+
+### Changed
+- **Configuration schema**
+  - `template` is now the only required field
+  - `icsUrl` moved from required to optional fields
+  - Calendar fetching is skipped when `icsUrl` is not present
+  - Empty events array passed to templates when no calendar configured
+
+### Documentation
+- Updated CONFIGURATION.md to reflect optional `icsUrl`
+- Added weather dashboard example without calendar
+- Updated README.md with new `today-weather` template
+- Updated config-sample-README.md schema documentation
+- Clarified use cases for extraData-only templates
+
 ## [0.9.0] - 2025-11-11
 
 ### Changed
