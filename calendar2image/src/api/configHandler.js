@@ -1032,7 +1032,8 @@ async function runValidations(index, config, icsUrls, extraDataUrls) {
       formatter.format(testDate);
       validations.timezone = { valid: true, message: 'Valid IANA timezone' };
     } catch (error) {
-      validations.timezone = { valid: false, message: 'Invalid timezone name' };
+      validations.timezone = { valid: false, message: 'Invalid timezone name - use IANA timezone (e.g., "Europe/Berlin", not "CET")' };
+      console.warn(`[Config Validation] Invalid timezone in config ${index}: "${config.timezone}". Use IANA timezone names like "Europe/Berlin" or "America/New_York", not abbreviations like "CET" or "EST". See: https://en.wikipedia.org/wiki/List_of_tz_database_time_zones`);
     }
   }
 
