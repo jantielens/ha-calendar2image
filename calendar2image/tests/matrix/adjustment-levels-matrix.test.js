@@ -4,8 +4,6 @@
  * Generates visual comparison matrices specifically for the levels adjustment feature:
  * - Gamma vs Output Black matrix (grayscale 2-bit e-ink simulation)
  * - Gamma vs Output Black matrix (color 8-bit)
- * - Input Range matrix (grayscale 2-bit)
- * - Input Range matrix (color 8-bit)
  */
 
 const { generateImage } = require('../../src/image');
@@ -42,6 +40,16 @@ async function generateLevelsImage(levelsConfig, imageConfig) {
     extraData: {}
   });
   
+  // Build adjustments object
+  const adjustments = {
+    levels: levelsConfig
+  };
+  
+  // Add dithering for grayscale matrices
+  if (imageConfig.grayscale) {
+    adjustments.dither = true;
+  }
+  
   // Generate image with levels adjustment
   const result = await generateImage(html, {
     width: config.width,
@@ -49,9 +57,7 @@ async function generateLevelsImage(levelsConfig, imageConfig) {
     imageType: config.format,
     grayscale: config.grayscale,
     bitDepth: config.bitDepth,
-    adjustments: {
-      levels: levelsConfig
-    }
+    adjustments
   });
   
   return result.buffer;
@@ -82,7 +88,7 @@ async function createLabelImage(text, width, height) {
 async function generateGammaOutputMatrix(imageConfig, matrixName) {
   console.log(`\n📊 Generating ${matrixName} matrix...`);
   
-  const gammaValues = [0.1, 0.5, 1.0, 1.5, 2.2, 3.0, 5.0, 8.0];
+  const gammaValues = [0.2, 0.5, 1.0, 1.5, 2.2, 3.0, 5.0, 8.0];
   const outputBlackValues = [0, 30, 60, 90, 120];
   
   const cellWidth = BASE_CONFIG.width;
@@ -99,7 +105,7 @@ async function generateGammaOutputMatrix(imageConfig, matrixName) {
   // Add column headers (gamma values)
   for (let col = 0; col < gammaValues.length; col++) {
     const gamma = gammaValues[col];
-    const label = await createLabelImage(`γ=${gamma}`, cellWidth, labelHeight);
+    const label = await createLabelImage(`gamma: ${gamma}`, cellWidth, labelHeight);
     compositeOps.push({
       input: label,
       top: 0,
@@ -110,7 +116,7 @@ async function generateGammaOutputMatrix(imageConfig, matrixName) {
   // Add row headers (output black values)
   for (let row = 0; row < outputBlackValues.length; row++) {
     const outputBlack = outputBlackValues[row];
-    const label = await createLabelImage(`out=${outputBlack}`, labelWidth, cellHeight);
+    const label = await createLabelImage(`outputBlack: ${outputBlack}`, labelWidth, cellHeight);
     compositeOps.push({
       input: label,
       top: labelHeight + (row * cellHeight),
@@ -135,97 +141,6 @@ async function generateGammaOutputMatrix(imageConfig, matrixName) {
         inputWhite: 255,
         gamma: gamma,
         outputBlack: outputBlack,
-        outputWhite: 255
-      }, imageConfig);
-      
-      compositeOps.push({
-        input: imageBuffer,
-        top: labelHeight + (row * cellHeight),
-        left: labelWidth + (col * cellWidth)
-      });
-    }
-  }
-  
-  // Create base white image
-  const matrix = await sharp({
-    create: {
-      width: totalWidth,
-      height: totalHeight,
-      channels: 3,
-      background: { r: 255, g: 255, b: 255 }
-    }
-  })
-  .composite(compositeOps)
-  .png()
-  .toBuffer();
-  
-  // Save matrix
-  const outputPath = path.join(MATRIX_OUTPUT_DIR, `${matrixName}.png`);
-  await fs.writeFile(outputPath, matrix);
-  console.log(`✅ Saved: ${outputPath}`);
-  
-  return outputPath;
-}
-
-/**
- * Generate input range matrix
- */
-async function generateInputRangeMatrix(imageConfig, matrixName) {
-  console.log(`\n📊 Generating ${matrixName} matrix...`);
-  
-  const inputWhiteValues = [128, 160, 192, 224, 255];
-  const inputBlackValues = [0, 32, 64, 96, 128];
-  
-  const cellWidth = BASE_CONFIG.width;
-  const cellHeight = BASE_CONFIG.height;
-  const labelWidth = 80;
-  const labelHeight = 40;
-  
-  const totalWidth = labelWidth + (cellWidth * inputWhiteValues.length);
-  const totalHeight = labelHeight + (cellHeight * inputBlackValues.length);
-  
-  // Create composite image
-  const compositeOps = [];
-  
-  // Add column headers (input white values)
-  for (let col = 0; col < inputWhiteValues.length; col++) {
-    const inputWhite = inputWhiteValues[col];
-    const label = await createLabelImage(`in↑=${inputWhite}`, cellWidth, labelHeight);
-    compositeOps.push({
-      input: label,
-      top: 0,
-      left: labelWidth + (col * cellWidth)
-    });
-  }
-  
-  // Add row headers (input black values)
-  for (let row = 0; row < inputBlackValues.length; row++) {
-    const inputBlack = inputBlackValues[row];
-    const label = await createLabelImage(`in↓=${inputBlack}`, labelWidth, cellHeight);
-    compositeOps.push({
-      input: label,
-      top: labelHeight + (row * cellHeight),
-      left: 0
-    });
-  }
-  
-  // Generate all cells
-  let cellCount = 0;
-  const totalCells = inputWhiteValues.length * inputBlackValues.length;
-  
-  for (let row = 0; row < inputBlackValues.length; row++) {
-    for (let col = 0; col < inputWhiteValues.length; col++) {
-      cellCount++;
-      const inputBlack = inputBlackValues[row];
-      const inputWhite = inputWhiteValues[col];
-      
-      console.log(`  Generating cell ${cellCount}/${totalCells}: inputBlack=${inputBlack}, inputWhite=${inputWhite}`);
-      
-      const imageBuffer = await generateLevelsImage({
-        inputBlack: inputBlack,
-        inputWhite: inputWhite,
-        gamma: 1.0,
-        outputBlack: 0,
         outputWhite: 255
       }, imageConfig);
       
@@ -287,28 +202,6 @@ describe('Levels Adjustment Matrix Generation', () => {
     const outputPath = await generateGammaOutputMatrix(
       { grayscale: false, bitDepth: 8 },
       'levels-gamma-output-color-8bit'
-    );
-    
-    // Verify file exists and has reasonable size
-    const stats = await fs.stat(outputPath);
-    expect(stats.size).toBeGreaterThan(100000);
-  });
-
-  test('should generate input range matrix (grayscale 2-bit)', async () => {
-    const outputPath = await generateInputRangeMatrix(
-      { grayscale: true, bitDepth: 2 },
-      'levels-input-range-grayscale-2bit'
-    );
-    
-    // Verify file exists and has reasonable size
-    const stats = await fs.stat(outputPath);
-    expect(stats.size).toBeGreaterThan(100000);
-  });
-
-  test('should generate input range matrix (color 8-bit)', async () => {
-    const outputPath = await generateInputRangeMatrix(
-      { grayscale: false, bitDepth: 8 },
-      'levels-input-range-color-8bit'
     );
     
     // Verify file exists and has reasonable size
