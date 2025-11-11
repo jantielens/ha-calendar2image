@@ -84,15 +84,23 @@ async function generateCalendarImageInWorker(index, trigger = 'unknown') {
       // Ignore errors getting previous metadata
     }
     
-    // Fetch calendar events and extra data in parallel
-    const [events, extraData] = await Promise.all([
-      getCalendarEvents(config.icsUrl, {
-        expandRecurringFrom: config.expandRecurringFrom,
-        expandRecurringTo: config.expandRecurringTo,
-        expandRecurringMax: config.expandRecurringMax
-      }),
-      fetchExtraDataForConfig(config, index)
-    ]);
+    // Fetch calendar events and extra data in parallel (or skip calendar if no icsUrl)
+    let events = [];
+    let extraData = {};
+    
+    if (config.icsUrl) {
+      [events, extraData] = await Promise.all([
+        getCalendarEvents(config.icsUrl, {
+          expandRecurringFrom: config.expandRecurringFrom,
+          expandRecurringTo: config.expandRecurringTo,
+          expandRecurringMax: config.expandRecurringMax
+        }),
+        fetchExtraDataForConfig(config, index)
+      ]);
+    } else {
+      console.log(`[Worker] No icsUrl configured for config ${index}, skipping calendar fetch`);
+      extraData = await fetchExtraDataForConfig(config, index);
+    }
     
     // Render template
     console.log(`[Worker] Rendering template with ${events.length} events`);

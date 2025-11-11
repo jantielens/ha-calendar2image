@@ -29,13 +29,13 @@ Configuration files must be named with numeric IDs:
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `icsUrl` | string or array | Single ICS URL or array of calendar sources. For multiple sources, use objects with `url` (required) and `sourceName` (optional) fields. |
-| `template` | string | Template name to use for rendering (e.g., `"default"`, `"compact"`, `"weekly"`) |
+| `template` | string | Template name to use for rendering (e.g., `"week-view"`, `"today-view"`, `"today-weather"`) |
 
 ### Optional Fields
 
 | Field | Type | Default | Valid Values | Description |
 |-------|------|---------|--------------|-------------|
+| `icsUrl` | string or array | (none) | Single ICS URL or array of calendar sources | Single ICS URL or array of calendar sources. For multiple sources, use objects with `url` (required) and `sourceName` (optional) fields. When omitted, templates receive an empty events array (useful for extraData-only templates like weather dashboards). |
 | `width` | integer | `800` | `100-4096` | Width of the output image in pixels |
 | `height` | integer | `600` | `100-4096` | Height of the output image in pixels |
 | `grayscale` | boolean | `false` | `true`, `false` | Convert output image to grayscale |

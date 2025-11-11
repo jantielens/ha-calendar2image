@@ -15,6 +15,12 @@ Transform ICS calendar feeds into customizable images with optional extra data s
 - **Grayscale & bit depth control** - Optimize images for e-ink displays
 - **Multiple calendars** - Configure as many calendars as needed
 
+## 📸 Example: Weather Dashboard
+
+<img src="docs-user/images/weather-dashboard-example.png" alt="Weather Dashboard Example" width="600">
+
+The `today-weather` template fetches weather data from Open-Meteo API and displays current conditions with forecast. No calendar required - uses `extraDataUrl` only. See `sample-weather.json` for configuration example.
+
 ## 🚀 Quick Start
 
 1. **Start the add-on** and check the logs for:
@@ -71,10 +77,11 @@ Create JSON files in `/addon_configs/17f877f5_calendar2image/`:
 ```
 
 **Key Parameters:**
-- `icsUrl` - Your calendar's ICS feed URL or multiple sources (required)
+- `template` - Template name: `week-view`, `today-view`, `today-weather`, or custom (required)
+- `icsUrl` - Your calendar's ICS feed URL or multiple sources (optional)
   - Single: `"https://calendar.example.com/feed.ics"`
   - Multiple: `[{"url": "https://work.ics", "sourceName": "Work"}, {"url": "https://personal.ics", "sourceName": "Personal"}]`
-- `template` - Template name: `week-view`, `today-view`, or custom (required)
+  - Omit for templates that only use `extraData` (e.g., weather dashboards)
 - `width` / `height` - Image dimensions in pixels
 - `imageType` - Output format: `png`, `jpg`, or `bmp`
 - `preGenerateInterval` - Cron expression for scheduled generation (optional)

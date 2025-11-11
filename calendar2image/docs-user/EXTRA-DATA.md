@@ -4,6 +4,12 @@ Calendar2Image allows you to fetch additional data from any JSON API and use it 
 
 **Advanced:** Support for multiple data sources with per-source configuration!
 
+**Example:** The built-in `today-weather` template creates a complete weather dashboard without any calendar data:
+
+<img src="images/weather-dashboard-example.png" alt="Weather Dashboard Example" width="600">
+
+See the [Weather Dashboard Example](#weather-dashboard-no-calendar-required) below for the complete configuration.
+
 ---
 
 ## Quick Start
@@ -371,7 +377,44 @@ All three options prevent global `extraDataHeaders` from being applied to that U
 
 ## Common Use Cases
 
-### Weather Data
+### Weather Dashboard (No Calendar Required)
+
+**Example Output:**
+
+<img src="images/weather-dashboard-example.png" alt="Weather Dashboard Example" width="600">
+
+Create a weather-only dashboard using the built-in `today-weather` template with Open-Meteo API (no authentication required):
+
+**Configuration (`sample-weather.json`):**
+```json
+{
+  "template": "today-weather",
+  "extraDataUrl": "https://api.open-meteo.com/v1/forecast?latitude=50.8505&longitude=4.3488&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&hourly=temperature_2m,weather_code,rain,showers,snowfall,precipitation_probability&timezone=Europe/Brussels",
+  "width": 800,
+  "height": 480,
+  "imageType": "png",
+  "grayscale": true,
+  "bitDepth": 8,
+  "preGenerateInterval": "*/15 * * * *"
+}
+```
+
+**Note:** No `icsUrl` needed! The template uses only `extraDataUrl`.
+
+**Features:**
+- Current weather with large icon showing conditions
+- Temperature, humidity, and wind speed
+- 12-hour forecast with icons and temperatures
+- Optimized for e-ink displays (grayscale)
+- Weather icons using Material Design Icons
+- Updates every 15 minutes
+
+**Get coordinates for your location:**
+Visit [Open-Meteo](https://open-meteo.com/) and search for your city to get latitude/longitude values.
+
+---
+
+### Weather Data with Calendar
 
 **Configuration:**
 ```json
