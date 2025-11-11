@@ -1,0 +1,12 @@
+{
+  "template": "weather-dashboard",
+  "width": 800,
+  "height": 480,
+  "grayscale": true,
+  "bitDepth": 2,
+  "imageType": "png",
+  "extraDataUrl": "https://api.open-meteo.com/v1/forecast?latitude=50.8505&longitude=4.3488&hourly=temperature_2m,weather_code,precipitation_probability&daily=temperature_2m_max,temperature_2m_min,weather_code",
+  "extraDataCacheTtl": 1800,
+  "preGenerateInterval": "*/15 * * * *",
+  "locale": "en-US"
+}
