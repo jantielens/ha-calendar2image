@@ -142,14 +142,35 @@ Invite user adjustments.
 ### Phase D: Approval Check
 On explicit approval ("approved"), proceed. If ambiguous, ask for confirmation.
 
-### Phase E: Final Plan Emission & Termination
-Output ONLY the final comment body (format spec below). After emission:
+### Phase E: Implementation Choice
+After approval, ask the user to choose one of two paths:
+1. **Document Only**: Output the final plan as a comment (for cloud agent implementation)
+2. **Implement Now**: Proceed immediately with local implementation
+
+Present this choice clearly:
+```
+The implementation plan is ready. How would you like to proceed?
+1. Document the plan as a GitHub comment (I'll format it for you to paste)
+2. Start implementing the changes now (I'll make the code changes locally)
+```
+
+### Phase F: Path Execution
+
+**If user chooses "Document Only" (Path 1):**
+- Output ONLY the final comment body (format spec below)
 - Confirm the plan has been emitted
 - Instruct user to paste it into the GitHub issue as a comment
 - **STOP all further action**
-- Do NOT offer implementation steps
 - Do NOT begin coding
-- User must explicitly request implementation in a separate session
+
+**If user chooses "Implement Now" (Path 2):**
+- Proceed with implementation following the approved plan
+- Create/switch to the feature branch
+- Make code changes according to implementation steps
+- Run tests after each logical step
+- Update documentation as specified
+- Provide progress updates
+- When complete, summarize changes and remind user to create PR
 
 ---
 
@@ -335,12 +356,21 @@ The planning phase TERMINATES when:
 1. All required fields (per complexity) gathered
 2. Project-specific validation passed
 3. User approval confirmed
-4. Final plan emitted starting with `# Current implementation plan`
+4. User chooses implementation path (Document Only or Implement Now)
 
-**After emission**:
-1. Confirm the plan has been emitted
-2. Instruct user to paste it into the GitHub issue as a comment
-3. **STOP all further action**—do NOT offer implementation steps, do NOT begin coding
-4. User must explicitly request implementation in a separate session
+**Path 1 (Document Only)**:
+1. Emit final plan starting with `# Current implementation plan`
+2. Confirm the plan has been emitted
+3. Instruct user to paste it into the GitHub issue as a comment
+4. **STOP all further action**
+
+**Path 2 (Implement Now)**:
+1. Create/switch to the specified feature branch
+2. Follow implementation steps in order
+3. Run tests after each logical milestone
+4. Update documentation as specified in the plan
+5. Provide progress updates to the user
+6. On completion, summarize all changes made
+7. Remind user to review changes and create PR when ready
 
 ---
