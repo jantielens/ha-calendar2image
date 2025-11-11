@@ -14,14 +14,15 @@ agent: 'agent'
 
 This prompt manages the end-to-end preparation for implementing a GitHub issue:
 
-1. Gather issue metadata and repository context.
-2. Ask clarifying questions until the plan is sufficiently detailed.
-3. Produce a single, editable comment body (no markers, no versioning) whose first line is exactly `# Current implementation plan`.
-4. Wait for user approval before emitting the final plan.
-5. After approval, output ONLY the final plan (and do not start code changes unless explicitly requested later).
+1. Gather issue metadata and repository context
+2. Classify issue complexity (Trivial/Standard/Complex)
+3. Validate against project conventions (copilot-instructions.md)
+4. Ask clarifying questions until the plan is sufficiently detailed
+5. Produce a single comment body starting with `# Current implementation plan`
+6. Wait for explicit user approval
+7. After approval, output ONLY the final plan and STOP (no implementation unless separately requested)
 
-The cloud agent will later be invoked with a minimal prompt such as:  
-`Implement issue #<issueNumber>. Use the issue comment whose first line is "# Current implementation plan".`
+The cloud agent will later use: `Implement issue #<issueNumber>. Use the issue comment whose first line is "# Current implementation plan"`.
 
 ---
 
@@ -38,29 +39,83 @@ If `issueUrl` is missing, request it immediately and pause other actions.
 
 ---
 
-## 3. Core Responsibilities
+## 3. Issue Complexity Classification
 
-The agent must:
+Before gathering details, classify the issue:
 
-- Retrieve issue metadata (title, number, body).
-- Extract or ask for:
-  - Acceptance criteria (testable statements)
-  - Files expected to change
-  - Ordered implementation steps
-  - Test plan (unit, integration, docs, edge/regression)
-  - Examples (configuration/use cases)
-  - Risks & mitigations
-  - Definition of Done checklist
-  - Proposed branch name
-  - Optional conventional commit messages
-- Validate completeness before finalizing.
-- Wait for explicit user approval (`approved`, `go ahead`, `looks good`, etc.).
-- Emit the final comment content starting with `# Current implementation plan` (nothing precedes that heading).
-- Avoid beginning code changes until the user asks for implementation separately.
+**TRIVIAL** (< 3 files, < 50 LOC, no architectural changes):
+- Summary, Implementation Steps, Test Plan, Definition of Done (REQUIRED)
+- Examples, Risks (OPTIONAL)
+
+**STANDARD** (3-10 files, < 500 LOC, typical feature/fix):
+- All sections REQUIRED except Risks (OPTIONAL if none identified)
+
+**COMPLEX** (> 10 files, architectural changes, breaking changes):
+- All sections REQUIRED
+- Additional: Design review notes, migration strategy, backward compatibility analysis
+
+Communicate the classification to the user and adjust section requirements accordingly.
 
 ---
 
-## 4. Interaction Phases
+## 4. Project-Specific Validation
+
+Before finalizing the plan, validate against ha-calendar2image conventions:
+
+**Code Quality:**
+- Follows KISS principle
+- Uses async/await for async operations
+- Includes JSDoc comments for public functions
+- Functions are focused and single-purpose
+
+**Testing Requirements:**
+- Jest unit tests required
+- Docker integration tests for container changes
+- All tests must pass before PR
+- Coverage for edge cases (0 events, invalid configs, etc.)
+
+**Performance Critical:**
+- CRC32 and image serving must remain fast
+- Consider impact on ESP32 battery consumption
+- Pre-generation and caching strategies
+
+**Dependencies:**
+- Justify any new dependencies (bundle size impact)
+- Security: run npm audit
+- Prefer built-in Node.js features when possible
+
+**Documentation:**
+- Update relevant files in docs-user/ or docs-developer/
+- Update CHANGELOG.md
+- Update version in package.json and config.yaml if user-facing
+
+If the plan violates any conventions, flag it and request clarification.
+
+---
+
+## 5. Core Responsibilities
+
+The agent must:
+
+1. Retrieve issue metadata (title, number, body)
+2. Classify issue complexity (Trivial/Standard/Complex)
+3. Extract or ask for required fields based on classification:
+   - Acceptance criteria (testable statements)
+   - Ordered implementation steps
+   - Test plan (unit, integration, docs, edge/regression, container)
+   - Examples (for Standard/Complex)
+   - Risks & mitigations (for Complex, optional for Standard)
+   - Definition of Done checklist
+   - Proposed branch name
+4. Validate against project conventions (copilot-instructions.md)
+5. Validate completeness before finalizing
+6. Wait for explicit user approval (natural language: "approved", "go ahead", "yes", "looks good", "👍", etc.)
+7. Emit the final comment content starting with `# Current implementation plan`
+8. **TERMINATE** after emitting the plan—do NOT begin implementation
+
+---
+
+## 6. Interaction Phases
 
 ### Phase A: Initialization
 1. Parse/infer `issueUrl` → derive `issueNumber`, `repoOwner`, `repoName`.
@@ -69,9 +124,9 @@ The agent must:
 
 ### Phase B: Context Refinement
 Ask targeted questions for missing fields:
-- “List files expected to change.”
-- “Provide acceptance criteria as verifiable bullet points.”
-- “Confirm branch name or approve suggested one.”
+- "List files expected to change."
+- "Provide acceptance criteria as verifiable bullet points."
+- "Confirm branch name or approve suggested one."
 
 Iterate until all required data is gathered.
 
@@ -79,45 +134,55 @@ Iterate until all required data is gathered.
 Present a draft (NOT the final comment) summarizing:
 - Goal
 - Acceptance criteria
-- File list
 - Steps
 - Test plan outline
 
 Invite user adjustments.
 
 ### Phase D: Approval Check
-On explicit approval (“approved”), proceed. If ambiguous, ask for confirmation.
+On explicit approval ("approved"), proceed. If ambiguous, ask for confirmation.
 
-### Phase E: Final Plan Emission
-Output ONLY the final comment body (format spec below). No extra commentary afterward.
-
-### Phase F (Optional)
-If user later says “Start implementation,” offer next steps or prepare a separate implementation PR prompt—do not implement prematurely.
+### Phase E: Final Plan Emission & Termination
+Output ONLY the final comment body (format spec below). After emission:
+- Confirm the plan has been emitted
+- Instruct user to paste it into the GitHub issue as a comment
+- **STOP all further action**
+- Do NOT offer implementation steps
+- Do NOT begin coding
+- User must explicitly request implementation in a separate session
 
 ---
 
-## 5. Required Data Fields
+## 7. Required Data Fields (by Complexity)
 
+**ALL COMPLEXITIES (REQUIRED):**
 | Field | Description | Validation |
-|-------|-------------|-----------|
+|-------|-------------|------------|
 | issueNumber | Derived from URL | Positive integer |
 | repoOwner | Owner org/user | Non-empty |
 | repoName | Repository name | Non-empty |
 | branchName | Feature branch (kebab-case) | Non-empty |
 | acceptanceCriteria[] | Testable bullets | ≥1 |
-| files[] | Relative paths | ≥1 (unless user explicitly says none) |
-| implementationSteps[] | Ordered list | ≥3 typical steps |
-| testPlan | Unit/Integration/Docs/Edge | Each addressed |
-| examples[] | Configs/usages | ≥1 |
-| risks[] | Paired with mitigations | Optional but recommended |
+| implementationSteps[] | Ordered list | ≥2 for trivial, ≥3 for others |
+| testPlan | Unit/Integration/Docs/Edge/Container | Address relevant categories |
 | definitionOfDone[] | Completion checklist | ≥3 |
-| commitMessages[] | Conventional commits | Optional |
+
+**STANDARD & COMPLEX (REQUIRED):**
+| Field | Description | Validation |
+|-------|-------------|------------|
+| examples[] | Configs/usages | ≥1 |
+
+**COMPLEX ONLY (REQUIRED):**
+| Field | Description | Validation |
+|-------|-------------|------------|
+| risks[] | Paired with mitigations | ≥1 |
+| backwardCompatibility | Breaking change analysis | Non-empty if breaking |
 
 Missing items → ask user. Do not guess uncertain details.
 
 ---
 
-## 6. Final Comment Format Specification
+## 8. Final Comment Format Specification
 
 First line MUST be exactly:
 ```
@@ -125,28 +190,13 @@ First line MUST be exactly:
 ```
 No blank lines before it.
 
-Structure:
+**Structure (adapt based on complexity):**
 
 ~~~markdown
 # Current implementation plan
 
-```json
-{
-  "issue": <issueNumber>,
-  "repo": "<repoOwner>/<repoName>",
-  "branch": "<branchName>",
-  "acceptanceCriteria": [
-    ...
-  ],
-  "files": [
-    ...
-  ],
-  "status": "approved"
-}
-```
-
 ## Summary
-(Concise rationale and goal.)
+(Concise rationale, goal, and complexity classification: TRIVIAL/STANDARD/COMPLEX)
 
 ## Implementation Steps
 1. ...
@@ -156,39 +206,36 @@ Structure:
 ## Test Plan
 - Unit: ...
 - Integration: ...
+- Container: ... (if Docker changes)
 - Docs: ...
-- Edge / Regression: ...
-- (Optional) Performance: ...
+- Edge Cases: ...
+- Performance: ... (if relevant for ESP32/caching)
 
-## Examples
+## Examples (STANDARD/COMPLEX)
 - Example A (minimal): ...
-- Example B (alternate usage): ...
-- Example C (legacy/backward-compatible): ...
+- Example B (advanced): ...
 
-## Risks & Mitigations
+## Risks & Mitigations (COMPLEX or if identified)
 - Risk: ...
   - Mitigation: ...
-- Risk: ...
-  - Mitigation: ...
+
+## Backward Compatibility (COMPLEX or if breaking)
+- Analysis of breaking changes
+- Migration path for existing users
 
 ## Definition of Done
-- Item 1
-- Item 2
-- Item 3
+- [ ] All tests pass (npm run test:all)
+- [ ] Documentation updated (docs-user/ or docs-developer/)
+- [ ] CHANGELOG.md updated
+- [ ] Version bumped (if user-facing change)
+- [ ] No new high/critical security vulnerabilities
+- [ ] Code follows KISS principle and project conventions
 - ...
 
-## Commit Messages (Optional)
-- feat(...): ...
-- test(...): ...
-- docs(...): ...
-- chore(...): ...
 ~~~
-
-Ensure valid JSON and no trailing commentary afterward.
-
 ---
 
-## 7. Cloud Agent Retrieval Instructions
+## 9. Cloud Agent Retrieval Instructions
 
 Later prompt to cloud agent:
 `Implement issue #<issueNumber>. Use the issue comment whose first line is "# Current implementation plan". If absent, request it before proceeding.`
@@ -196,12 +243,11 @@ Later prompt to cloud agent:
 Agent behavior:
 - Fetch issue comments.
 - Locate the single comment whose first line matches exactly.
-- Parse JSON block for structured guidance.
 - Execute steps and open PR.
 
 ---
 
-## 8. Branch Naming Guidance
+## 10. Branch Naming Guidance
 
 Suggested pattern:
 - Lowercase
@@ -209,13 +255,13 @@ Suggested pattern:
 - Prefix with `feat/`, `fix/`, or `chore/`.
 
 Example:
-Issue title: “Allow optional icsUrl for templates using only extraData”  
+Issue title: "Allow optional icsUrl for templates using only extraData"  
 Suggested: `feat/optional-icsurl-extra-data`  
 Accept user override.
 
 ---
 
-## 9. Acceptance Criteria Pattern
+## 11. Acceptance Criteria Pattern
 
 Each must be:
 - Binary (pass/fail).
@@ -230,132 +276,71 @@ Example:
 
 ---
 
-## 10. Test Plan Pattern
+## 12. Test Plan Pattern
 
-Encourage coverage:
-- Unit: schema changes, utility functions.
-- Integration: handler / worker conditional logic.
-- Docs: examples align with new behavior.
-- Edge: minimal config, legacy config, invalid config missing `template`.
-- (Optional) Performance: verify no added latency.
+Must address (based on changes):
+- **Unit Tests**: Schema validation, utility functions, parsers (Jest)
+- **Integration Tests**: API handlers, worker processes, calendar fetching
+- **Container Tests**: Docker integration tests if rootfs/ or Dockerfile changes
+- **Documentation**: Examples in docs-user/ align with behavior
+- **Edge Cases**: 0 events, invalid configs, missing fields, malformed ICS
+- **Regression**: Existing configs/templates remain unaffected
+- **Performance**: CRC32/image serving speed maintained (critical for ESP32 battery life)
+
+All tests must pass before PR: `npm run test:all`
 
 ---
 
-## 11. Clarification Prompts
+## 13. Clarification Prompts
 
 Use concise targeted questions:
-- “List the exact files to modify.”
-- “Provide at least three acceptance criteria.”
-- “Confirm branch name: `<suggestedBranch>` or propose another.”
-- “Any risks or non-goals?”
+- "List the exact files to modify."
+- "Provide at least three acceptance criteria."
+- "Confirm branch name: `<suggestedBranch>` or propose another."
+- "Any risks or non-goals?"
 
 ---
 
-## 12. Guardrails
+## 14. Guardrails & Approval Rules
 
-- Do NOT emit final plan before explicit approval.
-- Do NOT produce multiple plan comments.
-- Restate everything; do not rely on hidden prior context.
-- Resolve ambiguities before finalizing.
+**Drafts**: Must be clearly labeled "Draft Plan" and must NOT use the heading `# Current implementation plan`.
 
----
+**Approval Detection**: Use natural language understanding to detect approval:
+- Positive signals: "approved", "go ahead", "looks good", "yes", "ship it", "👍", "sounds good", "let's do it"
+- Revision signals: "change", "adjust", "revise", "modify", "wait", "not yet"
 
-## 13. User Instructions Post-Emission
+**Rules**:
+- Do NOT emit final plan before explicit approval
+- Do NOT produce multiple plan comments (one authoritative version only)
+- Restate everything; do not rely on hidden prior context
+- Resolve ambiguities before finalizing
 
-After final plan output:
-1. Paste/edit it into a single issue comment.
-2. Avoid creating additional comments with same heading—edit existing.
-3. Invoke cloud agent with the minimal kickoff prompt.
-
----
-
-## 14. Example (For Illustration Only—Do Not Emit Without Request)
-
-~~~markdown
-# Current implementation plan
-
-```json
-{
-  "issue": 3,
-  "repo": "jantielens/ha-calendar2image",
-  "branch": "feat/optional-icsurl",
-  "acceptanceCriteria": [
-    "Config validates without icsUrl",
-    "Events array [] when icsUrl absent",
-    "Backward compatibility maintained",
-    "Docs updated marking icsUrl optional",
-    "Tests cover both paths"
-  ],
-  "files": [
-    "src/config/schema.js",
-    "src/api/handler.js",
-    "src/image/worker.js",
-    "tests/config/schema.test.js",
-    "tests/api/handler.test.js",
-    "docs-user/CONFIGURATION.md",
-    "config-sample-README.md",
-    "CHANGELOG.md"
-  ],
-  "status": "approved"
-}
-```
-## Summary
-...
-
-(Etc.)
-~~~
+**Non-Goals**: If user supplies non-goals, include them in Summary or a brief "Non-Goals" subsection.
 
 ---
 
-## 15. Final Output Rule
+## 15. Error Handling
 
-Only output the final comment body after approval. Drafts must be clearly labeled (e.g., “Draft plan”) and must NOT start with the heading `# Current implementation plan`.
-
----
-
-## 16. Approval Keywords
-
-Trigger final emission on:
-- `approved`
-- `go ahead`
-- `looks good`
-- `ship it`
-
-Revision triggers:
-- `change`
-- `adjust`
-- `revise`
-- `modify`
+- Issue fetch fails → Verify URL or request owner/repo manually
+- Vague acceptance criteria → Request testable bullet points
+- Missing project conventions → Search for copilot-instructions.md and validate
+- Unclear complexity → Ask user for clarification
+- Plan violates project conventions → Flag and request adjustments
 
 ---
 
-## 17. Non-Goals
+## 16. Termination & Post-Emission
 
-If user supplies non-goals, include them in Summary or a brief “Non-Goals” subsection inside the plan (optional).
+The planning phase TERMINATES when:
+1. All required fields (per complexity) gathered
+2. Project-specific validation passed
+3. User approval confirmed
+4. Final plan emitted starting with `# Current implementation plan`
 
----
-
-## 18. Error Handling
-
-If issue metadata fetch fails:
-- Prompt user to verify URL or supply owner/repo manually.
-
-If acceptance criteria too vague:
-- Ask: “Please restate acceptance criteria as clear, testable bullet points.”
-
----
-
-## 19. Termination
-
-Planning phase ends ONLY after:
-- All required fields gathered.
-- User approval confirmed.
-- Final plan comment emitted cleanly.
-
----
-
-## 20. Internal Summary
-
-Single authoritative implementation plan comment; heading = `# Current implementation plan`; emit only after explicit user approval; cloud agent later uses that comment verbatim.
+**After emission**:
+1. Confirm the plan has been emitted
+2. Instruct user to paste it into the GitHub issue as a comment
+3. **STOP all further action**—do NOT offer implementation steps, do NOT begin coding
+4. User must explicitly request implementation in a separate session
 
 ---
