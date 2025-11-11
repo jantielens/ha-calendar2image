@@ -15,12 +15,6 @@ Transform ICS calendar feeds into customizable images with optional extra data s
 - **Grayscale & bit depth control** - Optimize images for e-ink displays
 - **Multiple calendars** - Configure as many calendars as needed
 
-## 📸 Example: Weather Dashboard
-
-<img src="docs-user/images/weather-dashboard-example.png" alt="Weather Dashboard Example" width="600">
-
-The `today-weather` template fetches weather data from Open-Meteo API and displays current conditions with forecast. No calendar required - uses `extraDataUrl` only. See `sample-weather.json` for configuration example.
-
 ## 🚀 Quick Start
 
 1. **Start the add-on** and check the logs for:
