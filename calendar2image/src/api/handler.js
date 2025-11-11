@@ -169,7 +169,8 @@ async function generateCalendarImage(index, options = {}) {
       imageType: config.imageType,
       grayscale: config.grayscale,
       bitDepth: config.bitDepth,
-      rotate: config.rotate
+      rotate: config.rotate,
+      adjustments: config.adjustments
     });
     const imageDuration = Date.now() - startImage;
     console.log(`[API] Image generated: ${result.buffer.length} bytes in ${imageDuration}ms`);
