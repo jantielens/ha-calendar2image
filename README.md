@@ -1,6 +1,6 @@
 # Calendar2Image for Home Assistant
 
-A Home Assistant add-on that transforms ICS calendar feeds into customizable images with optional extra data sources (weather, tasks, etc.) - perfect for e-ink displays and dashboards. Features multiple calendar support, REST API, intelligent caching, custom JavaScript templates, and optimized rendering.
+Transform calendars, other data, or both into customizable images - supports ICS feeds, external data sources, custom templates, intelligent caching, and e-ink optimization for ultra-low-power displays.
 
 > **⚠️ Network Access:** Generated images are served via the built-in web server (default port 3000) and will be accessible to any device or user on your internal network.
 
