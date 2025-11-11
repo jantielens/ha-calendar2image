@@ -119,7 +119,8 @@ async function generateCalendarImageInWorker(index, trigger = 'unknown') {
       imageType: config.imageType || 'png',
       grayscale: config.grayscale || false,
       bitDepth: config.bitDepth || 8,
-      rotate: config.rotate || 0
+      rotate: config.rotate || 0,
+      adjustments: config.adjustments
     });
     
     // Calculate CRC32

@@ -14,6 +14,7 @@ A Home Assistant add-on that transforms ICS calendar feeds into customizable ima
 - **Pre-generation & caching** - Ultra-fast responses (<100ms) with scheduled background generation
 - **CRC32 checksums** - Bandwidth-efficient change detection for e-ink displays
 - **Extra data integration** - Fetch weather, tasks, or other JSON data for enhanced templates
+- **Image adjustments** - 10 adjustment parameters (brightness, contrast, saturation, etc.) with dithering support for display optimization
 - **Grayscale & bit depth control** - Optimize images for e-ink displays
 - **Multiple calendars** - Configure as many calendars as needed
 - **Image rotation** - Support for landscape/portrait orientations

@@ -155,6 +155,68 @@ const configSchema = {
       type: 'object',
       description: 'HTTP headers for extra data request (e.g., Authorization for Home Assistant)',
       additionalProperties: { type: 'string' }
+    },
+    adjustments: {
+      type: 'object',
+      description: 'Image adjustments for display optimization (e-ink, LCD, OLED)',
+      properties: {
+        brightness: {
+          type: 'number',
+          minimum: -100,
+          maximum: 100,
+          description: 'Adjust overall brightness (-100 to +100)'
+        },
+        contrast: {
+          type: 'number',
+          minimum: -100,
+          maximum: 100,
+          description: 'Adjust contrast (-100 to +100)'
+        },
+        saturation: {
+          type: 'number',
+          minimum: -100,
+          maximum: 100,
+          description: 'Adjust color saturation (-100 to +100, no effect on grayscale)'
+        },
+        gamma: {
+          type: 'number',
+          minimum: 0.1,
+          maximum: 3.0,
+          description: 'Gamma correction for mid-tones (0.1 to 3.0, default: 1.0)'
+        },
+        sharpen: {
+          type: 'boolean',
+          description: 'Apply sharpening filter for text readability'
+        },
+        invert: {
+          type: 'boolean',
+          description: 'Invert colors (useful for dark mode or specific e-ink displays)'
+        },
+        hue: {
+          type: 'number',
+          minimum: -180,
+          maximum: 180,
+          description: 'Shift color hue (-180 to +180 degrees, no effect on grayscale)'
+        },
+        normalize: {
+          type: 'boolean',
+          description: 'Auto-enhance contrast via histogram normalization'
+        },
+        threshold: {
+          type: 'number',
+          minimum: 0,
+          maximum: 255,
+          description: 'Black/white threshold for 1-bit displays (0-255, default: 127)'
+        },
+        dither: {
+          oneOf: [
+            { type: 'boolean' },
+            { type: 'string', enum: ['floyd-steinberg', 'atkinson'] }
+          ],
+          description: 'Apply dithering for low bit-depth displays (false, true/"floyd-steinberg", or "atkinson")'
+        }
+      },
+      additionalProperties: false
     }
   },
   required: ['template'],

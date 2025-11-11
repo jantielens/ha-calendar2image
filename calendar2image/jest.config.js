@@ -9,6 +9,7 @@ module.exports = {
   testMatch: ['**/tests/**/*.test.js'],
   testPathIgnorePatterns: [
     'tests/integration',
+    'tests/matrix',                  // Matrix generation tests (requires Docker, run separately)
     'tests/image/browser.test.js',  // Requires Puppeteer/Chrome
     'tests/image/index.test.js',     // Requires Puppeteer/Chrome
     'tests/api/handler.test.js'      // Mocks are affected by missing browser
