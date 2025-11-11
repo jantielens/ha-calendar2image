@@ -266,6 +266,26 @@ This implementation exactly matches Paint.NET's Levels adjustment dialog:
 
 ![Paint.NET Levels Reference](https://github.com/user-attachments/assets/f3b3b494-9b57-4d90-b4d9-49277308501b)
 
+**Visual Reference - Gamma × Output Black Matrix**:
+
+These matrices show how `gamma` and `outputBlack` parameters interact:
+
+![Levels Gamma × Output Black - Grayscale 2-bit](images/levels-gamma-output-grayscale-2bit.png)
+*E-ink simulation (2-bit grayscale) - 8 gamma values × 5 outputBlack values*
+
+![Levels Gamma × Output Black - Color 8-bit](images/levels-gamma-output-color-8bit.png)
+*Full color (8-bit) - 8 gamma values × 5 outputBlack values*
+
+**Visual Reference - Input Range Matrix**:
+
+These matrices show how `inputBlack` and `inputWhite` parameters compress/expand the input range:
+
+![Levels Input Range - Grayscale 2-bit](images/levels-input-range-grayscale-2bit.png)
+*E-ink simulation (2-bit grayscale) - 5 inputWhite values × 5 inputBlack values*
+
+![Levels Input Range - Color 8-bit](images/levels-input-range-color-8bit.png)
+*Full color (8-bit) - 5 inputWhite values × 5 inputBlack values*
+
 **Performance**: Fast (native Sharp operations)
 
 ---
