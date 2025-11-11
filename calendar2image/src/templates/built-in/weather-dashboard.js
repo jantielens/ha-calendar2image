@@ -94,10 +94,13 @@ function getWeatherEmoji(code) {
 }
 
 module.exports = function weatherDashboard(data) {
-  const { events, now, locale, extraData } = data;
+  const { events, now, locale, extra } = data;
   
   // Note: events will be an empty array if icsUrl is not configured
   // This template demonstrates working purely with extraData
+  
+  // Support both 'extra' (from renderTemplate) and 'extraData' (for direct calls)
+  const extraData = extra || data.extraData || {};
   
   if (!extraData || !extraData.hourly) {
     return `
