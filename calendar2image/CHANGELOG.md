@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.11.2] - 2025-11-11
+
+### Changed
+- **Updated project description** across all documentation to better reflect data source flexibility
+  - New description emphasizes support for calendars, other data sources, or both
+  - Highlights optional ICS feeds and external data source capabilities
+  - Makes it clear the add-on can work with calendars only, data only, or combined
+  - Updated in: config.yaml, package.json, and both README files
+
 ## [0.11.1] - 2025-11-11
 
 ### Fixed
