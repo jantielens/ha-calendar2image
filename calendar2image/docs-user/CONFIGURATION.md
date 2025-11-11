@@ -62,7 +62,10 @@ Each configuration file should contain:
   
   **⚠️ Queue Protection**: The system automatically prevents duplicate jobs for the same configuration. If a config is already being generated when a new scheduled request arrives, the new request is skipped and logged to both console and timeline view. This prevents infinite queue growth on slower devices (e.g., Raspberry Pi with 25+ second generation times).
 - **locale** (string, default: `"en-US"`): BCP 47 locale code for date/time formatting (e.g., `"en-US"`, `"de-DE"`, `"fr-FR"`)
-- **timezone** (string, optional): IANA timezone name to convert event times (e.g., `"Europe/Berlin"`, `"America/New_York"`)
+- **timezone** (string, optional): IANA timezone name to convert event times (e.g., `"Europe/Berlin"`, `"America/New_York"`, `"Asia/Tokyo"`). 
+  - **⚠️ Important**: Only [IANA timezone database](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones) names are accepted. 
+  - Timezone abbreviations like `"CET"`, `"EST"`, `"PST"` are **NOT valid** and will cause validation errors.
+  - Use the full timezone name from the IANA database (e.g., use `"Europe/Brussels"` instead of `"CET"`, `"America/New_York"` instead of `"EST"`)
 - **extraDataUrl** (string or array, optional): URL(s) to fetch additional JSON data for templates. See [Extra Data Guide](EXTRA-DATA.md) for details.
   - **String format** (simple): Single URL
   - **Array format** (advanced): Array of data source objects with per-source configuration

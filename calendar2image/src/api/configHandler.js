@@ -1030,9 +1030,19 @@ async function runValidations(index, config, icsUrls, extraDataUrls) {
       const testDate = new Date();
       const formatter = new Intl.DateTimeFormat('en-US', { timeZone: config.timezone });
       formatter.format(testDate);
-      validations.timezone = { valid: true, message: 'Valid IANA timezone' };
+      
+      // Check if timezone is a deprecated abbreviation (CET, EST, PST, etc.)
+      // These are technically valid but not recommended
+      const deprecatedAbbreviations = ['CET', 'CEST', 'EST', 'EDT', 'CST', 'CDT', 'MST', 'MDT', 'PST', 'PDT', 'EET', 'EEST', 'WET', 'WEST', 'MET', 'MEST'];
+      if (deprecatedAbbreviations.includes(config.timezone.toUpperCase())) {
+        validations.timezone = { valid: false, message: 'Invalid timezone abbreviation - use IANA region/city format (e.g., "Europe/Berlin", not "CET")' };
+        console.warn(`[Config Validation] Deprecated timezone abbreviation in config ${index}: "${config.timezone}". Use IANA region/city format like "Europe/Berlin" or "America/New_York" instead of abbreviations like "CET" or "EST". See: https://en.wikipedia.org/wiki/List_of_tz_database_time_zones`);
+      } else {
+        validations.timezone = { valid: true, message: 'Valid IANA timezone' };
+      }
     } catch (error) {
-      validations.timezone = { valid: false, message: 'Invalid timezone name' };
+      validations.timezone = { valid: false, message: 'Invalid timezone name - use IANA timezone (e.g., "Europe/Berlin", not "CET")' };
+      console.warn(`[Config Validation] Invalid timezone in config ${index}: "${config.timezone}". Use IANA timezone names like "Europe/Berlin" or "America/New_York", not abbreviations like "CET" or "EST". See: https://en.wikipedia.org/wiki/List_of_tz_database_time_zones`);
     }
   }
 

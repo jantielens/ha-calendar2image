@@ -30,7 +30,7 @@ Example configuration for Antwerp, Belgium:
   "expandRecurringFrom": -1,
   "expandRecurringTo": 1,
   "locale": "nl-BE",
-  "timezone": "CET",
+  "timezone": "Europe/Brussels",
   "extraDataUrl": "https://api.open-meteo.com/v1/forecast?latitude=51.2194&longitude=4.4025&hourly=temperature_2m,weather_code",
   "extraDataCacheTtl": 3600
 }
