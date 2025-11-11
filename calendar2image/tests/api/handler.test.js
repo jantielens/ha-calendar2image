@@ -81,7 +81,8 @@ describe('API Handler', () => {
         height: mockConfig.height,
         imageType: mockConfig.imageType,
         grayscale: mockConfig.grayscale,
-        bitDepth: mockConfig.bitDepth
+        bitDepth: mockConfig.bitDepth,
+        adjustments: undefined
       });
       expect(result).toEqual(mockImageResult);
     });
@@ -525,6 +526,96 @@ describe('API Handler', () => {
       });
     });
 
+    describe('image adjustments', () => {
+      it('should pass adjustments to generateImage when configured', async () => {
+        const configWithAdjustments = {
+          ...mockConfig,
+          adjustments: {
+            brightness: 10,
+            contrast: 20,
+            gamma: 1.2,
+            sharpen: true
+          }
+        };
+
+        loadConfig.mockResolvedValue(configWithAdjustments);
+        getCalendarEvents.mockResolvedValue(mockEvents);
+        renderTemplate.mockResolvedValue(mockHtml);
+        generateImage.mockResolvedValue(mockImageResult);
+
+        await generateCalendarImage(0);
+
+        expect(generateImage).toHaveBeenCalledWith(mockHtml, {
+          width: configWithAdjustments.width,
+          height: configWithAdjustments.height,
+          imageType: configWithAdjustments.imageType,
+          grayscale: configWithAdjustments.grayscale,
+          bitDepth: configWithAdjustments.bitDepth,
+          rotate: configWithAdjustments.rotate,
+          adjustments: configWithAdjustments.adjustments
+        });
+      });
+
+      it('should pass undefined adjustments when not configured', async () => {
+        loadConfig.mockResolvedValue(mockConfig);
+        getCalendarEvents.mockResolvedValue(mockEvents);
+        renderTemplate.mockResolvedValue(mockHtml);
+        generateImage.mockResolvedValue(mockImageResult);
+
+        await generateCalendarImage(0);
+
+        expect(generateImage).toHaveBeenCalledWith(mockHtml, expect.objectContaining({
+          adjustments: undefined
+        }));
+      });
+
+      it('should handle all adjustment options', async () => {
+        const configWithAllAdjustments = {
+          ...mockConfig,
+          adjustments: {
+            brightness: -10,
+            contrast: 15,
+            saturation: -20,
+            gamma: 0.8,
+            sharpen: true,
+            invert: false,
+            hue: 45,
+            normalize: true,
+            threshold: 128
+          }
+        };
+
+        loadConfig.mockResolvedValue(configWithAllAdjustments);
+        getCalendarEvents.mockResolvedValue(mockEvents);
+        renderTemplate.mockResolvedValue(mockHtml);
+        generateImage.mockResolvedValue(mockImageResult);
+
+        await generateCalendarImage(0);
+
+        expect(generateImage).toHaveBeenCalledWith(mockHtml, expect.objectContaining({
+          adjustments: configWithAllAdjustments.adjustments
+        }));
+      });
+
+      it('should pass empty adjustments object when configured but empty', async () => {
+        const configWithEmptyAdjustments = {
+          ...mockConfig,
+          adjustments: {}
+        };
+
+        loadConfig.mockResolvedValue(configWithEmptyAdjustments);
+        getCalendarEvents.mockResolvedValue(mockEvents);
+        renderTemplate.mockResolvedValue(mockHtml);
+        generateImage.mockResolvedValue(mockImageResult);
+
+        await generateCalendarImage(0);
+
+        expect(generateImage).toHaveBeenCalledWith(mockHtml, expect.objectContaining({
+          adjustments: {}
+        }));
+      });
+    });
+
     describe('config without icsUrl (extraData-only)', () => {
       it('should successfully generate image without icsUrl', async () => {
         const configWithoutIcsUrl = {
@@ -555,7 +646,8 @@ describe('API Handler', () => {
           imageType: configWithoutIcsUrl.imageType,
           grayscale: configWithoutIcsUrl.grayscale,
           bitDepth: configWithoutIcsUrl.bitDepth,
-          rotate: undefined
+          rotate: undefined,
+          adjustments: undefined
         });
         expect(result).toEqual(mockImageResult);
       });
