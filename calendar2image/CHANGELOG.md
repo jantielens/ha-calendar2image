@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.11.1] - 2025-11-11
+
+### Fixed
+- **Image adjustments now applied to /fresh endpoint** (#83)
+  - Fixed bug where `config.adjustments` parameter was not passed to `generateImage()` function
+  - Both `/api/:index.:ext` and `/api/:index/fresh.:ext` endpoints now consistently apply configured adjustments
+  - Ensures e-ink displays, LCDs, and OLEDs receive properly adjusted images regardless of endpoint used
+  - Added comprehensive test coverage for adjustments parameter handling
+
 ## [0.11.0] - 2025-11-11
 
 ### Added
