@@ -29,24 +29,27 @@ Configuration files must be named with numeric IDs:
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `icsUrl` | string or array | Single ICS URL or array of calendar sources. For multiple sources, use objects with `url` (required) and `sourceName` (optional) fields. |
 | `template` | string | Template name to use for rendering (e.g., `"default"`, `"compact"`, `"weekly"`) |
 
 ### Optional Fields
 
 | Field | Type | Default | Valid Values | Description |
 |-------|------|---------|--------------|-------------|
+| `icsUrl` | string or array | (none) | Valid HTTP(S) URL(s) | Single ICS URL or array of calendar sources. For multiple sources, use objects with `url` (required) and `sourceName` (optional) fields. If omitted, template receives an empty events array (useful for extraData-only templates like weather dashboards). |
 | `width` | integer | `800` | `100-4096` | Width of the output image in pixels |
 | `height` | integer | `600` | `100-4096` | Height of the output image in pixels |
 | `grayscale` | boolean | `false` | `true`, `false` | Convert output image to grayscale |
 | `bitDepth` | integer | `8` | `1-32` | Bit depth for the output image |
 | `imageType` | string | `"png"` | `"png"`, `"jpg"`, `"bmp"` | Output image format |
 | `rotate` | integer | `0` | `0`, `90`, `180`, `270` | Rotate the output image (in degrees) |
-| `expandRecurringFrom` | integer | `-31` | Any negative integer | Number of days in the past to expand recurring events |
-| `expandRecurringTo` | integer | `31` | Any positive integer | Number of days in the future to expand recurring events |
+| `expandRecurringFrom` | integer | `-31` | Any negative integer | Number of days in the past to expand recurring events (only applies when `icsUrl` is configured) |
+| `expandRecurringTo` | integer | `31` | Any positive integer | Number of days in the future to expand recurring events (only applies when `icsUrl` is configured) |
 | `preGenerateInterval` | string | (none) | Cron expression | Schedule for automatic pre-generation (e.g., `"*/5 * * * *"` for every 5 minutes) |
 | `locale` | string | `"en-US"` | BCP 47 locale code | Locale for date/time formatting (e.g., `"de-DE"`, `"fr-FR"`) |
 | `timezone` | string | (none) | IANA timezone name | Timezone to convert event times (e.g., `"Europe/Berlin"`, `"America/New_York"`) |
+| `extraDataUrl` | string or array | (none) | Valid HTTP(S) URL(s) | URL(s) to fetch additional JSON data for templates (e.g., weather, tasks). See documentation for details. |
+| `extraDataCacheTtl` | integer | `300` | 0 or higher | Cache TTL in seconds for extra data |
+| `extraDataHeaders` | object | `{}` | Key-value pairs | HTTP headers for extra data requests (e.g., Authorization tokens) |
 
 ## Examples
 
@@ -142,6 +145,22 @@ This configuration combines events from multiple calendars. Events will include 
 }
 ```
 With `preGenerateInterval` set, images are regenerated every 5 minutes in the background. API responses are <100ms (from cache) instead of ~8 seconds (on-demand generation). Use the `/api/{index}.{ext}.crc32` endpoint (e.g., `/api/0.png.crc32`) to check if the image changed before downloading.
+
+### Weather Dashboard (No Calendar)
+```json
+{
+  "template": "weather-dashboard",
+  "width": 800,
+  "height": 480,
+  "grayscale": true,
+  "bitDepth": 2,
+  "imageType": "png",
+  "extraDataUrl": "https://api.open-meteo.com/v1/forecast?latitude=50.8505&longitude=4.3488&hourly=temperature_2m,weather_code,rain,showers,snowfall,snow_depth,precipitation,precipitation_probability",
+  "extraDataCacheTtl": 1800,
+  "preGenerateInterval": "*/15 * * * *"
+}
+```
+This configuration demonstrates a template that doesn't use any calendar data. The `icsUrl` field is omitted, and the template receives an empty events array. The template uses `extraData` to display weather information from the Open-Meteo API. Perfect for info screens, weather stations, or dashboards that don't need calendar events.
 
 ## Calendar Source Examples
 

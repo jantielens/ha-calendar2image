@@ -38,21 +38,21 @@ Each configuration file should contain:
 
 ### Required Fields
 
-- **icsUrl** (string or array): Calendar source configuration. Must start with `http://` or `https://`
+- **template** (string): Name of the template to use (e.g., "week-view", "today-view")
+
+### Optional Fields
+
+- **icsUrl** (string or array, optional): Calendar source configuration. Must start with `http://` or `https://`. **If omitted, the template receives an empty events array**, enabling extraData-only templates like weather dashboards or info screens.
   - **String format**: Single ICS URL (e.g., `"https://calendar.example.com/feed.ics"`)
   - **Array format**: Multiple calendar sources with optional names
     - `url` (string, required): ICS URL to fetch
     - `sourceName` (string, optional): Human-readable name for the calendar source
     - `rejectUnauthorized` (boolean, optional, default: `true`): Verify SSL certificates. Set to `false` only for trusted sources with certificate issues.
-- **template** (string): Name of the template to use (e.g., "week-view", "today-view")
-
-### Optional Fields
-
 - **grayscale** (boolean, default: `false`): Convert image to grayscale
 - **bitDepth** (number, default: `8`): Color bit depth (1-32)
 - **imageType** (string, default: `"png"`): Output image format. Options: `"jpg"`, `"png"`, `"bmp"`
-- **expandRecurringFrom** (number, default: `-31`): Days from today to start expanding recurring events (negative for past)
-- **expandRecurringTo** (number, default: `31`): Days from today to stop expanding recurring events
+- **expandRecurringFrom** (number, default: `-31`): Days from today to start expanding recurring events (negative for past). Only applies when `icsUrl` is configured.
+- **expandRecurringTo** (number, default: `31`): Days from today to stop expanding recurring events. Only applies when `icsUrl` is configured.
 - **preGenerateInterval** (string, optional): Cron expression for automatic image pre-generation. When set, images are generated in the background on this schedule and served from cache for ultra-fast responses. **When NOT set, images are always generated fresh on each request** to ensure up-to-date calendar data. Examples:
   - `"*/5 * * * *"` - Every 5 minutes (recommended for cached mode)
   - `"*/1 * * * *"` - Every 1 minute (very frequent) 
@@ -174,6 +174,28 @@ Without `preGenerateInterval`, images are **always generated fresh** on each req
 }
 ```
 Fetches weather data from Home Assistant to use in templates. See [Extra Data Guide](EXTRA-DATA.md) for more details.
+
+### Weather Dashboard (No Calendar)
+```json
+{
+  "template": "weather-dashboard",
+  "width": 800,
+  "height": 480,
+  "grayscale": true,
+  "bitDepth": 2,
+  "imageType": "png",
+  "extraDataUrl": "https://api.open-meteo.com/v1/forecast?latitude=50.8505&longitude=4.3488&hourly=temperature_2m,weather_code,rain,showers,snowfall,snow_depth,precipitation,precipitation_probability",
+  "extraDataCacheTtl": 1800,
+  "preGenerateInterval": "*/15 * * * *"
+}
+```
+This configuration demonstrates a template that **doesn't use any calendar data**. The `icsUrl` field is omitted entirely, and the template receives an empty events array. The template uses `extraData` to display weather information from the Open-Meteo API. Perfect for:
+- Weather stations
+- Info screens
+- Dashboards that don't need calendar events
+- Any display that uses external data sources without calendar integration
+
+**Note**: Replace `latitude` and `longitude` with your location coordinates in the extraDataUrl.
 
 ### Configuration with Multiple Extra Data Sources (Advanced)
 ```json

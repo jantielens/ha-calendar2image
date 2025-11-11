@@ -1,5 +1,22 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+- **Optional icsUrl for extraData-only templates**
+  - `icsUrl` is now optional in configuration files
+  - Templates can work exclusively with `extraData` without requiring calendar sources
+  - When `icsUrl` is omitted, templates receive an empty events array
+  - Enables new use-cases: weather dashboards, info screens, data visualizations without calendar events
+  - Config page UI displays "Not configured" status when icsUrl is absent
+  - Fully backward compatible: existing configs with icsUrl work unchanged
+
+### Documentation
+- **CONFIGURATION.md**: Updated to mark `icsUrl` as optional with clear explanation
+- **CONFIGURATION.md**: Added "Weather Dashboard (No Calendar)" example using Open-Meteo API
+- **config-sample-README.md**: Updated schema tables to reflect icsUrl as optional
+- **config-sample-README.md**: Added weather dashboard example configuration
+
 ## [0.9.0] - 2025-11-11
 
 ### Changed
