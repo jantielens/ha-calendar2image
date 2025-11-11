@@ -86,49 +86,62 @@ async function generateCalendarImage(index, options = {}) {
     // Step 1: Load configuration
     console.log(`[API] Loading configuration ${index}...`);
     const config = await loadConfig(index);
-    console.log(`[API] Configuration loaded: template="${config.template}", icsUrl="${config.icsUrl}"`);
+    const hasCalendar = config.icsUrl !== undefined;
+    console.log(`[API] Configuration loaded: template="${config.template}", icsUrl="${hasCalendar ? config.icsUrl : '(not configured)'}"`)
     console.log(`[API] Image settings: ${config.width}x${config.height}, ${config.imageType}, grayscale=${config.grayscale}, bitDepth=${config.bitDepth}, rotate=${config.rotate}°`);
 
     // Step 2: Fetch calendar events and extra data in parallel
-    const isMultiSource = Array.isArray(config.icsUrl);
-    if (isMultiSource) {
-      console.log(`[API] Fetching calendar events from ${config.icsUrl.length} ICS source(s)...`);
-    } else {
-      console.log(`[API] Fetching calendar events from ICS URL...`);
-    }
+    let events;
+    let extraData;
     
     const startFetch = Date.now();
     
-    const [events, extraData] = await Promise.all([
-      getCalendarEvents(config.icsUrl, {
-        expandRecurringFrom: config.expandRecurringFrom,
-        expandRecurringTo: config.expandRecurringTo,
-        timezone: config.timezone
-      }),
-      fetchExtraDataForConfig(config, index)
-    ]);
-    
-    const fetchDuration = Date.now() - startFetch;
-    
-    // Enhanced logging for multiple sources
-    if (isMultiSource) {
-      // Count events by source
-      const eventsBySource = {};
-      events.forEach(event => {
-        const sourceKey = event.source;
-        eventsBySource[sourceKey] = (eventsBySource[sourceKey] || 0) + 1;
-      });
+    if (hasCalendar) {
+      const isMultiSource = Array.isArray(config.icsUrl);
+      if (isMultiSource) {
+        console.log(`[API] Fetching calendar events from ${config.icsUrl.length} ICS source(s)...`);
+      } else {
+        console.log(`[API] Fetching calendar events from ICS URL...`);
+      }
       
-      const sourceDetails = config.icsUrl.map((source, index) => {
-        const eventCount = eventsBySource[index] || 0;
-        const sourceName = source.sourceName ? ` (${source.sourceName})` : '';
-        return `source ${index}${sourceName}: ${eventCount} events`;
-      }).join(', ');
+      [events, extraData] = await Promise.all([
+        getCalendarEvents(config.icsUrl, {
+          expandRecurringFrom: config.expandRecurringFrom,
+          expandRecurringTo: config.expandRecurringTo,
+          timezone: config.timezone
+        }),
+        fetchExtraDataForConfig(config, index)
+      ]);
       
-      console.log(`[API] Fetched ${events.length} events total in ${fetchDuration}ms - ${sourceDetails}`);
+      const fetchDuration = Date.now() - startFetch;
+      
+      // Enhanced logging for multiple sources
+      if (isMultiSource) {
+        // Count events by source
+        const eventsBySource = {};
+        events.forEach(event => {
+          const sourceKey = event.source;
+          eventsBySource[sourceKey] = (eventsBySource[sourceKey] || 0) + 1;
+        });
+        
+        const sourceDetails = config.icsUrl.map((source, index) => {
+          const eventCount = eventsBySource[index] || 0;
+          const sourceName = source.sourceName ? ` (${source.sourceName})` : '';
+          return `source ${index}${sourceName}: ${eventCount} events`;
+        }).join(', ');
+        
+        console.log(`[API] Fetched ${events.length} events total in ${fetchDuration}ms - ${sourceDetails}`);
+      } else {
+        console.log(`[API] Fetched ${events.length} events in ${fetchDuration}ms`);
+      }
     } else {
-      console.log(`[API] Fetched ${events.length} events in ${fetchDuration}ms`);
+      console.log(`[API] No calendar configured, skipping event fetch (extraData-only mode)`);
+      events = [];
+      extraData = await fetchExtraDataForConfig(config, index);
+      const fetchDuration = Date.now() - startFetch;
+      console.log(`[API] Fetched extraData in ${fetchDuration}ms (0 calendar events)`);
     }
+    
     if (config.extraDataUrl) {
       const dataKeys = Array.isArray(extraData) 
         ? `array with ${extraData.length} sources`

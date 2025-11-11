@@ -79,10 +79,10 @@ describe('config loader', () => {
       await expect(loadConfig(0, tempDir)).rejects.toThrow('Invalid JSON');
     });
 
-    it('should throw error for config missing required fields', async () => {
+    it('should accept config without icsUrl (extraData-only mode)', async () => {
       const config = {
         template: 'week-view'
-        // Missing icsUrl
+        // No icsUrl - valid for extraData-only templates
       };
 
       await fs.writeFile(
@@ -90,7 +90,9 @@ describe('config loader', () => {
         JSON.stringify(config)
       );
 
-      await expect(loadConfig(0, tempDir)).rejects.toThrow('Configuration validation failed');
+      const result = await loadConfig(0, tempDir);
+      expect(result.template).toBe('week-view');
+      expect(result.icsUrl).toBeUndefined();
     });
 
     it('should throw error for invalid icsUrl', async () => {
@@ -209,8 +211,8 @@ describe('config loader', () => {
         template: 'week-view'
       };
       const invalidConfig = {
+        icsUrl: 'ftp://invalid.com/calendar.ics', // Invalid protocol
         template: 'week-view'
-        // Missing icsUrl
       };
 
       await fs.writeFile(path.join(tempDir, '0.json'), JSON.stringify(config0));
@@ -220,7 +222,7 @@ describe('config loader', () => {
     });
 
     it('should report all invalid configs in error message', async () => {
-      const invalidConfig1 = { template: 'week-view' }; // Missing icsUrl
+      const invalidConfig1 = { icsUrl: 'ftp://invalid.com/calendar.ics', template: 'week-view' }; // Invalid protocol
       const invalidConfig2 = { icsUrl: 'https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics' }; // Missing template
 
       await fs.writeFile(path.join(tempDir, '0.json'), JSON.stringify(invalidConfig1));
@@ -259,8 +261,8 @@ describe('config loader', () => {
 
     it('should throw error for invalid configs', async () => {
       const invalidConfig = {
+        icsUrl: 'ftp://invalid.com/calendar.ics', // Invalid protocol
         template: 'week-view'
-        // Missing icsUrl
       };
 
       await fs.writeFile(path.join(tempDir, '0.json'), JSON.stringify(invalidConfig));

@@ -338,22 +338,32 @@ async function generateConfigPageHTML(index, config, baseUrl) {
           </div>
           <div class="card-content">
             <div class="section-description">
-              ICS calendar URLs to fetch events from. Supports single URL (string) or multiple URLs (array of objects with <code>url</code> and <code>sourceName</code>).
+              ICS calendar URLs to fetch events from. Supports single URL (string) or multiple URLs (array of objects with <code>url</code> and <code>sourceName</code>). Optional for extraData-only templates.
             </div>
-            <div class="setting-row">
-              <span class="setting-label">Total Sources <span class="json-path" data-json-preview="${escapeHtml(generateJsonPreview(config, 'icsUrl'))}">icsUrl</span></span>
-              <span class="setting-value"><span class="badge badge-info">${icsUrls.length} ${icsUrls.length === 1 ? 'calendar' : 'calendars'}</span></span>
-            </div>
-            <ul class="url-list">
-              ${icsUrls.map((source, idx) => `
-                <li class="url-item">
-                  <span class="url-name">[${idx}] ${escapeHtml(source.sourceName || 'Unnamed source')} <span class="json-path" data-json-preview="${escapeHtml(generateJsonPreview(config, `icsUrl[${idx}].${source.sourceName ? 'sourceName' : 'url'}`))}">icsUrl[${idx}].${source.sourceName ? 'sourceName' : 'url'}</span></span>
-                  <a href="${escapeHtml(source.url)}" target="_blank" class="url-link">${escapeHtml(truncateUrl(source.url))}</a>
-                  ${source.rejectUnauthorized === false ? `<span class="badge badge-warning" title="SSL certificate verification disabled for this source">⚠️ SSL verification disabled</span>` : ''}
-                  ${validations.icsUrls[idx] ? `<div class="url-meta">${getValidationBadge(validations.icsUrls[idx])}</div>` : ''}
-                </li>
-              `).join('')}
-            </ul>
+            ${icsUrls.length > 0 ? `
+              <div class="setting-row">
+                <span class="setting-label">Total Sources <span class="json-path" data-json-preview="${escapeHtml(generateJsonPreview(config, 'icsUrl'))}">icsUrl</span></span>
+                <span class="setting-value"><span class="badge badge-info">${icsUrls.length} ${icsUrls.length === 1 ? 'calendar' : 'calendars'}</span></span>
+              </div>
+              <ul class="url-list">
+                ${icsUrls.map((source, idx) => `
+                  <li class="url-item">
+                    <span class="url-name">[${idx}] ${escapeHtml(source.sourceName || 'Unnamed source')} <span class="json-path" data-json-preview="${escapeHtml(generateJsonPreview(config, `icsUrl[${idx}].${source.sourceName ? 'sourceName' : 'url'}`))}">icsUrl[${idx}].${source.sourceName ? 'sourceName' : 'url'}</span></span>
+                    <a href="${escapeHtml(source.url)}" target="_blank" class="url-link">${escapeHtml(truncateUrl(source.url))}</a>
+                    ${source.rejectUnauthorized === false ? `<span class="badge badge-warning" title="SSL certificate verification disabled for this source">⚠️ SSL verification disabled</span>` : ''}
+                    ${validations.icsUrls[idx] ? `<div class="url-meta">${getValidationBadge(validations.icsUrls[idx])}</div>` : ''}
+                  </li>
+                `).join('')}
+              </ul>
+            ` : `
+              <div class="setting-row">
+                <span class="setting-label">Status <span class="json-path">icsUrl</span></span>
+                <span class="setting-value"><span class="badge badge-secondary">Not configured</span></span>
+              </div>
+              <p style="color: #6c757d; margin-top: 12px; font-size: 0.95em;">
+                No calendar sources configured. Template will receive an empty events array and can work exclusively with extraData.
+              </p>
+            `}
           </div>
         </div>
         
@@ -728,6 +738,9 @@ async function generateConfigPageHTML(index, config, baseUrl) {
  * Parse ICS URLs into array format
  */
 function parseIcsUrls(icsUrl) {
+  if (!icsUrl) {
+    return [];
+  }
   if (Array.isArray(icsUrl)) {
     return icsUrl;
   }

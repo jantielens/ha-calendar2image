@@ -31,15 +31,27 @@ describe('config schema', () => {
       expect(result.errors).toEqual([]);
     });
 
-    it('should reject configuration missing icsUrl', () => {
+    it('should accept configuration without icsUrl (extraData-only mode)', () => {
       const config = {
-        template: 'week-view'
+        template: 'weather-dashboard'
       };
 
       const result = validateConfig(config);
       
-      expect(result.valid).toBe(false);
-      expect(result.errors.length).toBeGreaterThan(0);
+      expect(result.valid).toBe(true);
+      expect(result.errors).toEqual([]);
+    });
+
+    it('should accept configuration without icsUrl but with extraDataUrl', () => {
+      const config = {
+        template: 'weather-dashboard',
+        extraDataUrl: 'https://api.open-meteo.com/v1/forecast?latitude=50.8505&longitude=4.3488&hourly=temperature_2m'
+      };
+
+      const result = validateConfig(config);
+      
+      expect(result.valid).toBe(true);
+      expect(result.errors).toEqual([]);
     });
 
     it('should reject configuration missing template', () => {
