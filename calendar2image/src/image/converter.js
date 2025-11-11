@@ -158,6 +158,36 @@ function applyAtkinsonDither(data, width, height, channels, palette) {
 }
 
 /**
+ * Create a gamma correction lookup table (LUT)
+ * @param {number} gamma - Gamma value (0.1-8.0)
+ * @returns {Uint8Array} 256-element lookup table
+ */
+function createGammaLUT(gamma) {
+  const lut = new Uint8Array(256);
+  for (let i = 0; i < 256; i++) {
+    lut[i] = Math.round(255 * Math.pow(i / 255, gamma));
+  }
+  return lut;
+}
+
+/**
+ * Apply lookup table to image data
+ * @param {Buffer} data - Raw pixel data
+ * @param {Uint8Array} lut - Lookup table
+ * @param {number} channels - Number of channels (3 or 4)
+ * @returns {Buffer} Modified pixel data
+ */
+function applyLUT(data, lut, channels) {
+  const result = Buffer.from(data);
+  for (let i = 0; i < result.length; i++) {
+    // Skip alpha channel if present (every 4th byte when channels=4)
+    if (channels === 4 && (i + 1) % 4 === 0) continue;
+    result[i] = lut[result[i]];
+  }
+  return result;
+}
+
+/**
  * Apply Paint.NET-style levels adjustment
  * @param {Object} pipeline - Sharp pipeline instance
  * @param {Object} config - Levels configuration
@@ -166,9 +196,9 @@ function applyAtkinsonDither(data, width, height, channels, palette) {
  * @param {number} config.gamma - Gamma correction (0.1-8.0)
  * @param {number} config.outputBlack - Output black point (0-255)
  * @param {number} config.outputWhite - Output white point (0-255)
- * @returns {Object} Modified Sharp pipeline
+ * @returns {Promise<Object>} Modified Sharp pipeline
  */
-function applyLevelsAdjustment(pipeline, config) {
+async function applyLevelsAdjustment(pipeline, config) {
   const {
     inputBlack = 0,
     inputWhite = 255,
@@ -177,61 +207,58 @@ function applyLevelsAdjustment(pipeline, config) {
     outputWhite = 255
   } = config;
 
+  // If no adjustments needed, return pipeline unchanged
+  if (inputBlack === 0 && inputWhite === 255 && gamma === 1.0 && outputBlack === 0 && outputWhite === 255) {
+    return pipeline;
+  }
+
+  // Get raw pixel data
+  const { data, info } = await pipeline.raw().toBuffer({ resolveWithObject: true });
+  let result = Buffer.from(data);
+
   // Step 1: Map input range [inputBlack, inputWhite] to [0, 255]
-  // This stretches or compresses the input histogram
   if (inputBlack !== 0 || inputWhite !== 255) {
-    // Avoid division by zero
     const inputRange = inputWhite - inputBlack;
     if (Math.abs(inputRange) < 0.01) {
-      // If input range is too small, skip input mapping
       console.warn('Levels adjustment: inputBlack and inputWhite are too close, skipping input mapping');
     } else {
-      // Formula: output = (input - inputBlack) * (255 / (inputWhite - inputBlack))
-      // Using Sharp's linear: a * input + b
-      const a = 255 / inputRange;
-      const b = -inputBlack * a;
-      pipeline = pipeline.linear(a, b);
-      
-      // Clamp to [0, 255] range
-      pipeline = pipeline.linear(1, 0); // This effectively clamps via Sharp's internal processing
+      for (let i = 0; i < result.length; i++) {
+        // Skip alpha channel
+        if (info.channels === 4 && (i + 1) % 4 === 0) continue;
+        
+        const normalized = ((result[i] - inputBlack) / inputRange) * 255;
+        result[i] = Math.max(0, Math.min(255, Math.round(normalized)));
+      }
     }
   }
 
-  // Step 2: Apply gamma correction (non-linear mid-tone adjustment)
-  // Sharp's gamma() requires values >= 1.0 and <= 3.0
-  // For gamma < 1.0 (darkening mid-tones), invert → apply 1/gamma → invert
-  // For gamma > 3.0, clamp to 3.0 with warning
-  if (gamma !== undefined && gamma !== 1.0) {
-    if (gamma < 1.0) {
-      // For gamma < 1.0: invert, apply inverse gamma (clamped to 3.0), invert back
-      // This darkens mid-tones
-      const inverseGamma = Math.min(1.0 / Math.max(gamma, 0.1), 3.0);
-      pipeline = pipeline
-        .negate()
-        .gamma(inverseGamma)
-        .negate();
-    } else if (gamma > 3.0) {
-      // For gamma > 3.0: use maximum of 3.0 (Sharp's limitation)
-      console.warn(`Levels adjustment: gamma ${gamma} exceeds Sharp's maximum of 3.0, clamping to 3.0`);
-      pipeline = pipeline.gamma(3.0);
-    } else {
-      // Standard gamma correction for 1.0 <= gamma <= 3.0
-      pipeline = pipeline.gamma(gamma);
-    }
+  // Step 2: Apply gamma correction using LUT
+  // This correctly implements value^gamma for any gamma value (0.1 to 8.0)
+  if (gamma !== 1.0) {
+    const lut = createGammaLUT(gamma);
+    result = applyLUT(result, lut, info.channels);
   }
 
   // Step 3: Map output range from [0, 255] to [outputBlack, outputWhite]
-  // This compresses the output histogram into the desired range
   if (outputBlack !== 0 || outputWhite !== 255) {
-    // Formula: output = input * ((outputWhite - outputBlack) / 255) + outputBlack
-    // Using Sharp's linear: a * input + b
     const outputRange = outputWhite - outputBlack;
-    const a = outputRange / 255;
-    const b = outputBlack;
-    pipeline = pipeline.linear(a, b);
+    for (let i = 0; i < result.length; i++) {
+      // Skip alpha channel
+      if (info.channels === 4 && (i + 1) % 4 === 0) continue;
+      
+      const mapped = outputBlack + (result[i] / 255) * outputRange;
+      result[i] = Math.max(0, Math.min(255, Math.round(mapped)));
+    }
   }
 
-  return pipeline;
+  // Create new pipeline from processed data
+  return sharp(result, {
+    raw: {
+      width: info.width,
+      height: info.height,
+      channels: info.channels
+    }
+  });
 }
 
 /**
@@ -239,9 +266,9 @@ function applyLevelsAdjustment(pipeline, config) {
  * @param {Object} pipeline - Sharp pipeline instance
  * @param {Object} adjustments - Adjustment parameters
  * @param {boolean} isGrayscale - Whether image is grayscale
- * @returns {Object} Modified Sharp pipeline
+ * @returns {Promise<Object>} Modified Sharp pipeline
  */
-function applyAdjustments(pipeline, adjustments, isGrayscale) {
+async function applyAdjustments(pipeline, adjustments, isGrayscale) {
   if (!adjustments || Object.keys(adjustments).length === 0) {
     return pipeline;
   }
@@ -261,8 +288,8 @@ function applyAdjustments(pipeline, adjustments, isGrayscale) {
       levelsConfig.gamma = adjustments.gamma;
     }
     
-    // Apply levels adjustment (with defaults handled inside applyLevelsAdjustment)
-    pipeline = applyLevelsAdjustment(pipeline, levelsConfig);
+    // Apply levels adjustment (now async, returns new pipeline)
+    pipeline = await applyLevelsAdjustment(pipeline, levelsConfig);
   }
   
   // 3. Brightness (via modulate)
@@ -349,7 +376,7 @@ async function convertImage(imageBuffer, options = {}) {
 
     // Apply adjustments (after rotation, before quantization)
     if (adjustments) {
-      pipeline = applyAdjustments(pipeline, adjustments, grayscale);
+      pipeline = await applyAdjustments(pipeline, adjustments, grayscale);
     }
 
     // Determine if dithering is requested
