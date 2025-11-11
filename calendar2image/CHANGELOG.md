@@ -1,5 +1,33 @@
 # Changelog
 
+## [0.9.0] - 2025-11-11
+
+### Changed
+- **Timezone Configuration - Breaking Change for Deprecated Abbreviations**
+  - ⚠️ **Action Required**: If you use timezone abbreviations like `"CET"`, `"EST"`, `"PST"`, etc., update your configuration to use proper IANA timezone names
+  - Replace `"CET"` with region-based names like `"Europe/Brussels"`, `"Europe/Berlin"`, etc.
+  - Replace `"EST"` with `"America/New_York"`, `"PST"` with `"America/Los_Angeles"`, etc.
+  - See [IANA Timezone Database](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones) for valid timezone names
+
+### Fixed
+- **Documentation: Corrected all timezone examples**
+  - Updated all template sample documentation to use proper IANA timezone format (`"Europe/Brussels"` instead of `"CET"`)
+  - Updated template samples: dayview-with-weather, weekview-with-weather-bar, weekview-with-weather-bar-small, weekview-with-weather-bar-multiics
+  - Added comprehensive IANA timezone reference and guidance to CONFIGURATION.md
+
+### Added
+- **Enhanced timezone validation on config page**
+  - Config page now displays clear validation error badge when deprecated timezone abbreviations are detected
+  - Error message: "Invalid timezone abbreviation - use IANA region/city format (e.g., 'Europe/Berlin', not 'CET')"
+  - Console warnings logged when invalid or deprecated timezones are detected during validation
+  - Warnings include link to IANA timezone database for reference
+
+### Documentation
+- **CONFIGURATION.md**: Added explicit warning about timezone abbreviations not being valid
+- **CONFIGURATION.md**: Added link to [IANA Timezone Database](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones)
+- Clarified that only IANA region/city format is accepted (e.g., `"Europe/Berlin"`, `"America/New_York"`)
+- Added examples of correct and incorrect timezone formats throughout documentation
+
 ## [0.8.9] - 2025-11-08
 
 ### Fixed
