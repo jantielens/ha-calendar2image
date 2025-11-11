@@ -223,6 +223,165 @@ describe('Image Converter', () => {
       expect(result).toBeInstanceOf(Buffer);
     });
 
+    test('should apply levels adjustment with all parameters', async () => {
+      const result = await convertImage(testImageBuffer, {
+        imageType: 'png',
+        adjustments: {
+          levels: {
+            inputBlack: 0,
+            inputWhite: 255,
+            gamma: 2.2,
+            outputBlack: 40,
+            outputWhite: 255
+          }
+        }
+      });
+
+      expect(result).toBeInstanceOf(Buffer);
+    });
+
+    test('should apply levels adjustment with partial parameters', async () => {
+      const result = await convertImage(testImageBuffer, {
+        imageType: 'png',
+        adjustments: {
+          levels: {
+            gamma: 3.0,
+            outputBlack: 30
+          }
+        }
+      });
+
+      expect(result).toBeInstanceOf(Buffer);
+    });
+
+    test('should handle levels.gamma taking precedence over standalone gamma', async () => {
+      const resultLevels = await convertImage(testImageBuffer, {
+        imageType: 'png',
+        adjustments: {
+          gamma: 1.5,
+          levels: {
+            gamma: 2.2
+          }
+        }
+      });
+
+      const resultDirect = await convertImage(testImageBuffer, {
+        imageType: 'png',
+        adjustments: {
+          levels: {
+            gamma: 2.2
+          }
+        }
+      });
+
+      // Both should produce identical results since levels.gamma takes precedence
+      expect(resultLevels.equals(resultDirect)).toBe(true);
+    });
+
+    test('should apply standalone gamma via levels (backward compatibility)', async () => {
+      const resultOldGamma = await convertImage(testImageBuffer, {
+        imageType: 'png',
+        adjustments: {
+          gamma: 1.8
+        }
+      });
+
+      const resultLevelsGamma = await convertImage(testImageBuffer, {
+        imageType: 'png',
+        adjustments: {
+          levels: {
+            gamma: 1.8
+          }
+        }
+      });
+
+      // Both should produce identical results
+      expect(resultOldGamma.equals(resultLevelsGamma)).toBe(true);
+    });
+
+    test('should handle extreme levels gamma values', async () => {
+      const resultLow = await convertImage(testImageBuffer, {
+        imageType: 'png',
+        adjustments: {
+          levels: {
+            gamma: 0.1
+          }
+        }
+      });
+
+      const resultHigh = await convertImage(testImageBuffer, {
+        imageType: 'png',
+        adjustments: {
+          levels: {
+            gamma: 8.0
+          }
+        }
+      });
+
+      expect(resultLow).toBeInstanceOf(Buffer);
+      expect(resultHigh).toBeInstanceOf(Buffer);
+    });
+
+    test('should handle levels with input range compression', async () => {
+      const result = await convertImage(testImageBuffer, {
+        imageType: 'png',
+        adjustments: {
+          levels: {
+            inputBlack: 50,
+            inputWhite: 200
+          }
+        }
+      });
+
+      expect(result).toBeInstanceOf(Buffer);
+    });
+
+    test('should handle levels with output range compression', async () => {
+      const result = await convertImage(testImageBuffer, {
+        imageType: 'png',
+        adjustments: {
+          levels: {
+            outputBlack: 30,
+            outputWhite: 220
+          }
+        }
+      });
+
+      expect(result).toBeInstanceOf(Buffer);
+    });
+
+    test('should work with levels on grayscale images', async () => {
+      const result = await convertImage(testImageBuffer, {
+        imageType: 'png',
+        grayscale: true,
+        adjustments: {
+          levels: {
+            gamma: 2.5,
+            outputBlack: 40
+          }
+        }
+      });
+
+      expect(result).toBeInstanceOf(Buffer);
+    });
+
+    test('should combine levels with other adjustments', async () => {
+      const result = await convertImage(testImageBuffer, {
+        imageType: 'png',
+        adjustments: {
+          levels: {
+            gamma: 2.2,
+            outputBlack: 30
+          },
+          brightness: 10,
+          contrast: 20,
+          sharpen: true
+        }
+      });
+
+      expect(result).toBeInstanceOf(Buffer);
+    });
+
     test('should apply sharpen', async () => {
       const result = await convertImage(testImageBuffer, {
         imageType: 'png',

@@ -126,9 +126,11 @@ Controls color intensity. Positive values make colors more vivid, negative value
 
 ---
 
-### Gamma
+### Gamma (Legacy)
 
-**Range**: `1.0` to `3.0` | **Default**: `1.0` (no adjustment)
+**Range**: `0.1` to `3.0` | **Default**: `1.0` (no adjustment)
+
+> **Note**: This is a legacy parameter. For professional-grade control, use `levels.gamma` instead, which supports a wider range (0.1 to 8.0) and integrates with input/output point adjustments.
 
 Adjusts the mid-tone brightness without affecting pure black or pure white. Higher values brighten mid-tones.
 
@@ -150,9 +152,131 @@ Adjusts the mid-tone brightness without affecting pure black or pure white. High
 }
 ```
 
-**Note**: Values below 1.0 are not supported by Sharp's native gamma operation.
+**Migration**: For more control, use the `levels` adjustment:
+```json
+{
+  "adjustments": {
+    "levels": {
+      "gamma": 2.2
+    }
+  }
+}
+```
 
 **Performance**: Fast (native Sharp operation)
+
+---
+
+### Levels (Paint.NET Style)
+
+**Type**: Object | **Default**: All parameters optional with sensible defaults
+
+Professional-grade levels adjustment providing full control over input/output black/white points and gamma correction. Values match Paint.NET semantics exactly, allowing you to simulate adjustments in Paint.NET and apply the same values here.
+
+**Parameters**:
+
+| Parameter | Type | Range | Default | Description |
+|-----------|------|-------|---------|-------------|
+| `inputBlack` | integer | 0-255 | 0 | Input black point - pixels at or below this value become black |
+| `inputWhite` | integer | 0-255 | 255 | Input white point - pixels at or above this value become white |
+| `gamma` | float | 0.1-8.0 | 1.0 | Mid-tone adjustment (matches Paint.NET middle slider) |
+| `outputBlack` | integer | 0-255 | 0 | Output black point - darkest output value |
+| `outputWhite` | integer | 0-255 | 255 | Output white point - brightest output value |
+
+**Processing Order**:
+1. **Input mapping**: Stretch/compress input histogram from `[inputBlack, inputWhite]` to `[0, 255]`
+2. **Gamma correction**: Apply non-linear mid-tone adjustment
+3. **Output mapping**: Map `[0, 255]` to `[outputBlack, outputWhite]`
+
+**Gamma Values** (Paint.NET-compatible):
+- **0.1-0.9**: Dramatically darken mid-tones (non-white pixels become very dark)
+- **1.0**: No adjustment (linear)
+- **1.5-2.2**: Moderately brighten mid-tones (standard for display compensation)
+- **2.5-5.0**: Significantly brighten mid-tones
+- **5.0-8.0**: Extreme brightening (near-white becomes white, only darkest pixels remain dark)
+
+**Use Cases**:
+- **Darken emoji icons** without affecting white backgrounds (gamma: 2.5-4.0, outputBlack: 30-50)
+- **E-ink optimization** with precise control over contrast and tonal range
+- **Match Paint.NET adjustments** exactly (use same values from Paint.NET levels dialog)
+- **Professional color grading** with full histogram control
+
+**Example - Full Control (Paint.NET style)**:
+```json
+{
+  "adjustments": {
+    "levels": {
+      "inputBlack": 0,
+      "inputWhite": 255,
+      "gamma": 2.2,
+      "outputBlack": 40,
+      "outputWhite": 255
+    }
+  }
+}
+```
+
+**Example - Darken Mid-Tones (Emoji Use Case)**:
+```json
+{
+  "adjustments": {
+    "levels": {
+      "gamma": 3.0,
+      "outputBlack": 30
+    }
+  }
+}
+```
+
+**Example - Compress Output Range**:
+```json
+{
+  "adjustments": {
+    "levels": {
+      "outputBlack": 50,
+      "outputWhite": 220
+    }
+  }
+}
+```
+
+**Example - Expand Input Range**:
+```json
+{
+  "adjustments": {
+    "levels": {
+      "inputBlack": 30,
+      "inputWhite": 200
+    }
+  }
+}
+```
+
+**Compatibility**:
+- If both `gamma` (legacy) and `levels.gamma` are present, `levels.gamma` takes precedence
+- If only `gamma` is set, it's treated as `levels.gamma` internally
+- Works with both color and grayscale images
+- Can be combined with other adjustments (brightness, contrast, etc.)
+
+**Paint.NET Mapping**:
+This implementation exactly matches Paint.NET's Levels adjustment dialog:
+- **Input Histogram** → `inputBlack` (left slider), `inputWhite` (right slider)
+- **Middle Slider** → `gamma` (0.1 to 8.0 range)
+- **Output Histogram** → `outputBlack` (left slider), `outputWhite` (right slider)
+
+![Paint.NET Levels Reference](https://github.com/user-attachments/assets/f3b3b494-9b57-4d90-b4d9-49277308501b)
+
+**Visual Reference - Gamma × Output Black**:
+
+These matrices show how `gamma` and `outputBlack` parameters interact to control mid-tone brightness and minimum output values:
+
+![Levels Gamma × Output Black - Grayscale 2-bit](images/levels-gamma-output-grayscale-2bit.png)
+*E-ink simulation (2-bit grayscale with dithering) - 8 gamma values × 5 outputBlack values*
+
+![Levels Gamma × Output Black - Color 8-bit](images/levels-gamma-output-color-8bit.png)
+*Full color (8-bit) - 8 gamma values × 5 outputBlack values*
+
+**Performance**: Fast (native Sharp operations)
 
 ---
 
@@ -349,13 +473,13 @@ Applies dithering algorithms to simulate more gray levels on low bit-depth displ
 
 Multiple adjustments can be combined. They are applied in this order:
 
-1. **Brightness** - Linear adjustment
-2. **Contrast** - Linear adjustment
-3. **Saturation** - Color intensity
-4. **Gamma** - Non-linear mid-tone adjustment
-5. **Hue** - Color rotation
-6. **Sharpen** - Edge enhancement
-7. **Normalize** - Auto-enhance (stretches histogram)
+1. **Normalize** - Auto-enhance (stretches histogram)
+2. **Levels** - Input mapping → Gamma → Output mapping (replaces old gamma)
+3. **Brightness** - Linear adjustment
+4. **Contrast** - Linear adjustment
+5. **Saturation** - Color intensity
+6. **Hue** - Color rotation
+7. **Sharpen** - Edge enhancement
 8. **Invert** - Color inversion
 9. **Threshold** - Binary conversion
 10. **Dithering** - Error diffusion (after bit depth reduction)
@@ -368,7 +492,9 @@ Multiple adjustments can be combined. They are applied in this order:
   "adjustments": {
     "brightness": 10,
     "contrast": 30,
-    "gamma": 1.8,
+    "levels": {
+      "gamma": 1.8
+    },
     "sharpen": true,
     "dither": "floyd-steinberg"
   }
@@ -461,7 +587,8 @@ This creates 4 matrices (color, 8-bit grayscale, 4-bit grayscale, 2-bit grayscal
 
 **Issue**: Image is too dark/bright
 - **Solution**: Adjust `brightness` first (-50 to +50 range)
-- **Solution**: Try `gamma` for mid-tone adjustments (1.5 to 2.2)
+- **Solution**: Try `levels.gamma` for mid-tone adjustments (1.5 to 3.0)
+- **Solution**: Use `levels` with input/output point control for precise tonal mapping
 - **Solution**: Use `normalize: true` for automatic enhancement
 
 **Issue**: Colors look washed out
@@ -491,10 +618,28 @@ This creates 4 matrices (color, 8-bit grayscale, 4-bit grayscale, 2-bit grayscal
   "adjustments": {
     "brightness": 10,
     "contrast": 35,
-    "gamma": 1.8,
+    "levels": {
+      "gamma": 1.8
+    },
     "sharpen": true,
     "threshold": 140,
     "dither": "floyd-steinberg"
+  }
+}
+```
+
+### E-ink with Darkened Emojis/Icons
+```json
+{
+  "grayscale": true,
+  "bitDepth": 4,
+  "adjustments": {
+    "levels": {
+      "gamma": 3.0,
+      "outputBlack": 30
+    },
+    "sharpen": true,
+    "dither": "atkinson"
   }
 }
 ```
@@ -518,7 +663,9 @@ This creates 4 matrices (color, 8-bit grayscale, 4-bit grayscale, 2-bit grayscal
     "brightness": -5,
     "contrast": 20,
     "saturation": 15,
-    "gamma": 2.2
+    "levels": {
+      "gamma": 2.2
+    }
   }
 }
 ```
@@ -537,14 +684,16 @@ This creates 4 matrices (color, 8-bit grayscale, 4-bit grayscale, 2-bit grayscal
 }
 ```
 
-### Dark Mode Calendar
+**Example - Dark Mode Calendar**:
 ```json
 {
   "adjustments": {
     "invert": true,
     "brightness": -10,
     "contrast": 15,
-    "gamma": 1.5
+    "levels": {
+      "gamma": 1.5
+    }
   }
 }
 ```
