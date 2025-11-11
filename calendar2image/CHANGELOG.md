@@ -1,5 +1,55 @@
 # Changelog
 
+## [0.11.1] - 2025-11-11
+
+### Fixed
+- **Image adjustments now applied to /fresh endpoint** (#83)
+  - Fixed bug where `config.adjustments` parameter was not passed to `generateImage()` function
+  - Both `/api/:index.:ext` and `/api/:index/fresh.:ext` endpoints now consistently apply configured adjustments
+  - Ensures e-ink displays, LCDs, and OLEDs receive properly adjusted images regardless of endpoint used
+  - Added comprehensive test coverage for adjustments parameter handling
+
+## [0.11.0] - 2025-11-11
+
+### Added
+- **Image Adjustments for Display Optimization**
+  - New optional `adjustments` configuration field to optimize images for different display hardware
+  - **Tier 1 (Essential) adjustments**: brightness (-100 to +100), contrast (-100 to +100), saturation (-100 to +100), gamma (0.1 to 3.0), sharpen (boolean), invert (boolean)
+  - **Tier 2 (Display-specific) adjustments**: hue (-180 to +180), normalize (boolean), threshold (0-255), dithering (Floyd-Steinberg and Atkinson algorithms)
+  - All adjustments implemented using native Sharp operations for optimal performance
+  - Floyd-Steinberg dithering for general use (more aggressive error diffusion)
+  - Atkinson dithering optimized for e-ink displays (lighter pattern, less ghosting)
+  - Dithering works with existing bit-depth quantization (1, 2, 4, 8-bit)
+  - All processing is fully deterministic (same config produces identical output)
+  - Non-breaking change: existing configurations without `adjustments` work unchanged
+- **Example configurations** for common display types:
+  - E-ink display (Waveshare 4-bit): contrast, gamma, sharpen, Atkinson dither
+  - Outdoor LCD (sunlight): brightness, contrast, normalize, sharpen
+  - OLED dashboard: saturation, hue, contrast
+- **Comprehensive documentation** in CONFIGURATION.md:
+  - All adjustment parameters with ranges and descriptions
+  - When to use each adjustment type
+  - Performance impact details (~250ms worst case)
+  - Dithering algorithm explanation
+
+### Changed
+- **Image processing pipeline** - Adjustments applied after rotation, before bit-depth quantization for optimal quality
+- **Bit-depth quantization** - Enhanced to support dithering algorithms alongside existing rounding quantization
+
+### Performance
+- Basic adjustments: ~10-30ms overhead
+- Normalize: ~20-40ms overhead
+- Sharpen: ~30-50ms overhead
+- Dithering (800×480): ~100-150ms overhead
+- Total worst case: ~250ms (within 300ms requirement)
+- No performance impact when adjustments not configured
+
+### Documentation
+- Updated CONFIGURATION.md with Image Adjustments section
+- Added adjustment parameter reference table
+- Included 3 practical example configurations
+- Explained dithering algorithms and when to use them
+
 ## [0.10.0] - 2025-11-11
 
 ### Added

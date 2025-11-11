@@ -31,6 +31,7 @@ RUN npm ci --only=production
 
 # Copy application code
 COPY src ./src
+COPY generate-adjustment-matrix.js ./
 
 # Create necessary directories
 RUN mkdir -p /config /data/cache /data/calendar2image/templates

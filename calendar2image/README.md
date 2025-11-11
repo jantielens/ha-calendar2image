@@ -133,13 +133,14 @@ For comprehensive documentation, see the main repository README:
 **👉 [Full Documentation & Guides](https://github.com/jantielens/ha-calendar2image#readme)**
 
 Including:
-- **[Installation Guide](https://github.com/jantielens/ha-calendar2image/blob/main/calendar2image/docs-user/INSTALLATION.md)** - Detailed setup instructions
-- **[Configuration Guide](https://github.com/jantielens/ha-calendar2image/blob/main/calendar2image/docs-user/CONFIGURATION.md)** - All configuration options
-- **[API Reference](https://github.com/jantielens/ha-calendar2image/blob/main/calendar2image/docs-user/API-REFERENCE.md)** - Complete API documentation
-- **[Template Development](https://github.com/jantielens/ha-calendar2image/blob/main/calendar2image/docs-user/TEMPLATE-DEVELOPMENT.md)** - Creating custom templates
-- **[Template Samples](https://github.com/jantielens/ha-calendar2image/blob/main/calendar2image/docs-user/template-samples/)** - Ready-to-use template examples
-- **[Extra Data Guide](https://github.com/jantielens/ha-calendar2image/blob/main/calendar2image/docs-user/EXTRA-DATA.md)** - Using external data in templates
-- **[Troubleshooting](https://github.com/jantielens/ha-calendar2image/blob/main/calendar2image/docs-user/TROUBLESHOOTING.md)** - Common issues and solutions
+- **[Installation Guide](docs-user/INSTALLATION.md)** - Detailed setup instructions
+- **[Configuration Guide](docs-user/CONFIGURATION.md)** - All configuration options
+- **[Image Adjustments](docs-user/IMAGE-ADJUSTMENTS.md)** - Display optimization and adjustment parameters
+- **[API Reference](docs-user/API-REFERENCE.md)** - Complete API documentation
+- **[Template Development](docs-user/TEMPLATE-DEVELOPMENT.md)** - Creating custom templates
+- **[Template Samples](docs-user/template-samples/)** - Ready-to-use template examples
+- **[Extra Data Guide](docs-user/EXTRA-DATA.md)** - Using external data in templates
+- **[Troubleshooting](docs-user/TROUBLESHOOTING.md)** - Common issues and solutions
 
 ## 💬 Support
 

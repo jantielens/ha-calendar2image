@@ -779,5 +779,257 @@ describe('config schema', () => {
       expect(result.timezone).toBe('Europe/Berlin');
     });
   });
+
+  describe('adjustments validation', () => {
+    it('should accept valid adjustments configuration', () => {
+      const config = {
+        template: 'week-view',
+        adjustments: {
+          brightness: 50,
+          contrast: 30,
+          saturation: -20,
+          gamma: 1.2,
+          sharpen: true,
+          invert: false,
+          hue: 90,
+          normalize: true,
+          threshold: 127,
+          dither: 'atkinson'
+        }
+      };
+
+      const result = validateConfig(config);
+      expect(result.valid).toBe(true);
+      expect(result.errors).toEqual([]);
+    });
+
+    it('should accept partial adjustments', () => {
+      const config = {
+        template: 'week-view',
+        adjustments: {
+          brightness: 10,
+          contrast: 15
+        }
+      };
+
+      const result = validateConfig(config);
+      expect(result.valid).toBe(true);
+    });
+
+    it('should accept dither as boolean true', () => {
+      const config = {
+        template: 'week-view',
+        adjustments: {
+          dither: true
+        }
+      };
+
+      const result = validateConfig(config);
+      expect(result.valid).toBe(true);
+    });
+
+    it('should accept dither as boolean false', () => {
+      const config = {
+        template: 'week-view',
+        adjustments: {
+          dither: false
+        }
+      };
+
+      const result = validateConfig(config);
+      expect(result.valid).toBe(true);
+    });
+
+    it('should accept dither as floyd-steinberg string', () => {
+      const config = {
+        template: 'week-view',
+        adjustments: {
+          dither: 'floyd-steinberg'
+        }
+      };
+
+      const result = validateConfig(config);
+      expect(result.valid).toBe(true);
+    });
+
+    it('should accept dither as atkinson string', () => {
+      const config = {
+        template: 'week-view',
+        adjustments: {
+          dither: 'atkinson'
+        }
+      };
+
+      const result = validateConfig(config);
+      expect(result.valid).toBe(true);
+    });
+
+    it('should reject invalid dither value', () => {
+      const config = {
+        template: 'week-view',
+        adjustments: {
+          dither: 'invalid-method'
+        }
+      };
+
+      const result = validateConfig(config);
+      expect(result.valid).toBe(false);
+    });
+
+    it('should reject brightness out of range (too high)', () => {
+      const config = {
+        template: 'week-view',
+        adjustments: {
+          brightness: 101
+        }
+      };
+
+      const result = validateConfig(config);
+      expect(result.valid).toBe(false);
+    });
+
+    it('should reject brightness out of range (too low)', () => {
+      const config = {
+        template: 'week-view',
+        adjustments: {
+          brightness: -101
+        }
+      };
+
+      const result = validateConfig(config);
+      expect(result.valid).toBe(false);
+    });
+
+    it('should reject contrast out of range', () => {
+      const config = {
+        template: 'week-view',
+        adjustments: {
+          contrast: 150
+        }
+      };
+
+      const result = validateConfig(config);
+      expect(result.valid).toBe(false);
+    });
+
+    it('should reject saturation out of range', () => {
+      const config = {
+        template: 'week-view',
+        adjustments: {
+          saturation: -150
+        }
+      };
+
+      const result = validateConfig(config);
+      expect(result.valid).toBe(false);
+    });
+
+    it('should reject gamma out of range (too low)', () => {
+      const config = {
+        template: 'week-view',
+        adjustments: {
+          gamma: 0.05
+        }
+      };
+
+      const result = validateConfig(config);
+      expect(result.valid).toBe(false);
+    });
+
+    it('should reject gamma out of range (too high)', () => {
+      const config = {
+        template: 'week-view',
+        adjustments: {
+          gamma: 4.0
+        }
+      };
+
+      const result = validateConfig(config);
+      expect(result.valid).toBe(false);
+    });
+
+    it('should reject hue out of range', () => {
+      const config = {
+        template: 'week-view',
+        adjustments: {
+          hue: 200
+        }
+      };
+
+      const result = validateConfig(config);
+      expect(result.valid).toBe(false);
+    });
+
+    it('should reject threshold out of range (too low)', () => {
+      const config = {
+        template: 'week-view',
+        adjustments: {
+          threshold: -1
+        }
+      };
+
+      const result = validateConfig(config);
+      expect(result.valid).toBe(false);
+    });
+
+    it('should reject threshold out of range (too high)', () => {
+      const config = {
+        template: 'week-view',
+        adjustments: {
+          threshold: 256
+        }
+      };
+
+      const result = validateConfig(config);
+      expect(result.valid).toBe(false);
+    });
+
+    it('should reject invalid adjustment property', () => {
+      const config = {
+        template: 'week-view',
+        adjustments: {
+          invalidProperty: 123
+        }
+      };
+
+      const result = validateConfig(config);
+      expect(result.valid).toBe(false);
+    });
+
+    it('should accept empty adjustments object', () => {
+      const config = {
+        template: 'week-view',
+        adjustments: {}
+      };
+
+      const result = validateConfig(config);
+      expect(result.valid).toBe(true);
+    });
+
+    it('should not apply defaults to adjustments when not provided', () => {
+      const config = {
+        template: 'week-view'
+      };
+
+      const result = applyDefaults(config);
+      expect(result.adjustments).toBeUndefined();
+    });
+
+    it('should preserve adjustments when provided', () => {
+      const config = {
+        template: 'week-view',
+        adjustments: {
+          brightness: 20,
+          contrast: 30
+        }
+      };
+
+      const result = applyDefaults(config);
+      expect(result.adjustments).toEqual({
+        brightness: 20,
+        contrast: 30
+      });
+    });
+  });
 });
 
