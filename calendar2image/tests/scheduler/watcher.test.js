@@ -303,4 +303,63 @@ describe('Scheduler Config Watcher', () => {
     status = getScheduleStatus();
     expect(status).toHaveLength(0);
   }, 10000);
+
+  test('should use configured timezone for scheduling', async () => {
+    // Create config with timezone
+    const config0 = {
+      icsUrl: 'https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics',
+      template: 'week',
+      width: 800,
+      height: 480,
+      imageType: 'png',
+      preGenerateInterval: '0 8 * * *', // 8am daily
+      timezone: 'Europe/Brussels'
+    };
+    
+    await fs.writeFile(
+      path.join(testConfigDir, '0.json'),
+      JSON.stringify(config0, null, 2)
+    );
+
+    // Initialize scheduler
+    await initializeScheduler();
+    
+    // Wait for watcher to start
+    await new Promise(resolve => setTimeout(resolve, 500));
+
+    // Verify timezone is stored in schedule
+    const status = getScheduleStatus();
+    expect(status).toHaveLength(1);
+    expect(status[0].timezone).toBe('Europe/Brussels');
+    expect(status[0].cronExpression).toBe('0 8 * * *');
+  }, 10000);
+
+  test('should default to UTC when timezone is not configured', async () => {
+    // Create config without timezone
+    const config0 = {
+      icsUrl: 'https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics',
+      template: 'week',
+      width: 800,
+      height: 480,
+      imageType: 'png',
+      preGenerateInterval: '0 8 * * *' // 8am daily
+      // No timezone specified
+    };
+    
+    await fs.writeFile(
+      path.join(testConfigDir, '0.json'),
+      JSON.stringify(config0, null, 2)
+    );
+
+    // Initialize scheduler
+    await initializeScheduler();
+    
+    // Wait for watcher to start
+    await new Promise(resolve => setTimeout(resolve, 500));
+
+    // Verify timezone defaults to UTC
+    const status = getScheduleStatus();
+    expect(status).toHaveLength(1);
+    expect(status[0].timezone).toBe('UTC');
+  }, 10000);
 });
