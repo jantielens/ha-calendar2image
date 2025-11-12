@@ -1,6 +1,6 @@
 {
   "name": "ha-calendar2image",
-  "version": "0.12.1",
+  "version": "0.12.2",
   "description": "Transform calendars, other data, or both into customizable images - supports ICS feeds, external data sources, custom templates, intelligent caching, and e-ink optimization for ultra-low-power displays.",
   "main": "src/index.js",
   "scripts": {

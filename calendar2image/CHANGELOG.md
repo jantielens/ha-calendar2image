@@ -1,5 +1,27 @@
 # Changelog
 
+## [0.12.2] - 2025-11-12
+
+### Fixed
+- **Timezone Handling for Scheduled Generation** (#46)
+  - Fixed scheduler to respect configured timezone instead of hardcoded UTC
+  - `preGenerateInterval` schedules now execute in the configured timezone (e.g., "0 8 * * *" runs at 8am Europe/Brussels, not 8am UTC)
+  - Worker process now passes timezone to `getCalendarEvents()` for consistent event rendering
+  - Both scheduled and manual `/fresh` generation now use the same timezone for event times
+  - Added timezone field to job status tracking for monitoring
+  - If no timezone is configured, defaults to UTC (backward compatible)
+  
+### Added
+- **Timezone Tests** - Added comprehensive test coverage for scheduler timezone handling
+  - Test for configured timezone (Europe/Brussels example)
+  - Test for UTC default when timezone not specified
+  - All 258 tests passing (2 new tests added)
+
+### Documentation
+- Updated CONFIGURATION.md to clarify that `timezone` affects both event display AND schedule execution
+- Added "Timezone Awareness" warning to `preGenerateInterval` documentation
+- Updated config-sample-README.md to reflect timezone's dual purpose
+
 ## [0.12.1] - 2025-11-11
 
 ### Fixed
