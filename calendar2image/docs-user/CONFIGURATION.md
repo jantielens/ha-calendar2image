@@ -54,16 +54,24 @@ Each configuration file should contain:
 - **imageType** (string, default: `"png"`): Output image format. Options: `"jpg"`, `"png"`, `"bmp"`
 - **expandRecurringFrom** (number, default: `-31`): Days from today to start expanding recurring events (negative for past)
 - **expandRecurringTo** (number, default: `31`): Days from today to stop expanding recurring events
-- **preGenerateInterval** (string, optional): Cron expression for automatic image pre-generation. When set, images are generated in the background on this schedule and served from cache for ultra-fast responses. **When NOT set, images are always generated fresh on each request** to ensure up-to-date calendar data. Examples:
+- **preGenerateInterval** (string, optional): Cron expression for automatic image pre-generation. When set, images are generated in the background on this schedule and served from cache for ultra-fast responses. **When NOT set, images are always generated fresh on each request** to ensure up-to-date calendar data. 
+  
+  **⚠️ Timezone Awareness**: The schedule respects the `timezone` configuration. For example, if set to `"0 8 * * *"` (8am daily) with `timezone: "Europe/Brussels"`, the image will be generated at 8am Brussels time, not 8am UTC.
+  
+  Examples:
   - `"*/5 * * * *"` - Every 5 minutes (recommended for cached mode)
   - `"*/1 * * * *"` - Every 1 minute (very frequent) 
   - `"*/15 * * * *"` - Every 15 minutes
   - `"0 * * * *"` - Every hour at :00
+  - `"0 8 * * *"` - Every day at 8am (in configured timezone)
   - **(omitted)** - No caching, always generate fresh (ensures real-time calendar data)
   
   **⚠️ Queue Protection**: The system automatically prevents duplicate jobs for the same configuration. If a config is already being generated when a new scheduled request arrives, the new request is skipped and logged to both console and timeline view. This prevents infinite queue growth on slower devices (e.g., Raspberry Pi with 25+ second generation times).
 - **locale** (string, default: `"en-US"`): BCP 47 locale code for date/time formatting (e.g., `"en-US"`, `"de-DE"`, `"fr-FR"`)
-- **timezone** (string, optional): IANA timezone name to convert event times (e.g., `"Europe/Berlin"`, `"America/New_York"`, `"Asia/Tokyo"`). 
+- **timezone** (string, optional): IANA timezone name that affects both event time conversion AND the `preGenerateInterval` schedule. 
+  - **Event Times**: Calendar event times are converted to this timezone for display
+  - **Schedule Timing**: When `preGenerateInterval` is set, the schedule runs in this timezone (e.g., `"0 8 * * *"` means 8am in this timezone, not UTC)
+  - **Default**: If not specified, defaults to UTC for both event times and scheduling
   - **⚠️ Important**: Only [IANA timezone database](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones) names are accepted. 
   - Timezone abbreviations like `"CET"`, `"EST"`, `"PST"` are **NOT valid** and will cause validation errors.
   - Use the full timezone name from the IANA database (e.g., use `"Europe/Brussels"` instead of `"CET"`, `"America/New_York"` instead of `"EST"`)

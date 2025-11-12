@@ -44,9 +44,9 @@ Configuration files must be named with numeric IDs:
 | `rotate` | integer | `0` | `0`, `90`, `180`, `270` | Rotate the output image (in degrees) |
 | `expandRecurringFrom` | integer | `-31` | Any negative integer | Number of days in the past to expand recurring events |
 | `expandRecurringTo` | integer | `31` | Any positive integer | Number of days in the future to expand recurring events |
-| `preGenerateInterval` | string | (none) | Cron expression | Schedule for automatic pre-generation (e.g., `"*/5 * * * *"` for every 5 minutes) |
+| `preGenerateInterval` | string | (none) | Cron expression | Schedule for automatic pre-generation (e.g., `"*/5 * * * *"` for every 5 minutes). Runs in configured timezone. |
 | `locale` | string | `"en-US"` | BCP 47 locale code | Locale for date/time formatting (e.g., `"de-DE"`, `"fr-FR"`) |
-| `timezone` | string | (none) | IANA timezone name | Timezone to convert event times (e.g., `"Europe/Berlin"`, `"America/New_York"`) |
+| `timezone` | string | (none) | IANA timezone name | Timezone for event times AND scheduling (e.g., `"Europe/Berlin"`, `"America/New_York"`) |
 
 ## Examples
 
