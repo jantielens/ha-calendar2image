@@ -93,7 +93,8 @@ async function generateCalendarImageInWorker(index, trigger = 'unknown') {
         getCalendarEvents(config.icsUrl, {
           expandRecurringFrom: config.expandRecurringFrom,
           expandRecurringTo: config.expandRecurringTo,
-          expandRecurringMax: config.expandRecurringMax
+          expandRecurringMax: config.expandRecurringMax,
+          timezone: config.timezone
         }),
         fetchExtraDataForConfig(config, index)
       ]);
