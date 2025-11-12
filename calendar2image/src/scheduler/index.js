@@ -171,8 +171,9 @@ function isValidCron(cronExpression) {
  * Schedule pre-generation for a single configuration
  * @param {number} index - Configuration index
  * @param {string} cronExpression - Cron expression (e.g., every 5 minutes)
+ * @param {string} timezone - IANA timezone name for scheduling (e.g., "Europe/Brussels")
  */
-function schedulePreGeneration(index, cronExpression) {
+function schedulePreGeneration(index, cronExpression, timezone = 'UTC') {
   // Stop existing job if any
   stopPreGeneration(index);
 
@@ -181,19 +182,20 @@ function schedulePreGeneration(index, cronExpression) {
     return false;
   }
 
-  console.log(`[Scheduler] Scheduling pre-generation for config ${index} with cron: ${cronExpression}`);
+  console.log(`[Scheduler] Scheduling pre-generation for config ${index} with cron: ${cronExpression} (timezone: ${timezone})`);
 
   const task = cron.schedule(cronExpression, async () => {
     console.log(`[Scheduler] Triggered scheduled generation for config ${index}`);
     await generateAndCache(index, 'scheduled');
   }, {
     scheduled: true,
-    timezone: "UTC" // Use UTC for consistency
+    timezone: timezone
   });
 
   activeJobs.set(index, {
     task,
     cronExpression,
+    timezone,
     scheduledAt: new Date().toISOString()
   });
 
@@ -225,7 +227,8 @@ async function scheduleConfigIfNeeded(index, preGenerateNow = true) {
     const config = await loadConfig(index);
     
     if (config.preGenerateInterval) {
-      const success = schedulePreGeneration(index, config.preGenerateInterval);
+      const timezone = config.timezone || 'UTC';
+      const success = schedulePreGeneration(index, config.preGenerateInterval, timezone);
       if (success) {
         console.log(`[Scheduler] Config ${index} scheduled successfully`);
         
@@ -266,7 +269,8 @@ async function initializeScheduler() {
     
     for (const { index, config } of configs) {
       if (config.preGenerateInterval) {
-        const success = schedulePreGeneration(index, config.preGenerateInterval);
+        const timezone = config.timezone || 'UTC';
+        const success = schedulePreGeneration(index, config.preGenerateInterval, timezone);
         if (success) {
           scheduledCount++;
         }
@@ -576,6 +580,7 @@ function getScheduleStatus() {
     status.push({
       index,
       cronExpression: job.cronExpression,
+      timezone: job.timezone,
       scheduledAt: job.scheduledAt,
       isRunning: true
     });
