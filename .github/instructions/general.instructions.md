@@ -156,13 +156,57 @@ docker run -p 3000:3000 -v $(pwd)/data/calendar2image:/data calendar2image:local
 - Keep README.md up-to-date with major features
 - Update CHANGELOG.md with all user-facing changes
 
-## Pull Request Checklist
-When creating a PR, ensure you:
-- [ ] Update the version in both `package.json` and `config.yaml`
-- [ ] Update the CHANGELOG with your changes
+## Pull Request Workflow
+
+### CRITICAL: Before Creating a PR
+**STOP! Complete these steps BEFORE running `git commit` or creating a branch:**
+
+1. **Update Version Numbers** (REQUIRED for all feature/fix PRs)
+   - Bump version in `calendar2image/package.json`
+   - Bump version in `calendar2image/config.yaml` (must match package.json)
+   - Use semantic versioning:
+     - MAJOR: Breaking changes (e.g., 1.0.0 → 2.0.0)
+     - MINOR: New features, backward compatible (e.g., 0.13.0 → 0.14.0)
+     - PATCH: Bug fixes, backward compatible (e.g., 0.13.0 → 0.13.1)
+
+2. **Update CHANGELOG.md** (REQUIRED)
+   - Add new section at the top with version and date: `## [0.14.0] - 2025-01-19`
+   - Document changes under appropriate headings:
+     - `### Added` - New features
+     - `### Changed` - Changes to existing functionality
+     - `### Fixed` - Bug fixes
+     - `### Security` - Security improvements
+     - `### Breaking Changes` - Backward-incompatible changes
+     - `### Documentation` - Documentation updates
+   - Be specific and user-focused (not implementation details)
+
+3. **Run All Tests** (REQUIRED)
+   ```bash
+   npm run test:all
+   ```
+   - All tests must pass before committing
+   - Fix any failing tests before proceeding
+
+4. **Security Audit** (REQUIRED)
+   ```bash
+   npm audit
+   ```
+   - Address any high/critical vulnerabilities before committing
+
+### PR Checklist
+When creating a PR, verify you have:
+- [x] Updated version in both `package.json` and `config.yaml` (MUST be done FIRST)
+- [x] Updated CHANGELOG.md with all user-facing changes (MUST be done FIRST)
 - [ ] Review all `.md` files and update if needed
 - [ ] All tests pass (`npm run test:all`)
 - [ ] No new high/critical security vulnerabilities (`npm audit`)
 - [ ] Code follows style conventions
 - [ ] Complex changes include JSDoc comments
-- [ ] Breaking changes are clearly documented
+- [ ] Breaking changes are clearly documented in CHANGELOG
+- [ ] PR description links to related issue(s)
+
+### Why Version/CHANGELOG Come First
+- Including them in the initial commit keeps the PR clean and atomic
+- Avoids "oops, forgot to update version" commits that clutter git history
+- Forces you to think about the user impact before committing code
+- Makes it easier to generate release notes from CHANGELOG

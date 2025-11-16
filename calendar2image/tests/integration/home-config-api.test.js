@@ -226,7 +226,7 @@ describe('Home Page and Config API Integration Tests', () => {
       const response = await makeRequest('/');
       
       // Check for API documentation (generic placeholder)
-      expect(response.body).toContain('/api/config/{index}');
+      expect(response.body).toContain('/api/config/{name}');
       
       // Check for actual config page links (HTML visualization)
       expect(response.body).toContain('/config/0');
@@ -245,8 +245,8 @@ describe('Home Page and Config API Integration Tests', () => {
       const response = await makeRequest('/');
       
       expect(response.body).toContain('API Documentation');
-      expect(response.body).toContain('GET /api/{index}.{ext}');
-      expect(response.body).toContain('GET /api/config/{index}');
+      expect(response.body).toContain('GET /api/{name}.{ext}');
+      expect(response.body).toContain('GET /api/config/{name}');
     });
 
     it('should be styled with CSS', async () => {

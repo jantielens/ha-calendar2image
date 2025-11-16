@@ -2,31 +2,37 @@ const { loadConfig } = require('../config/loader');
 const { getTimeline, getTimelineStats } = require('../timeline');
 
 /**
- * Express middleware handler for /timeline/:index page
+ * Express middleware handler for /timeline/:name page
  * Displays timeline visualization for a specific configuration
  * 
  * @param {Object} req - Express request object
  * @param {Object} res - Express response object
  */
 async function handleTimelinePage(req, res) {
-  const indexParam = req.params.index;
+  const nameParam = decodeURIComponent(req.params.name);
   
-  // Validate index parameter
-  const index = parseInt(indexParam, 10);
-  
-  if (isNaN(index) || index < 0 || indexParam !== index.toString()) {
-    return res.status(400).send('Invalid index parameter');
+  // Support both numeric and string names
+  let name;
+  try {
+    if (/^\d+$/.test(nameParam)) {
+      name = parseInt(nameParam, 10);
+    } else {
+      name = nameParam;
+    }
+  } catch (error) {
+    console.warn(`[Timeline Page] Invalid name parameter: "${nameParam}"`);
+    return res.status(400).send('Invalid config name parameter');
   }
 
   try {
     // Verify config exists
     let config;
     try {
-      config = await loadConfig(index);
+      config = await loadConfig(name);
     } catch (configError) {
       const errorMessage = configError.message || 'Unknown error';
-      if (errorMessage.includes('Configuration file not found')) {
-        return res.status(404).send(`Configuration ${index} not found`);
+      if (errorMessage.includes('Configuration file not found') || errorMessage.includes('not found')) {
+        return res.status(404).send(`Configuration ${name} not found`);
       }
       throw configError;
     }
@@ -38,17 +44,17 @@ async function handleTimelinePage(req, res) {
     
     // Load timeline events and stats
     const [events, stats] = await Promise.all([
-      getTimeline(index),
-      getTimelineStats(index)
+      getTimeline(name),
+      getTimelineStats(name)
     ]);
     
     // Generate HTML
-    const html = generateTimelinePageHTML(index, config, events, stats, baseUrl);
+    const html = generateTimelinePageHTML(name, config, events, stats, baseUrl);
     
     res.type('html').send(html);
     
   } catch (error) {
-    console.error(`[Timeline Page] Error rendering page for config ${index}:`, error.message);
+    console.error(`[Timeline Page] Error rendering page for config ${name}:`, error.message);
     res.status(500).send(`Error loading timeline: ${error.message}`);
   }
 }
@@ -139,14 +145,16 @@ function calculateEventCounts(events) {
 
 /**
  * Generate the HTML for the timeline page
- * @param {number} index - Configuration index
+ * @param {string|number} name - Configuration name or index
  * @param {Object} config - Configuration object
  * @param {Array} events - Timeline events
  * @param {Object} stats - Timeline statistics
  * @param {string} baseUrl - Base URL for generating links
  * @returns {string} HTML content
  */
-function generateTimelinePageHTML(index, config, events, stats, baseUrl) {
+function generateTimelinePageHTML(name, config, events, stats, baseUrl) {
+  // Display name: add .json suffix to show it's a file
+  const displayName = typeof name === 'number' ? `${name}.json` : `${name}.json`;
   // Group events by CRC32
   const crc32Groups = groupEventsByCRC32(events);
   
@@ -167,7 +175,7 @@ function generateTimelinePageHTML(index, config, events, stats, baseUrl) {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Timeline - Config ${index}</title>
+  <title>Timeline - Config ${displayName}</title>
   <style>
     * {
       margin: 0;
@@ -545,7 +553,7 @@ function generateTimelinePageHTML(index, config, events, stats, baseUrl) {
 <body>
   <div class="container">
     <div class="header">
-      <h1>Timeline - Config ${index}</h1>
+      <h1>Timeline - Config ${displayName}</h1>
       <div class="subtitle">
         Template: ${config.template} | 
         Last 24 hours (${events.length} events)
@@ -636,7 +644,7 @@ function generateTimelinePageHTML(index, config, events, stats, baseUrl) {
           <p>Timeline events will appear here as they occur.</p>
         </div>
       ` : `
-        ${crc32Groups.map((group, groupIndex) => generateCRC32BlockHTML(group, groupIndex, index)).join('')}
+        ${crc32Groups.map((group, groupIndex) => generateCRC32BlockHTML(group, groupIndex, name)).join('')}
       `}
     </div>
   </div>
@@ -778,7 +786,7 @@ function generateTimelinePageHTML(index, config, events, stats, baseUrl) {
     let refreshInterval = null;
     const autoRefreshCheckbox = document.getElementById('auto-refresh');
     const refreshIntervalSelect = document.getElementById('refresh-interval');
-    const storageKey = \`timeline-autorefresh-${index}\`;
+    const storageKey = \`timeline-autorefresh-${typeof name === 'number' ? name : name.replace(/[^a-zA-Z0-9]/g, '_')}\`;
     
     // Restore saved settings from localStorage
     const savedSettings = localStorage.getItem(storageKey);
@@ -843,10 +851,10 @@ function generateTimelinePageHTML(index, config, events, stats, baseUrl) {
  * Generate HTML for a CRC32 block
  * @param {Object} group - CRC32 group object
  * @param {number} groupIndex - Group index
- * @param {number} configIndex - Configuration index (for event indexing)
+ * @param {string|number} configName - Configuration name or index (for event indexing)
  * @returns {string} HTML for the CRC32 block
  */
-function generateCRC32BlockHTML(group, groupIndex, configIndex) {
+function generateCRC32BlockHTML(group, groupIndex, configName) {
   const counts = calculateEventCounts(group.events);
   
   // Format time range

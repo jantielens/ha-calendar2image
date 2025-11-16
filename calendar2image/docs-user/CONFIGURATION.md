@@ -2,7 +2,7 @@
 
 This folder contains sample configuration files for the HA Calendar2Image add-on.
 
-> 💡 **Tip**: You can view an interactive visualization of your configuration with validation at `http://homeassistant.local:3000/config/0` (replace `0` with your config index). Click the orange "Config" button from the dashboard to access it.
+> 💡 **Tip**: You can view an interactive visualization of your configuration with validation at `http://homeassistant.local:3000/config/sample` (replace `sample` with your config filename without .json). Click the orange "Config" button from the dashboard to access it.
 
 ## Configuration Location
 
@@ -12,7 +12,7 @@ This follows the Home Assistant standard for add-on configurations. The folder n
 
 > ⚠️ **File Editor Setup**: To edit configuration files with the File Editor add-on, you must set `enforce_basepath: false` in its configuration ([documentation](https://github.com/home-assistant/addons/blob/master/configurator/DOCS.md#option-enforce_basepath-required)). This allows access to add-on config folders which are outside the default `/config` directory.
 
-**Default configuration**: When you first start the add-on, it automatically creates `0.json` and `README.md` in this directory. The `0.json` file is a fully working configuration with all available parameters set to sensible defaults - just update the `icsUrl` to point to your calendar and you're ready to go!
+**Default configuration**: When you first start the add-on, it automatically creates `sample.json` and `README.md` in this directory. The `sample.json` file is a fully working configuration with all available parameters set to sensible defaults - just update the `icsUrl` to point to your calendar and you're ready to go!
 
 **Custom templates**: All built-in templates are automatically copied to the `templates/` folder with a `custom-` prefix (e.g., `custom-week-view.js`, `custom-today-view.js`) as examples for you to customize. To use a custom template instead of a built-in one, change `"template": "week-view"` to `"template": "custom-week-view"` in your config file.
 
@@ -30,6 +30,8 @@ Configuration files can use any valid filename:
   - `kitchen.json` → `/api/kitchen.png`
   - `vacation-2024.json` → `/api/vacation-2024.png`
   - `Work Calendar.json` → `/api/Work%20Calendar.png` (spaces URL-encoded)
+  - `sample.json` → `/api/sample.png`
+  - `kitchen.json` → `/api/kitchen.png`
   - `0.json` → `/api/0.png` (numeric still works)
 
 The dashboard automatically lists all configs, sorted with numeric configs first (0, 1, 2...) followed by alphabetically sorted named configs.
@@ -368,27 +370,28 @@ See [Extra Data Guide](EXTRA-DATA.md) for complete multi-source documentation an
 Once configured, each calendar can be accessed via:
 
 **Image Endpoints:**
-- `/api/0.png` - First configuration (0.json) - Returns cached or generated image
+- `/api/sample.png` - Sample configuration (sample.json) - Returns cached or generated image
+- `/api/0.png` - Numeric configuration (0.json) - Returns cached or generated image
 - `/api/1.png` - Second configuration (1.json) - Returns cached or generated image
-- `/api/{index}/fresh.png` - Force fresh generation, bypass cache
+- `/api/{name}/fresh.png` - Force fresh generation, bypass cache
 
 **Note:** Replace `.png` with `.jpg` or `.bmp` to match the `imageType` in your config file.
 
 **CRC32 Checksum Endpoints:**
-- `/api/0.png.crc32` - Get CRC32 checksum for first configuration
+- `/api/sample.png.crc32` - Get CRC32 checksum for sample configuration
 - `/api/1.png.crc32` - Get CRC32 checksum for second configuration
-- `/api/{index}.{ext}.crc32` - Get CRC32 checksum (plain text, lowercase hex)
+- `/api/{name}.{ext}.crc32` - Get CRC32 checksum (plain text, lowercase hex)
 
 **E-ink Display Workflow Example:**
 ```python
 import requests
 
 # Check if image changed before downloading
-crc = requests.get('http://homeassistant.local:3000/api/0.png.crc32').text
+crc = requests.get('http://homeassistant.local:3000/api/sample.png.crc32').text
 
 if crc != last_known_crc:
     # Image changed - download it
-    image = requests.get('http://homeassistant.local:3000/api/0.png').content
+    image = requests.get('http://homeassistant.local:3000/api/sample.png').content
     update_display(image)
     last_known_crc = crc
 else:

@@ -161,18 +161,22 @@ async function handleConfigAPI(req, res) {
  */
 function generateHomePageHTML(configs, baseUrl) {
   const version = getVersion();
-  const configRows = configs.map(({ index, config }) => {
+  const configRows = configs.map(({ name, index, config }) => {
     const ext = config.imageType;
-    const imageUrl = `${baseUrl}/api/${index}.${ext}`;
-    const freshUrl = `${baseUrl}/api/${index}/fresh.${ext}`;
-    const configUrl = `${baseUrl}/config/${index}`;
-    const timelineUrl = `${baseUrl}/timeline/${index}`;
+    const encodedName = encodeURIComponent(name);
+    const imageUrl = `${baseUrl}/api/${encodedName}.${ext}`;
+    const freshUrl = `${baseUrl}/api/${encodedName}/fresh.${ext}`;
+    const configUrl = `${baseUrl}/config/${encodedName}`;
+    const timelineUrl = `${baseUrl}/timeline/${encodedName}`;
     
     const hasSchedule = config.preGenerateInterval ? `Yes (${config.preGenerateInterval})` : 'No';
     
+    // Display name: show "#N" for numeric, plain name for others
+    const displayName = typeof index === 'number' ? `${index}.json` : `${escapeHtml(name)}.json`;
+    
     return `
       <tr>
-        <td class="index-col">${index}</td>
+        <td class="name-col">${displayName}</td>
         <td class="template-col">${escapeHtml(config.template)}</td>
         <td class="size-col">${config.width}x${config.height}</td>
         <td class="type-col">${ext}</td>
@@ -482,7 +486,7 @@ function generateHomePageHTML(configs, baseUrl) {
         <table>
           <thead>
             <tr>
-              <th>Index</th>
+              <th>Name</th>
               <th>Template</th>
               <th>Size</th>
               <th>Type</th>
@@ -498,7 +502,8 @@ function generateHomePageHTML(configs, baseUrl) {
       ` : `
       <div class="no-config">
         <h3>No configurations found</h3>
-        <p>Add configuration files (0.json, 1.json, etc.) to ${escapeHtml(CONFIG_DIR)}</p>
+        <p>Add configuration files (*.json) to ${escapeHtml(CONFIG_DIR)}</p>
+        <p style="font-size: 0.9em; opacity: 0.8;">Examples: sample.json, kitchen.json, Work Calendar.json</p>
       </div>
       `}
       
@@ -506,23 +511,23 @@ function generateHomePageHTML(configs, baseUrl) {
         <h2>📚 API Documentation</h2>
         
         <div class="endpoint">
-          <code>GET /api/{index}.{ext}</code>
-          <p>Get calendar image (cached if available). Extension must match config's imageType.</p>
+          <code>GET /api/{name}.{ext}</code>
+          <p>Get calendar image (cached if available). Extension must match config's imageType. URL-encode names with spaces.</p>
         </div>
         
         <div class="endpoint">
-          <code>GET /api/{index}/fresh.{ext}</code>
+          <code>GET /api/{name}/fresh.{ext}</code>
           <p>Force fresh image generation, bypassing cache. Updates cache with new image.</p>
         </div>
         
         <div class="endpoint">
-          <code>GET /api/{index}.{ext}.crc32</code>
-          <p>Get CRC32 checksum of the image (returns plain text).</p>
+          <code>GET /api/{name}.{ext}.crc32</code>
+          <p>Get CRC32 checksum of the image (returns plain text). Use to check if image changed before downloading.</p>
         </div>
         
         <div class="endpoint">
-          <code>GET /api/config/{index}</code>
-          <p>Get configuration as JSON for the specified index.</p>
+          <code>GET /api/config/{name}</code>
+          <p>Get configuration as JSON for the specified config name (supports both numeric and string names).</p>
         </div>
         
         <div class="endpoint">

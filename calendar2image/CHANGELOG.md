@@ -1,5 +1,33 @@
 # Changelog
 
+## [0.14.0] - 2025-01-19
+
+### Added
+- **Config Portal Support for Arbitrary Names** (#52)
+  - Home page now displays config names (e.g., `sample.json`, `kitchen.json`, `0.json`) instead of indices
+  - Config detail page (`/config/:name`) now accepts any config name via URL
+  - Timeline page (`/timeline/:name`) now supports arbitrary config names
+  - CRC32 history page (`/crc32-history/:name`) now supports arbitrary config names
+  - All portal pages properly handle URL encoding for names with spaces or unicode
+  - Consistent display: all config names show `.json` suffix for clarity
+  
+### Changed
+- **Default Config Name** - Fresh installations now provision `sample.json` instead of `0.json`
+  - Clearer intent: "sample" is more descriptive than "0" for example configurations
+  - Backward compatible: existing numeric configs continue to work
+- **Route Parameters** - API routes changed from `:index` to `:name` pattern for clarity
+- **Timeline & CRC32 History** - File paths now use `toCacheName()` utility for filesystem-safe names
+- **Display Consistency** - Removed `#` prefix from numeric configs (e.g., "0.json" instead of "#0")
+
+### Fixed
+- **Timeline Page Bug** - Fixed "index is not defined" error when viewing timeline for any config
+- **Integration Tests** - Updated API documentation placeholders from `{index}` to `{name}`
+
+### Documentation
+- Updated all examples to use `sample.json` as primary example instead of `0.json`
+- Updated API-REFERENCE.md with new route parameter patterns
+- Updated TROUBLESHOOTING.md with arbitrary naming context
+
 ## [0.13.0] - 2025-11-16
 
 ### Added

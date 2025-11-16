@@ -103,7 +103,7 @@ docker-compose -f docker-compose.local.yml up
 
 ## Testing Timeline Feature
 
-The timeline feature logs events to `/data/cache/{index}.timeline.json`. To view timeline data:
+The timeline feature logs events to `/data/cache/{name}.timeline.json`. To view timeline data:
 
 ```bash
 # View timeline in browser

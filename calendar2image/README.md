@@ -36,7 +36,7 @@ Transform calendars, other data, or both into customizable images - supports ICS
 ### First Steps
 
 The add-on automatically creates configuration files in `/addon_configs/17f877f5_calendar2image/`:
-- `0.json` - Working configuration with sample calendar (you can rename this to any `.json` filename)
+- `sample.json` - Working configuration with sample calendar (you can rename this to any `.json` filename)
 - `templates/` - All built-in templates as custom templates (prefixed with `custom-`) for you to customize
 - `README.md` - Configuration documentation
 
@@ -46,7 +46,7 @@ The add-on automatically creates configuration files in `/addon_configs/17f877f5
 - Access images via `/api/your-filename.png` (spaces must be URL-encoded: `Work%20Calendar`)
 
 **Edit the configuration:**
-1. Open your config file (e.g., `0.json`) in File Editor add-on
+1. Open your config file (e.g., `sample.json`) in File Editor add-on
    - ⚠️ **Important**: Set `enforce_basepath: false` in File Editor configuration to access add-on config folders ([docs](https://github.com/home-assistant/addons/blob/master/configurator/DOCS.md#option-enforce_basepath-required))
 2. Replace `icsUrl` with your calendar's public ICS URL
 3. Save and view the updated image at `http://homeassistant.local:3000/api/0.png`
@@ -86,7 +86,8 @@ Create JSON files in `/addon_configs/17f877f5_calendar2image/`:
 - `preGenerateInterval` - Cron expression for scheduled generation (optional)
 
 **Multiple Calendars:**
-- `0.json` → `/api/0.png`
+- `sample.json` → `/api/sample.png`
+- `0.json` → `/api/0.png` (numeric names work too)
 - `1.json` → `/api/1.png`
 - `2.json` → `/api/2.png`
 

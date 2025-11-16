@@ -70,7 +70,7 @@ async function saveCachedData(cachePath, data, timestamp) {
  * @param {Object} options - Fetch options
  * @param {number} options.cacheTtl - Cache TTL in seconds (default: 300)
  * @param {Object} options.headers - HTTP headers for request
- * @param {number} options.configIndex - Configuration index for timeline logging (optional)
+ * @param {string|number} options.configIndex - Configuration name or index for timeline logging (optional)
  * @returns {Promise<Object>} Parsed JSON data or empty object on error
  */
 async function fetchExtraData(url, options = {}) {
@@ -141,7 +141,7 @@ async function fetchExtraData(url, options = {}) {
  * @param {string} url - URL to fetch from
  * @param {Object} headers - HTTP headers
  * @param {string} cachePath - Cache file path
- * @param {number|null} configIndex - Configuration index for logging
+ * @param {string|number|null} configIndex - Configuration name or index for logging
  * @param {string} cacheKey - Cache key for tracking ongoing refreshes
  * @returns {Promise<Object>} Fetched data
  */
@@ -202,7 +202,7 @@ async function fetchAndCache(url, headers, cachePath, configIndex, cacheKey) {
  * @param {string} url - URL to fetch from
  * @param {Object} headers - HTTP headers
  * @param {string} cachePath - Cache file path
- * @param {number|null} configIndex - Configuration index for logging
+ * @param {string|number|null} configIndex - Configuration name or index for logging
  * @param {string} cacheKey - Cache key for tracking ongoing refreshes
  */
 function refreshInBackground(url, headers, cachePath, configIndex, cacheKey) {
@@ -235,7 +235,7 @@ function refreshInBackground(url, headers, cachePath, configIndex, cacheKey) {
 
 /**
  * Log extra data event to timeline
- * @param {number} configIndex - Configuration index
+ * @param {string|number} configIndex - Configuration name or index
  * @param {string} subtype - Event subtype
  * @param {Object} metadata - Event metadata
  * @returns {Promise<void>}

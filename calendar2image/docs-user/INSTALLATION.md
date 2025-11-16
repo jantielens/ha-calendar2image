@@ -48,7 +48,7 @@ The add-on automatically creates a working configuration on first startup:
 **Location:** `/addon_configs/17f877f5_calendar2image/`
 
 **Files created:**
-- `0.json` - Working configuration with Google US Holidays calendar
+- `sample.json` - Working configuration with Google US Holidays calendar
 - `README.md` - Configuration documentation
 - `templates/custom-week-view.js` - Sample custom template
 
@@ -76,7 +76,7 @@ The add-on automatically creates a working configuration on first startup:
    - Set `enforce_basepath: false` ([documentation](https://github.com/home-assistant/addons/blob/master/configurator/DOCS.md#option-enforce_basepath-required))
    - Save and restart File Editor add-on
 3. Navigate to `/addon_configs/17f877f5_calendar2image/`
-4. Edit `0.json` to configure your own calendar
+4. Edit `sample.json` to configure your own calendar
 
 **Using SSH/Terminal:**
 1. Connect via SSH or Terminal add-on
@@ -90,8 +90,8 @@ The add-on automatically creates a working configuration on first startup:
 
 1. **View the configuration dashboard**: Open `http://homeassistant.local:3000/` to see all your configurations
 2. **Explore configuration details**: Click the orange "Config" button to see an interactive visualization with validation
-3. **Configure your calendar**: Edit `0.json` and replace the `icsUrl` with your own calendar feed
-4. **Create additional calendars**: Copy `0.json` to `1.json`, `2.json`, etc.
+3. **Configure your calendar**: Edit `sample.json` and replace the `icsUrl` with your own calendar feed
+4. **Create additional calendars**: Copy `sample.json` to `kitchen.json`, `bedroom.json`, etc. (or use numeric names like `0.json`, `1.json`)
 5. **Customize templates**: See [Template Development Guide](TEMPLATE-DEVELOPMENT.md)
 6. **Integrate with Home Assistant**: Use the API endpoints in automations, dashboards, or e-ink displays
 

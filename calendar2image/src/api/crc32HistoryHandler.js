@@ -3,37 +3,42 @@ const { getHistory, getHistoryStats, MAX_HISTORY_ENTRIES } = require('../cache/c
 const { logDownload, EVENT_SUBTYPES } = require('../timeline');
 
 /**
- * Express middleware handler for /api/:index/crc32-history endpoint
+ * Express middleware handler for /api/:name/crc32-history endpoint
  * Returns CRC32 history as JSON
  * 
  * @param {Object} req - Express request object
  * @param {Object} res - Express response object
  */
 async function handleCRC32HistoryAPI(req, res) {
-  const indexParam = req.params.index;
+  const nameParam = decodeURIComponent(req.params.name);
   
-  // Validate index parameter
-  const index = parseInt(indexParam, 10);
-  
-  if (isNaN(index) || index < 0 || indexParam !== index.toString()) {
-    console.warn(`[CRC32History API] Invalid index parameter: "${indexParam}"`);
+  // Support both numeric and string names
+  let name;
+  try {
+    if (/^\d+$/.test(nameParam)) {
+      name = parseInt(nameParam, 10);
+    } else {
+      name = nameParam;
+    }
+  } catch (error) {
+    console.warn(`[CRC32History API] Invalid name parameter: "${nameParam}"`);
     return res.status(400).json({
       error: 'Bad Request',
-      message: 'Invalid index parameter',
-      details: 'Index must be a non-negative integer (0, 1, 2, etc.)'
+      message: 'Invalid config name parameter',
+      details: 'Name must be a valid config filename (without .json extension)'
     });
   }
 
   try {
     // Verify config exists
     try {
-      await loadConfig(index);
+      await loadConfig(name);
     } catch (configError) {
       const errorMessage = configError.message || 'Unknown error';
-      if (errorMessage.includes('Configuration file not found')) {
+      if (errorMessage.includes('Configuration file not found') || errorMessage.includes('not found')) {
         return res.status(404).json({
           error: 'Not Found',
-          message: `Configuration ${index} not found`,
+          message: `Configuration ${name} not found`,
           details: errorMessage
         });
       }
@@ -42,65 +47,72 @@ async function handleCRC32HistoryAPI(req, res) {
     
     // Get history and stats
     const [history, stats] = await Promise.all([
-      getHistory(index),
-      getHistoryStats(index)
+      getHistory(name),
+      getHistoryStats(name)
     ]);
     
-    console.log(`[CRC32History API] Returning history for config ${index}: ${history.length} entries`);
+    console.log(`[CRC32History API] Returning history for config ${name}: ${history.length} entries`);
     
     // Log download to timeline
     const clientIp = req.ip || req.connection.remoteAddress || 'unknown';
     const userAgent = req.get('user-agent') || 'unknown';
-    logDownload(index, EVENT_SUBTYPES.CRC32_HISTORY, {
+    logDownload(name, EVENT_SUBTYPES.CRC32_HISTORY, {
       ip: clientIp,
       userAgent,
       entryCount: history.length
     }).catch(err => console.warn(`[Timeline] Failed to log CRC32 history download: ${err.message}`));
     
     res.json({
-      index,
+      name: String(name),
+      index: typeof name === 'number' ? name : undefined,
       history,
       stats,
       maxEntries: MAX_HISTORY_ENTRIES
     });
 
   } catch (error) {
-    console.error(`[CRC32History API] Error fetching history for config ${index}:`, error.message);
+    console.error(`[CRC32History API] Error fetching history for config ${name}:`, error.message);
     
     res.status(500).json({
       error: 'Internal Server Error',
-      message: `Failed to fetch CRC32 history for config ${index}`,
+      message: `Failed to fetch CRC32 history for config ${name}`,
       details: error.message
     });
   }
 }
 
 /**
- * Express middleware handler for /crc32-history/:index page
+ * Express middleware handler for /crc32-history/:name page
  * Displays CRC32 history visualization
  * 
  * @param {Object} req - Express request object
  * @param {Object} res - Express response object
  */
 async function handleCRC32HistoryPage(req, res) {
-  const indexParam = req.params.index;
+  const nameParam = decodeURIComponent(req.params.name);
   
-  // Validate index parameter
-  const index = parseInt(indexParam, 10);
-  
-  if (isNaN(index) || index < 0 || indexParam !== index.toString()) {
-    return res.status(400).send('Invalid index parameter');
+  // Support both numeric and string names
+  let name;
+  try {
+    if (/^\d+$/.test(nameParam)) {
+      name = parseInt(nameParam, 10);
+    } else {
+      name = nameParam;
+    }
+  } catch (error) {
+    console.warn(`[CRC32History Page] Invalid name parameter: "${nameParam}"`);
+    return res.status(400).send('Invalid config name parameter');
   }
 
   try {
     // Verify config exists
     let config;
     try {
-      config = await loadConfig(index);
+      config = await loadConfig(name);
     } catch (configError) {
       const errorMessage = configError.message || 'Unknown error';
-      if (errorMessage.includes('Configuration file not found')) {
-        return res.status(404).send(`Configuration ${index} not found`);
+      if (errorMessage.includes('Configuration file not found') || errorMessage.includes('not found')) {
+        return res.status(404).send(`Configuration ${name} not found`);
       }
       throw configError;
     }
@@ -111,30 +123,33 @@ async function handleCRC32HistoryPage(req, res) {
     const baseUrl = `${protocol}://${host}`;
     
     // Generate HTML
-    const html = generateHistoryPageHTML(index, config, baseUrl);
+    const html = generateHistoryPageHTML(name, config, baseUrl);
     
     res.type('html').send(html);
     
   } catch (error) {
-    console.error(`[CRC32History Page] Error rendering page for config ${index}:`, error.message);
+    console.error(`[CRC32History Page] Error rendering page for config ${name}:`, error.message);
     res.status(500).send(`Error loading CRC32 history: ${error.message}`);
   }
 }
 
 /**
  * Generate the HTML for the CRC32 history page
- * @param {number} index - Configuration index
+ * @param {string|number} name - Configuration name or index
  * @param {Object} config - Configuration object
  * @param {string} baseUrl - Base URL for generating links
  * @returns {string} HTML content
  */
-function generateHistoryPageHTML(index, config, baseUrl) {
+function generateHistoryPageHTML(name, config, baseUrl) {
+  // Display name: show "#N" for numeric, plain name for others
+  const displayName = typeof name === 'number' ? `${name}.json` : `${name}.json`;
+  
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CRC32 History - Config ${index}</title>
+  <title>CRC32 History - Config ${displayName}</title>
   <style>
     * {
       margin: 0;
@@ -451,7 +466,7 @@ function generateHistoryPageHTML(index, config, baseUrl) {
         <h1>📊 CRC32 History</h1>
       </div>
       <div class="config-info">
-        <div><strong>Config Index:</strong> ${index}</div>
+        <div><strong>Config:</strong> ${displayName}</div>
         <div><strong>Template:</strong> ${escapeHtml(config.template)}</div>
         <div><strong>Size:</strong> ${config.width}x${config.height}</div>
       </div>
@@ -477,7 +492,8 @@ function generateHistoryPageHTML(index, config, baseUrl) {
   </div>
   
   <script>
-    const API_URL = '${baseUrl}/api/${index}/crc32-history';
+    const encodedName = '${encodeURIComponent(String(name))}';
+    const API_URL = '${baseUrl}/api/' + encodedName + '/crc32-history';
     
     async function loadHistory() {
       try {

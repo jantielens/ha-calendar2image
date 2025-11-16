@@ -42,7 +42,7 @@ node dev-setup.js my-awesome-calendar
 docker compose up
 
 # 3. Start the template watcher (in terminal 2)
-npm run watch 99  # Or whatever config index was created
+npm run watch 99  # Or whatever config filename was created (without .json)
 
 # 4. Edit your template
 # Open: ..\data\calendar2image\templates\my-awesome-calendar.js
@@ -316,7 +316,7 @@ Create JSON config files in `../data/calendar2image/`:
 
 ```
 data/calendar2image/
-  0.json      # Production config
+  sample.json      # Production config
   1.json      # Production config
   99.json     # Development config
   100.json    # Development config
@@ -376,7 +376,7 @@ data/calendar2image/
   templates/             # Your custom templates
     my-template.js
     another-template.js
-  0.json                # Production configs
+  sample.json           # Production configs
   99.json               # Development configs
   
 output/

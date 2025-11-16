@@ -76,7 +76,7 @@ Configuration files must be named with numeric IDs:
   "timezone": "UTC"
 }
 ```
-This is what the default `0.json` file contains - a complete configuration with all available parameters!
+This is what the default `sample.json` file contains - a complete configuration with all available parameters!
 
 ### Grayscale PNG
 ```json
@@ -141,7 +141,7 @@ This configuration combines events from multiple calendars. Events will include 
   "preGenerateInterval": "*/5 * * * *"
 }
 ```
-With `preGenerateInterval` set, images are regenerated every 5 minutes in the background. API responses are <100ms (from cache) instead of ~8 seconds (on-demand generation). Use the `/api/{index}.{ext}.crc32` endpoint (e.g., `/api/0.png.crc32`) to check if the image changed before downloading.
+With `preGenerateInterval` set, images are regenerated every 5 minutes in the background. API responses are <100ms (from cache) instead of ~8 seconds (on-demand generation). Use the `/api/{name}.{ext}.crc32` endpoint (e.g., `/api/0.png.crc32`) to check if the image changed before downloading.
 
 ## Calendar Source Examples
 
