@@ -1,7 +1,7 @@
 ---
 title: Source Code Instructions
 description: Instructions for working with the main source code
-scope: "calendar2image/src/**/*"
+applyTo: "calendar2image/src/**/*"
 ---
 
 # Source Code Instructions for ha-calendar2image

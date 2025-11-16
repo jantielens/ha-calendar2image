@@ -1,7 +1,7 @@
 ---
 title: Documentation Instructions
 description: Instructions for maintaining and updating documentation
-scope: "calendar2image/docs-**/*,**/*.md"
+applyTo: "calendar2image/docs-**/*,**/*.md"
 ---
 
 # Documentation Instructions for ha-calendar2image

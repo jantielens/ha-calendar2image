@@ -1,7 +1,7 @@
 ---
 title: Testing Instructions
 description: Instructions for writing and running tests in ha-calendar2image
-scope: "calendar2image/tests/**/*"
+applyTo: "calendar2image/tests/**/*"
 ---
 
 # Testing Instructions for ha-calendar2image

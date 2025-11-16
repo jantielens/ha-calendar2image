@@ -1,7 +1,7 @@
 ---
 title: GitHub Copilot Instructions for ha-calendar2image
 description: General instructions for working with the ha-calendar2image Home Assistant Add-On
-scope: "**/*"
+applyTo: "**/*"
 ---
 
 # GitHub Copilot Instructions for ha-calendar2image

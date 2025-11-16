@@ -6,7 +6,7 @@ This directory contains specialized instructions for GitHub Copilot coding agent
 
 ### General Instructions
 - **`general.instructions.md`**: Overall project guidelines, architecture, and development workflow
-- Applies to: All files in the repository (`scope: "**/*"`)
+- Applies to: All files in the repository (`applyTo: "**/*"`)
 
 ### Scoped Instructions
 Instructions that apply to specific parts of the codebase:
@@ -22,33 +22,28 @@ Instructions that apply to specific parts of the codebase:
 
 ## How It Works
 
-GitHub Copilot coding agent automatically reads these instruction files when working on your repository. The YAML frontmatter in each file defines the scope where instructions apply:
+GitHub Copilot in VS Code and the coding agent automatically read these instruction files when working on your repository. The YAML frontmatter in each file defines which files the instructions apply to using the `applyTo` field with glob patterns:
 
 ```yaml
 ---
 title: Instruction File Title
 description: Brief description of what these instructions cover
-scope: "pattern/matching/files/**/*"
+applyTo: "pattern/matching/files/**/*"
 ---
 ```
-
-## Legacy Format
-
-The repository also maintains `.github/copilot-instructions.md` for backward compatibility with older versions of GitHub Copilot. The content is equivalent to the combined instructions in this directory.
 
 ## Best Practices
 
 When working with this repository:
 1. Copilot will automatically apply the most specific instructions to your current context
 2. General instructions apply everywhere
-3. Scoped instructions override general ones for their specific areas
+3. Scoped instructions using `applyTo` patterns override general ones for their specific areas
 4. Always check these instructions match actual project practices
 
 ## Updating Instructions
 
 When updating instructions:
-- Keep both the legacy file and new instruction files in sync
-- Use YAML frontmatter to define clear scopes
+- Use YAML frontmatter with `applyTo` to define clear file pattern scopes
 - Be specific and actionable
 - Include examples where helpful
 - Test that instructions work as expected
