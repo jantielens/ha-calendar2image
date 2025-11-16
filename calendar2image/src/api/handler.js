@@ -12,10 +12,10 @@ const { getVersion } = require('../utils/version');
  * Fetch extra data based on config format (string or array)
  * 
  * @param {Object} config - Configuration object
- * @param {number} configIndex - Configuration index for timeline logging
+ * @param {string|number} configName - Configuration name or index for timeline logging
  * @returns {Promise<Object|Array>} Extra data as object (string format) or array (array format)
  */
-async function fetchExtraDataForConfig(config, configIndex) {
+async function fetchExtraDataForConfig(config, configName) {
   if (!config.extraDataUrl) {
     return {};
   }
@@ -25,7 +25,7 @@ async function fetchExtraDataForConfig(config, configIndex) {
     return fetchExtraData(config.extraDataUrl, {
       cacheTtl: config.extraDataCacheTtl,
       headers: config.extraDataHeaders || {},
-      configIndex
+      configIndex: configName
     });
   }
 
@@ -55,7 +55,7 @@ async function fetchExtraDataForConfig(config, configIndex) {
         ? source.cacheTtl 
         : config.extraDataCacheTtl;
 
-      return fetchExtraData(source.url, { cacheTtl, headers, configIndex });
+      return fetchExtraData(source.url, { cacheTtl, headers, configIndex: configName });
     });
 
     return Promise.all(promises);

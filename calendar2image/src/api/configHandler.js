@@ -3,31 +3,37 @@ const path = require('path');
 const fs = require('fs').promises;
 
 /**
- * Express middleware handler for /config/:index page
+ * Express middleware handler for /config/:name page
  * Displays configuration visualization with debugging info
  * 
  * @param {Object} req - Express request object
  * @param {Object} res - Express response object
  */
 async function handleConfigPage(req, res) {
-  const indexParam = req.params.index;
+  const nameParam = decodeURIComponent(req.params.name);
   
-  // Validate index parameter
-  const index = parseInt(indexParam, 10);
-  
-  if (isNaN(index) || index < 0 || indexParam !== index.toString()) {
-    return res.status(400).send('Invalid index parameter');
+  // Support both numeric and string names
+  let name;
+  try {
+    if (/^\d+$/.test(nameParam)) {
+      name = parseInt(nameParam, 10);
+    } else {
+      name = nameParam;
+    }
+  } catch (error) {
+    console.warn(`[Config Page] Invalid name parameter: "${nameParam}"`);
+    return res.status(400).send('Invalid config name parameter');
   }
 
   try {
     // Load config
     let config;
     try {
-      config = await loadConfig(index);
+      config = await loadConfig(name);
     } catch (configError) {
       const errorMessage = configError.message || 'Unknown error';
-      if (errorMessage.includes('Configuration file not found')) {
-        return res.status(404).send(`Configuration ${index} not found`);
+      if (errorMessage.includes('Configuration file not found') || errorMessage.includes('not found')) {
+        return res.status(404).send(`Configuration ${name} not found`);
       }
       throw configError;
     }
@@ -38,12 +44,12 @@ async function handleConfigPage(req, res) {
     const baseUrl = `${protocol}://${host}`;
     
     // Generate HTML
-    const html = await generateConfigPageHTML(index, config, baseUrl);
+    const html = await generateConfigPageHTML(name, config, baseUrl);
     
     res.type('html').send(html);
     
   } catch (error) {
-    console.error(`[Config Page] Error rendering config page for ${index}:`, error.message);
+    console.error(`[Config Page] Error rendering config page for ${name}:`, error.message);
     
     res.status(500).send(`
       <!DOCTYPE html>
@@ -196,8 +202,8 @@ function collectValidationErrors(config, validations, icsUrls) {
 /**
  * Generate HTML for the configuration page
  */
-async function generateConfigPageHTML(index, config, baseUrl) {
-  const configFileName = `${index}.json`;
+async function generateConfigPageHTML(name, config, baseUrl) {
+  const configFileName = `${name}.json`;
   const configFilePath = path.resolve(path.join(CONFIG_DIR, configFileName));
   
   // Determine template path (check custom first, then built-in)
@@ -220,17 +226,18 @@ async function generateConfigPageHTML(index, config, baseUrl) {
   const cronDescription = parseCronExpression(config.preGenerateInterval);
   
   // Run validations
-  const validations = await runValidations(index, config, icsUrls, extraDataUrls);
+  const validations = await runValidations(name, config, icsUrls, extraDataUrls);
   const validationErrors = collectValidationErrors(config, validations, icsUrls);
   
-  // Build URLs
-  const imageUrl = `${baseUrl}/api/${index}.${config.imageType}`;
-  const freshUrl = `${baseUrl}/api/${index}/fresh.${config.imageType}`;
-  const jsonApiUrl = `${baseUrl}/api/config/${index}`;
+  // Build URLs with proper encoding for names with spaces
+  const encodedName = encodeURIComponent(name);
+  const imageUrl = `${baseUrl}/api/${encodedName}.${config.imageType}`;
+  const freshUrl = `${baseUrl}/api/${encodedName}/fresh.${config.imageType}`;
+  const jsonApiUrl = `${baseUrl}/api/config/${encodedName}`;
   
   // Use API URL for cached image (browser will load it directly)
-  const cachedImageUrl = `${baseUrl}/api/${index}.${config.imageType}`;
-  const imageCrc32Url = `${baseUrl}/api/${index}.${config.imageType}.crc32`;
+  const cachedImageUrl = `${baseUrl}/api/${encodedName}.${config.imageType}`;
+  const imageCrc32Url = `${baseUrl}/api/${encodedName}.${config.imageType}.crc32`;
   
   // Load template content
   let templateContent = null;
@@ -240,12 +247,16 @@ async function generateConfigPageHTML(index, config, baseUrl) {
     console.log(`[Config Page] Could not load template: ${error.message}`);
   }
   
+  // Display name: show "#N" for numeric, plain name for others
+  const displayName = typeof name === 'number' ? `${name}.json` : `${escapeHtml(name)}.json`;
+  const pageTitle = `Configuration: ${escapeHtml(String(name))}.json`;
+  
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Configuration #${index} - Calendar2Image</title>
+  <title>${pageTitle} - Calendar2Image</title>
   ${getPageStyles()}
 </head>
 <body>
@@ -253,7 +264,7 @@ async function generateConfigPageHTML(index, config, baseUrl) {
     <div class="header">
       <div class="header-top">
         <div>
-          <h1>⚙️ Configuration #${index}</h1>
+          <h1>⚙️ ${pageTitle}</h1>
           <div class="template-info">
             Template: <span class="template-name">${escapeHtml(config.template)}</span>
           </div>
@@ -547,7 +558,7 @@ async function generateConfigPageHTML(index, config, baseUrl) {
             ${HOST_CONFIG_PATH ? `<br><small style="opacity: 0.8;">Host path (outside container): <code>${escapeHtml(HOST_CONFIG_PATH)}/</code></small>` : ''}
           </div>
           <div class="setting-row">
-            <span class="setting-label">Configuration File <span class="json-path" data-json-preview="Configuration file: ${index}.json">${index}.json</span></span>
+            <span class="setting-label">Configuration File <span class="json-path" data-json-preview="Configuration file: ${configFileName}">${escapeHtml(configFileName)}</span></span>
           </div>
           <div class="file-path">
             <code>${escapeHtml(configFilePath)}</code>
@@ -943,7 +954,7 @@ function generateJsonPreview(config, propertyPath) {
 /**
  * Run all validations
  */
-async function runValidations(index, config, icsUrls, extraDataUrls) {
+async function runValidations(name, config, icsUrls, extraDataUrls) {
   const validations = {
     icsUrls: [],
     cron: { valid: true, message: 'N/A' },
@@ -1036,13 +1047,13 @@ async function runValidations(index, config, icsUrls, extraDataUrls) {
       const deprecatedAbbreviations = ['CET', 'CEST', 'EST', 'EDT', 'CST', 'CDT', 'MST', 'MDT', 'PST', 'PDT', 'EET', 'EEST', 'WET', 'WEST', 'MET', 'MEST'];
       if (deprecatedAbbreviations.includes(config.timezone.toUpperCase())) {
         validations.timezone = { valid: false, message: 'Invalid timezone abbreviation - use IANA region/city format (e.g., "Europe/Berlin", not "CET")' };
-        console.warn(`[Config Validation] Deprecated timezone abbreviation in config ${index}: "${config.timezone}". Use IANA region/city format like "Europe/Berlin" or "America/New_York" instead of abbreviations like "CET" or "EST". See: https://en.wikipedia.org/wiki/List_of_tz_database_time_zones`);
+        console.warn(`[Config Validation] Deprecated timezone abbreviation in config ${name}: "${config.timezone}". Use IANA region/city format like "Europe/Berlin" or "America/New_York" instead of abbreviations like "CET" or "EST". See: https://en.wikipedia.org/wiki/List_of_tz_database_time_zones`);
       } else {
         validations.timezone = { valid: true, message: 'Valid IANA timezone' };
       }
     } catch (error) {
       validations.timezone = { valid: false, message: 'Invalid timezone name - use IANA timezone (e.g., "Europe/Berlin", not "CET")' };
-      console.warn(`[Config Validation] Invalid timezone in config ${index}: "${config.timezone}". Use IANA timezone names like "Europe/Berlin" or "America/New_York", not abbreviations like "CET" or "EST". See: https://en.wikipedia.org/wiki/List_of_tz_database_time_zones`);
+      console.warn(`[Config Validation] Invalid timezone in config ${name}: "${config.timezone}". Use IANA timezone names like "Europe/Berlin" or "America/New_York", not abbreviations like "CET" or "EST". See: https://en.wikipedia.org/wiki/List_of_tz_database_time_zones`);
     }
   }
 

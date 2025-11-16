@@ -2,7 +2,7 @@
 
 Common issues and solutions for Calendar2Image.
 
-> 💡 **Quick Diagnostics**: Visit `http://homeassistant.local:3000/config/0` (replace `0` with your config index) to see validation errors and configuration details in a visual format.
+> 💡 **Quick Diagnostics**: Visit `http://homeassistant.local:3000/config/sample` (replace `sample` with your config filename without .json) to see validation errors and configuration details in a visual format.
 
 ---
 
@@ -122,7 +122,7 @@ Should return:
 
 **Causes:**
 - Config file doesn't exist: `/addon_configs/17f877f5_calendar2image/1.json`
-- File has wrong name (must be `0.json`, `1.json`, etc.)
+- File has wrong name (must end in `.json`, e.g., `sample.json`, `kitchen.json`, or `0.json`)
 - File has invalid JSON syntax
 
 **Solution:**
@@ -137,7 +137,8 @@ Should return:
    - Check for missing commas, quotes, brackets
 
 3. **Use correct filename:**
-   - Must be numeric: `0.json`, `1.json`, `2.json`
+   - Can be descriptive: `kitchen.json`, `bedroom.json`
+   - Or numeric: `0.json`, `1.json`, `2.json`
    - Not: `calendar.json`, `config1.json`, etc.
 
 ---
@@ -852,7 +853,7 @@ curl http://localhost:3000/api/0.png.crc32
 ls -la /addon_configs/17f877f5_calendar2image/
 
 # Validate config JSON
-cat /addon_configs/17f877f5_calendar2image/0.json | python -m json.tool
+cat /addon_configs/17f877f5_calendar2image/sample.json | python -m json.tool
 ```
 
 Include results when reporting issues!

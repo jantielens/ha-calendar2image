@@ -51,14 +51,14 @@ See the **[Installation Guide](calendar2image/docs-user/INSTALLATION.md)** for d
 ### First Steps
 
 The add-on automatically creates:
-- `0.json` - Working configuration with sample calendar
+- `sample.json` - Working configuration with sample calendar
 - `templates/` - All built-in templates as custom templates (prefixed with `custom-`) for you to customize
 - `README.md` - Configuration documentation
 
 **Location:** `/addon_configs/17f877f5_calendar2image/`
 
 **Edit the configuration:**
-1. Open `0.json` in File Editor add-on
+1. Open `sample.json` in File Editor add-on
    - ⚠️ **Important**: Set `enforce_basepath: false` in File Editor configuration to access add-on config folders ([docs](https://github.com/home-assistant/addons/blob/master/configurator/DOCS.md#option-enforce_basepath-required))
 2. Replace `icsUrl` with your calendar's public ICS URL
 3. Save and view the updated image at `http://homeassistant.local:3000/api/0.png`
@@ -123,7 +123,8 @@ Create JSON files in `/addon_configs/17f877f5_calendar2image/`:
 ### Multiple Calendars
 
 Create multiple config files:
-- `0.json` → Access via `/api/0.png`
+- `sample.json` → Access via `/api/sample.png`
+- `0.json` → Access via `/api/0.png` (numeric names work too)
 - `1.json` → Access via `/api/1.png`
 - `2.json` → Access via `/api/2.png`
 
@@ -139,7 +140,7 @@ All built-in templates are automatically copied to your templates folder with a 
 
 To use a custom template:
 
-1. Open `/addon_configs/17f877f5_calendar2image/0.json`
+1. Open `/addon_configs/17f877f5_calendar2image/sample.json`
 2. Change:
    ```json
    {

@@ -1,32 +1,34 @@
 const fs = require('fs').promises;
 const path = require('path');
+const { toCacheName } = require('../utils/sanitize');
 
 const CACHE_DIR = path.join(process.cwd(), '..', 'data', 'cache');
 const MAX_HISTORY_ENTRIES = 500;
 
 /**
- * Get CRC32 history file path for a configuration index
- * @param {number} index - Configuration index
+ * Get CRC32 history file path for a configuration name
+ * @param {string|number} name - Configuration name or index
  * @returns {string} History file path
  */
-function getHistoryFilePath(index) {
-  return path.join(CACHE_DIR, `${index}.crc32-history.json`);
+function getHistoryFilePath(name) {
+  const cacheName = toCacheName(String(name));
+  return path.join(CACHE_DIR, `${cacheName}.crc32-history.json`);
 }
 
 /**
  * Load CRC32 history for a configuration
- * @param {number} index - Configuration index
+ * @param {string|number} name - Configuration name or index
  * @returns {Promise<Array>} Array of history entries
  */
-async function loadHistory(index) {
+async function loadHistory(name) {
   try {
-    const historyPath = getHistoryFilePath(index);
+    const historyPath = getHistoryFilePath(name);
     const data = await fs.readFile(historyPath, 'utf8');
     const history = JSON.parse(data);
     
     // Validate structure
     if (!Array.isArray(history)) {
-      console.warn(`[CRC32History] Invalid history format for config ${index}, resetting`);
+      console.warn(`[CRC32History] Invalid history format for config ${name}, resetting`);
       return [];
     }
     
@@ -34,9 +36,9 @@ async function loadHistory(index) {
   } catch (error) {
     // History file doesn't exist or is corrupted
     if (error.code === 'ENOENT') {
-      console.log(`[CRC32History] No history file found for config ${index}`);
+      console.log(`[CRC32History] No history file found for config ${name}`);
     } else {
-      console.warn(`[CRC32History] Failed to load history for config ${index}: ${error.message}`);
+      console.warn(`[CRC32History] Failed to load history for config ${name}: ${error.message}`);
     }
     return [];
   }
@@ -44,16 +46,16 @@ async function loadHistory(index) {
 
 /**
  * Save CRC32 history for a configuration
- * @param {number} index - Configuration index
+ * @param {string|number} name - Configuration name or index
  * @param {Array} history - Array of history entries
  * @returns {Promise<void>}
  */
-async function saveHistory(index, history) {
+async function saveHistory(name, history) {
   try {
-    const historyPath = getHistoryFilePath(index);
+    const historyPath = getHistoryFilePath(name);
     await fs.writeFile(historyPath, JSON.stringify(history, null, 2));
   } catch (error) {
-    console.error(`[CRC32History] Failed to save history for config ${index}: ${error.message}`);
+    console.error(`[CRC32History] Failed to save history for config ${name}: ${error.message}`);
     throw error;
   }
 }
@@ -62,7 +64,7 @@ async function saveHistory(index, history) {
  * Add a CRC32 entry to history
  * Maintains a circular buffer of MAX_HISTORY_ENTRIES
  * 
- * @param {number} index - Configuration index
+ * @param {string|number} name - Configuration name or index
  * @param {string} crc32 - CRC32 checksum
  * @param {Object} options - Additional options
  * @param {string} options.trigger - Trigger type (scheduled, fresh, startup, config_change)
@@ -70,7 +72,7 @@ async function saveHistory(index, history) {
  * @param {number} options.imageSize - Image size in bytes
  * @returns {Promise<void>}
  */
-async function addHistoryEntry(index, crc32, options = {}) {
+async function addHistoryEntry(name, crc32, options = {}) {
   try {
     const {
       trigger = 'unknown',
@@ -79,7 +81,7 @@ async function addHistoryEntry(index, crc32, options = {}) {
     } = options;
     
     // Load existing history
-    const history = await loadHistory(index);
+    const history = await loadHistory(name);
     
     // Create new entry
     const entry = {
@@ -105,23 +107,23 @@ async function addHistoryEntry(index, crc32, options = {}) {
     }
     
     // Save updated history
-    await saveHistory(index, history);
+    await saveHistory(name, history);
     
-    console.log(`[CRC32History] Added entry for config ${index}: ${crc32} (${trigger})`);
+    console.log(`[CRC32History] Added entry for config ${name}: ${crc32} (${trigger})`);
   } catch (error) {
     // Don't throw - history is non-critical
-    console.error(`[CRC32History] Failed to add history entry for config ${index}: ${error.message}`);
+    console.error(`[CRC32History] Failed to add history entry for config ${name}: ${error.message}`);
   }
 }
 
 /**
  * Get CRC32 history for a configuration
- * @param {number} index - Configuration index
+ * @param {string|number} name - Configuration name or index
  * @param {number} limit - Maximum number of entries to return (default: all)
  * @returns {Promise<Array>} Array of history entries (most recent first)
  */
-async function getHistory(index, limit = null) {
-  const history = await loadHistory(index);
+async function getHistory(name, limit = null) {
+  const history = await loadHistory(name);
   
   if (limit && limit > 0) {
     return history.slice(0, limit);
@@ -132,11 +134,11 @@ async function getHistory(index, limit = null) {
 
 /**
  * Get history statistics for a configuration
- * @param {number} index - Configuration index
+ * @param {string|number} name - Configuration name or index
  * @returns {Promise<Object>} Statistics object
  */
-async function getHistoryStats(index) {
-  const history = await loadHistory(index);
+async function getHistoryStats(name) {
+  const history = await loadHistory(name);
   
   if (history.length === 0) {
     return {
@@ -218,17 +220,17 @@ async function getHistoryStats(index) {
 
 /**
  * Delete history for a configuration
- * @param {number} index - Configuration index
+ * @param {string|number} name - Configuration name or index
  * @returns {Promise<void>}
  */
-async function deleteHistory(index) {
+async function deleteHistory(name) {
   try {
-    const historyPath = getHistoryFilePath(index);
+    const historyPath = getHistoryFilePath(name);
     await fs.unlink(historyPath);
-    console.log(`[CRC32History] Deleted history for config ${index}`);
+    console.log(`[CRC32History] Deleted history for config ${name}`);
   } catch (error) {
     if (error.code !== 'ENOENT') {
-      console.warn(`[CRC32History] Failed to delete history for config ${index}: ${error.message}`);
+      console.warn(`[CRC32History] Failed to delete history for config ${name}: ${error.message}`);
     }
   }
 }

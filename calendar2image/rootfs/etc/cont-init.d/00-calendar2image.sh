@@ -25,9 +25,9 @@ export ADDON_SLUG
 export HOST_CONFIG_PATH
 
 # Copy default configuration if it doesn't exist
-if [ ! -f "${CONFIG_DIR}/0.json" ]; then
-    bashio::log.info "Creating default configuration (0.json)..."
-    cp /app/sample-0.json "${CONFIG_DIR}/0.json"
+if [ ! -f "${CONFIG_DIR}/sample.json" ]; then
+    bashio::log.info "Creating default configuration (sample.json)..."
+    cp /app/sample-0.json "${CONFIG_DIR}/sample.json"
 fi
 
 if [ ! -f "${CONFIG_DIR}/README.md" ]; then

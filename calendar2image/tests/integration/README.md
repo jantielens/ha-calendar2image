@@ -94,7 +94,7 @@ npm run test:all
 1. **Build Phase**: Builds a Docker image from the Dockerfile
 2. **Setup Phase**: 
    - Creates a test configuration directory
-   - Writes a sample `0.json` config
+   - Writes a sample `sample.json` config
    - Starts the container with volume mount
    - Waits for the container to be ready (health check)
 3. **Test Phase**: Runs all tests against the running container

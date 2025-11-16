@@ -493,7 +493,7 @@ const fs = require('fs');
 
 async function downloadCalendar(index, filename) {
   const response = await axios.get(
-    `http://homeassistant.local:3000/api/${index}.png`,
+    `http://homeassistant.local:3000/api/${name}.png`,
     { responseType: 'arraybuffer' }
   );
   
@@ -513,7 +513,7 @@ import requests
 
 def download_calendar(index, filename):
     response = requests.get(
-        f'http://homeassistant.local:3000/api/{index}.png'
+        f'http://homeassistant.local:3000/api/{name}.png'
     )
     
     with open(filename, 'wb') as f:
