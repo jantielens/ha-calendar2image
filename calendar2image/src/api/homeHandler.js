@@ -17,8 +17,21 @@ async function handleHomePage(req, res) {
     // Load all configurations
     const configs = await loadAllConfigs(CONFIG_DIR);
     
-    // Sort by index
-    configs.sort((a, b) => a.index - b.index);
+    // Sort: numeric first (by number), then alphabetic
+    configs.sort((a, b) => {
+      const aIsNumeric = typeof a.index === 'number';
+      const bIsNumeric = typeof b.index === 'number';
+      
+      if (aIsNumeric && bIsNumeric) {
+        return a.index - b.index;
+      } else if (aIsNumeric) {
+        return -1;
+      } else if (bIsNumeric) {
+        return 1;
+      } else {
+        return a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' });
+      }
+    });
     
     // Get base URL from request
     const protocol = req.get('x-forwarded-proto') || req.protocol || 'http';
@@ -53,8 +66,21 @@ async function handleConfigListAPI(req, res) {
     // Load all configurations
     const configs = await loadAllConfigs(CONFIG_DIR);
     
-    // Sort by index
-    configs.sort((a, b) => a.index - b.index);
+    // Sort: numeric first (by number), then alphabetic
+    configs.sort((a, b) => {
+      const aIsNumeric = typeof a.index === 'number';
+      const bIsNumeric = typeof b.index === 'number';
+      
+      if (aIsNumeric && bIsNumeric) {
+        return a.index - b.index;
+      } else if (aIsNumeric) {
+        return -1;
+      } else if (bIsNumeric) {
+        return 1;
+      } else {
+        return a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' });
+      }
+    });
     
     res.json({
       count: configs.length,
@@ -80,41 +106,48 @@ async function handleConfigListAPI(req, res) {
  * @param {Object} res - Express response object
  */
 async function handleConfigAPI(req, res) {
-  const indexParam = req.params.index;
+  const nameParam = decodeURIComponent(req.params.name);
   
-  // Validate index parameter
-  const index = parseInt(indexParam, 10);
-  
-  if (isNaN(index) || index < 0 || indexParam !== index.toString()) {
-    console.warn(`[API] Invalid index parameter: "${indexParam}"`);
+  // Validate name parameter - support both numeric and string names
+  let name;
+  try {
+    if (/^\d+$/.test(nameParam)) {
+      name = parseInt(nameParam, 10);
+    } else {
+      name = nameParam;
+    }
+  } catch (error) {
+    console.warn(`[API] Invalid name parameter: "${nameParam}"`);
     return res.status(400).json({
       error: 'Bad Request',
-      message: 'Invalid index parameter',
-      details: 'Index must be a non-negative integer (0, 1, 2, etc.)'
+      message: 'Invalid name parameter',
+      details: 'Name must be a valid config filename (without .json extension)'
     });
   }
   
   try {
-    console.log(`[API] Loading configuration ${index}...`);
+    console.log(`[API] Loading configuration ${name}...`);
     
     // Use the loadConfig function which already applies defaults and validates
     const { loadConfig } = require('../config/loader');
-    const config = await loadConfig(index);
+    const config = await loadConfig(name);
     
     res.json({
-      index,
+      name: String(name),
+      // Include 'index' for backward compatibility if name is numeric
+      index: typeof name === 'number' ? name : undefined,
       config
     });
     
   } catch (error) {
-    console.error(`[API] Error loading configuration ${index}:`, error.message);
+    console.error(`[API] Error loading configuration ${name}:`, error.message);
     
     // Determine appropriate status code
     const statusCode = error.message.includes('not found') ? 404 : 500;
     
     res.status(statusCode).json({
       error: statusCode === 404 ? 'Not Found' : 'Internal Server Error',
-      message: `Failed to load configuration ${index}`,
+      message: `Failed to load configuration ${name}`,
       details: error.message
     });
   }

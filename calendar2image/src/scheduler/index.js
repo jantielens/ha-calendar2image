@@ -23,20 +23,22 @@ let isWorkerRunning = false;
 /**
  * Internal function to generate and cache an image using child process
  * This is passed to the cache module to avoid circular dependencies
- * @param {number} index - Configuration index
+ * @param {string|number} name - Configuration name or index
  * @param {string} trigger - Trigger type for history tracking
  * @returns {Promise<boolean>} Success status
  */
-async function generateAndCache(index, trigger = 'scheduled') {
+async function generateAndCache(name, trigger = 'scheduled') {
   return new Promise(async (resolve) => {
+    const nameStr = String(name);
+    
     // Check if this config is already queued to prevent duplicate jobs
-    const alreadyQueued = workerQueue.some(job => job.index === index);
+    const alreadyQueued = workerQueue.some(job => String(job.name) === nameStr);
     if (alreadyQueued) {
-      console.warn(`[Scheduler] ⚠️  Skipping config ${index} (trigger: ${trigger}) - already queued for generation`);
+      console.warn(`[Scheduler] ⚠️  Skipping config ${name} (trigger: ${trigger}) - already queued for generation`);
       
       // Log to timeline
       try {
-        await logSystem(index, 'scheduler_skipped', {
+        await logSystem(name, 'scheduler_skipped', {
           trigger,
           reason: 'already_queued',
           queueLength: workerQueue.length
@@ -50,7 +52,7 @@ async function generateAndCache(index, trigger = 'scheduled') {
     }
     
     // Add to worker queue to prevent concurrent browser instances
-    workerQueue.push({ index, trigger, resolve });
+    workerQueue.push({ name, trigger, resolve });
     processWorkerQueue();
   });
 }
@@ -64,9 +66,9 @@ async function processWorkerQueue() {
   }
 
   isWorkerRunning = true;
-  const { index, trigger, resolve } = workerQueue.shift();
+  const { name, trigger, resolve } = workerQueue.shift();
 
-  console.log(`[Scheduler] Starting generation for config ${index} in child process (trigger: ${trigger})... (queue: ${workerQueue.length} remaining)`);
+  console.log(`[Scheduler] Starting generation for config ${name} in child process (trigger: ${trigger})... (queue: ${workerQueue.length} remaining)`);
   const startTime = Date.now();
 
   // Fork worker process
@@ -94,20 +96,20 @@ async function processWorkerQueue() {
           const buffer = Buffer.from(msg.buffer, 'base64');
           
           // Save to cache
-          await saveCachedImage(index, buffer, msg.contentType, msg.imageType, {
+          await saveCachedImage(name, buffer, msg.contentType, msg.imageType, {
             trigger,
             generationDuration
           });
           
-          console.log(`[Scheduler] Successfully pre-generated image for config ${index} in ${generationDuration}ms`);
+          console.log(`[Scheduler] Successfully pre-generated image for config ${name} in ${generationDuration}ms`);
           resolve(true);
         } catch (error) {
-          console.error(`[Scheduler] Failed to save cached image for config ${index}: ${error.message}`);
+          console.error(`[Scheduler] Failed to save cached image for config ${name}: ${error.message}`);
           resolve(false);
         }
       } else {
         const duration = Date.now() - startTime;
-        console.error(`[Scheduler] Worker failed for config ${index} after ${duration}ms: ${msg.error}`);
+        console.error(`[Scheduler] Worker failed for config ${name} after ${duration}ms: ${msg.error}`);
         resolve(false);
       }
     });
@@ -115,24 +117,24 @@ async function processWorkerQueue() {
     // Handle worker errors
     worker.on('error', (error) => {
       const duration = Date.now() - startTime;
-      console.error(`[Scheduler] Worker error for config ${index} after ${duration}ms: ${error.message}`);
+      console.error(`[Scheduler] Worker error for config ${name} after ${duration}ms: ${error.message}`);
       resolve(false);
     });
     
     // Handle worker exit
     worker.on('exit', (code, signal) => {
       if (code !== 0 && code !== null) {
-        console.error(`[Scheduler] Worker exited with code ${code} for config ${index}`);
+        console.error(`[Scheduler] Worker exited with code ${code} for config ${name}`);
       }
       if (signal) {
-        console.error(`[Scheduler] Worker killed with signal ${signal} for config ${index}`);
+        console.error(`[Scheduler] Worker killed with signal ${signal} for config ${name}`);
       }
     });
     
     // Timeout protection (60 seconds - increased since workers run sequentially)
     const timeout = setTimeout(() => {
       const duration = Date.now() - startTime;
-      console.error(`[Scheduler] Generation timeout for config ${index} after ${duration}ms, killing worker`);
+      console.error(`[Scheduler] Generation timeout for config ${name} after ${duration}ms, killing worker`);
       worker.kill('SIGTERM');
       resolve(false);
     }, 60000);
@@ -143,7 +145,7 @@ async function processWorkerQueue() {
     });
     
     // Send generation request to worker
-    worker.send({ action: 'generate', index, trigger });
+    worker.send({ action: 'generate', name, trigger });
 
     // When worker finishes (success or failure), process next in queue
     const finishWorker = () => {
@@ -169,87 +171,90 @@ function isValidCron(cronExpression) {
 
 /**
  * Schedule pre-generation for a single configuration
- * @param {number} index - Configuration index
+ * @param {string|number} name - Configuration name or index
  * @param {string} cronExpression - Cron expression (e.g., every 5 minutes)
  * @param {string} timezone - IANA timezone name for scheduling (e.g., "Europe/Brussels")
  */
-function schedulePreGeneration(index, cronExpression, timezone = 'UTC') {
+function schedulePreGeneration(name, cronExpression, timezone = 'UTC') {
+  const nameStr = String(name);
+  
   // Stop existing job if any
-  stopPreGeneration(index);
+  stopPreGeneration(name);
 
   if (!isValidCron(cronExpression)) {
-    console.error(`[Scheduler] Invalid cron expression for config ${index}: "${cronExpression}"`);
+    console.error(`[Scheduler] Invalid cron expression for config ${name}: "${cronExpression}"`);
     return false;
   }
 
-  console.log(`[Scheduler] Scheduling pre-generation for config ${index} with cron: ${cronExpression} (timezone: ${timezone})`);
+  console.log(`[Scheduler] Scheduling pre-generation for config ${name} with cron: ${cronExpression} (timezone: ${timezone})`);
 
   const task = cron.schedule(cronExpression, async () => {
-    console.log(`[Scheduler] Triggered scheduled generation for config ${index}`);
-    await generateAndCache(index, 'scheduled');
+    console.log(`[Scheduler] Triggered scheduled generation for config ${name}`);
+    await generateAndCache(name, 'scheduled');
   }, {
     scheduled: true,
     timezone: timezone
   });
 
-  activeJobs.set(index, {
+  activeJobs.set(nameStr, {
     task,
     cronExpression,
     timezone,
     scheduledAt: new Date().toISOString()
   });
 
-  console.log(`[Scheduler] Successfully scheduled config ${index}`);
+  console.log(`[Scheduler] Successfully scheduled config ${name}`);
   return true;
 }
 
 /**
  * Stop pre-generation scheduling for a configuration
- * @param {number} index - Configuration index
+ * @param {string|number} name - Configuration name or index
  */
-function stopPreGeneration(index) {
-  const job = activeJobs.get(index);
+function stopPreGeneration(name) {
+  const nameStr = String(name);
+  const job = activeJobs.get(nameStr);
   if (job) {
     job.task.stop();
-    activeJobs.delete(index);
-    console.log(`[Scheduler] Stopped scheduling for config ${index}`);
+    activeJobs.delete(nameStr);
+    console.log(`[Scheduler] Stopped scheduling for config ${name}`);
   }
 }
 
 /**
  * Schedule or update a configuration based on its settings
- * @param {number} index - Configuration index
+ * @param {string|number} name - Configuration name or index
  * @param {boolean} preGenerateNow - Whether to pre-generate image immediately (default: true)
  * @returns {Promise<boolean>} True if scheduled, false otherwise
  */
-async function scheduleConfigIfNeeded(index, preGenerateNow = true) {
+async function scheduleConfigIfNeeded(name, preGenerateNow = true) {
   try {
-    const config = await loadConfig(index);
+    const config = await loadConfig(name);
     
     if (config.preGenerateInterval) {
       const timezone = config.timezone || 'UTC';
-      const success = schedulePreGeneration(index, config.preGenerateInterval, timezone);
+      const success = schedulePreGeneration(name, config.preGenerateInterval, timezone);
       if (success) {
-        console.log(`[Scheduler] Config ${index} scheduled successfully`);
+        console.log(`[Scheduler] Config ${name} scheduled successfully`);
         
         // Pre-generate immediately if requested
         if (preGenerateNow) {
-          console.log(`[Scheduler] Pre-generating image for config ${index}...`);
-          await generateAndCache(index, 'scheduled');
+          console.log(`[Scheduler] Pre-generating image for config ${name}...`);
+          await generateAndCache(name, 'scheduled');
         }
       }
       return success;
     } else {
       // Config exists but has no preGenerateInterval - stop any existing schedule
-      const wasScheduled = activeJobs.has(index);
-      stopPreGeneration(index);
+      const wasScheduled = activeJobs.has(String(name));
+      stopPreGeneration(name);
       if (wasScheduled) {
-        console.log(`[Scheduler] Config ${index} has no preGenerateInterval, scheduling stopped`);
+        console.log(`[Scheduler] Config ${name} has no preGenerateInterval, scheduling stopped`);
       }
       return false;
     }
   } catch (error) {
-    console.error(`[Scheduler] Failed to schedule config ${index}: ${error.message}`);
+    console.error(`[Scheduler] Failed to schedule config ${name}: ${error.message}`);
     return false;
   }
 }
@@ -267,15 +272,18 @@ async function initializeScheduler() {
 
     let scheduledCount = 0;
     
-    for (const { index, config } of configs) {
+    for (const { name, index, config } of configs) {
+      // Use 'name' if available, otherwise fall back to 'index' for backward compatibility
+      const configId = name || index;
+      
       if (config.preGenerateInterval) {
         const timezone = config.timezone || 'UTC';
-        const success = schedulePreGeneration(index, config.preGenerateInterval, timezone);
+        const success = schedulePreGeneration(configId, config.preGenerateInterval, timezone);
         if (success) {
           scheduledCount++;
         }
       } else {
-        console.log(`[Scheduler] Config ${index} has no preGenerateInterval, skipping scheduling`);
+        console.log(`[Scheduler] Config ${configId} has no preGenerateInterval, skipping scheduling`);
       }
     }
 
@@ -312,7 +320,10 @@ async function generateAllImagesNow() {
     }
 
     const results = await Promise.allSettled(
-      configsToGenerate.map(({ index }) => generateAndCache(index, 'boot'))
+      configsToGenerate.map(({ name, index }) => {
+        const configId = name || index;
+        return generateAndCache(configId, 'boot');
+      })
     );
 
     const successful = results.filter(r => r.status === 'fulfilled' && r.value === true).length;
@@ -357,16 +368,16 @@ function startConfigWatcher() {
     // Handle file additions and changes
     configWatcher.on('add', async (filePath) => {
       const filename = path.basename(filePath);
-      if (!filename.match(/^\d+\.json$/)) {
+      if (!filename.endsWith('.json')) {
         return;
       }
       
-      const index = parseInt(path.basename(filename, '.json'), 10);
+      const name = path.basename(filename, '.json');
       console.log(`[Scheduler] Config file added: ${filename}`);
       
       try {
-        console.log(`[Scheduler] Config ${index} added, updating schedule and generating image...`);
-        await scheduleConfigIfNeeded(index, true); // true = pre-generate immediately (uses 'config_change' trigger)
+        console.log(`[Scheduler] Config ${name} added, updating schedule and generating image...`);
+        await scheduleConfigIfNeeded(name, true); // true = pre-generate immediately (uses 'config_change' trigger)
       } catch (error) {
         console.error(`[Scheduler] Error handling config addition for ${filename}: ${error.message}`);
       }
@@ -374,16 +385,16 @@ function startConfigWatcher() {
 
     configWatcher.on('change', async (filePath) => {
       const filename = path.basename(filePath);
-      if (!filename.match(/^\d+\.json$/)) {
+      if (!filename.endsWith('.json')) {
         return;
       }
       
-      const index = parseInt(path.basename(filename, '.json'), 10);
+      const name = path.basename(filename, '.json');
       console.log(`[Scheduler] Config file changed: ${filename}`);
       
       try {
-        console.log(`[Scheduler] Config ${index} modified, updating schedule and generating image...`);
-        await scheduleConfigIfNeeded(index, true); // true = pre-generate immediately (uses 'config_change' trigger)
+        console.log(`[Scheduler] Config ${name} modified, updating schedule and generating image...`);
+        await scheduleConfigIfNeeded(name, true); // true = pre-generate immediately (uses 'config_change' trigger)
       } catch (error) {
         console.error(`[Scheduler] Error handling config change for ${filename}: ${error.message}`);
       }
@@ -392,16 +403,16 @@ function startConfigWatcher() {
     // Handle file deletions
     configWatcher.on('unlink', async (filePath) => {
       const filename = path.basename(filePath);
-      if (!filename.match(/^\d+\.json$/)) {
+      if (!filename.endsWith('.json')) {
         return;
       }
       
-      const index = parseInt(path.basename(filename, '.json'), 10);
+      const name = path.basename(filename, '.json');
       console.log(`[Scheduler] Config file deleted: ${filename}`);
       
       try {
-        console.log(`[Scheduler] Config ${index} deleted, removing from schedule...`);
-        stopPreGeneration(index);
+        console.log(`[Scheduler] Config ${name} deleted, removing from schedule...`);
+        stopPreGeneration(name);
       } catch (error) {
         console.error(`[Scheduler] Error handling config deletion for ${filename}: ${error.message}`);
       }
@@ -431,7 +442,7 @@ async function initializeFileStats() {
   try {
     const files = await fs.promises.readdir(CONFIG_DIR);
     for (const filename of files) {
-      if (filename.match(/^\d+\.json$/)) {
+      if (filename.endsWith('.json')) {
         const filePath = path.join(CONFIG_DIR, filename);
         try {
           const stats = await fs.promises.stat(filePath);
@@ -469,7 +480,7 @@ function startManualPolling() {
 
       // Check for new and modified files
       for (const filename of files) {
-        if (!filename.match(/^\d+\.json$/)) {
+        if (!filename.endsWith('.json')) {
           continue;
         }
 
@@ -483,25 +494,25 @@ function startManualPolling() {
           if (!oldStats) {
             // New file
             console.log(`[Scheduler] Manual poll detected new file: ${filename}`);
-            const index = parseInt(path.basename(filename, '.json'), 10);
+            const name = path.basename(filename, '.json');
             fileStats.set(filename, {
               mtime: stats.mtimeMs,
               size: stats.size
             });
             
-            console.log(`[Scheduler] Config ${index} added, updating schedule and generating image...`);
-            await scheduleConfigIfNeeded(index, true); // uses 'config_change' trigger
+            console.log(`[Scheduler] Config ${name} added, updating schedule and generating image...`);
+            await scheduleConfigIfNeeded(name, true); // uses 'config_change' trigger
           } else if (stats.mtimeMs !== oldStats.mtime || stats.size !== oldStats.size) {
             // Modified file
             console.log(`[Scheduler] Manual poll detected change in ${filename} (mtime: ${oldStats.mtime} -> ${stats.mtimeMs})`);
-            const index = parseInt(path.basename(filename, '.json'), 10);
+            const name = path.basename(filename, '.json');
             fileStats.set(filename, {
               mtime: stats.mtimeMs,
               size: stats.size
             });
             
-            console.log(`[Scheduler] Config ${index} modified, updating schedule and generating image...`);
-            await scheduleConfigIfNeeded(index, true); // uses 'config_change' trigger
+            console.log(`[Scheduler] Config ${name} modified, updating schedule and generating image...`);
+            await scheduleConfigIfNeeded(name, true); // uses 'config_change' trigger
           }
         } catch (error) {
           // File might have been deleted during stat
@@ -512,11 +523,11 @@ function startManualPolling() {
       for (const [filename] of fileStats) {
         if (!currentFiles.has(filename)) {
           console.log(`[Scheduler] Manual poll detected deleted file: ${filename}`);
-          const index = parseInt(path.basename(filename, '.json'), 10);
+          const name = path.basename(filename, '.json');
           fileStats.delete(filename);
           
-          console.log(`[Scheduler] Config ${index} deleted, removing from schedule...`);
-          stopPreGeneration(index);
+          console.log(`[Scheduler] Config ${name} deleted, removing from schedule...`);
+          stopPreGeneration(name);
         }
       }
     } catch (error) {
@@ -576,9 +587,9 @@ async function stopAllSchedules() {
  */
 function getScheduleStatus() {
   const status = [];
-  for (const [index, job] of activeJobs.entries()) {
+  for (const [name, job] of activeJobs.entries()) {
     status.push({
-      index,
+      name,
       cronExpression: job.cronExpression,
       timezone: job.timezone,
       scheduledAt: job.scheduledAt,

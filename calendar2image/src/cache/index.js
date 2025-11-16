@@ -2,6 +2,7 @@ const fs = require('fs').promises;
 const path = require('path');
 const { calculateCRC32 } = require('../utils/crc32');
 const { addHistoryEntry } = require('./crc32History');
+const { toCacheName } = require('../utils/sanitize');
 
 // Cache directory - use environment variable or default
 const CACHE_DIR = process.env.CACHE_DIR || path.join(process.cwd(), '..', 'data', 'cache');
@@ -51,33 +52,35 @@ async function cleanupTempFiles() {
 }
 
 /**
- * Get cache file path for a configuration index
- * @param {number} index - Configuration index
+ * Get cache file path for a configuration name
+ * @param {string|number} name - Configuration name or index
  * @param {string} imageType - Image type (png, jpg, bmp)
  * @returns {string} Cache file path
  */
-function getCacheFilePath(index, imageType = 'png') {
+function getCacheFilePath(name, imageType = 'png') {
+  const cacheName = toCacheName(String(name));
   const extension = imageType === 'jpg' ? 'jpg' : imageType === 'bmp' ? 'bmp' : 'png';
-  return path.join(CACHE_DIR, `${index}.${extension}`);
+  return path.join(CACHE_DIR, `${cacheName}.${extension}`);
 }
 
 /**
- * Get cache metadata file path for a configuration index
- * @param {number} index - Configuration index
+ * Get cache metadata file path for a configuration name
+ * @param {string|number} name - Configuration name or index
  * @returns {string} Metadata file path
  */
-function getMetadataFilePath(index) {
-  return path.join(CACHE_DIR, `${index}.meta.json`);
+function getMetadataFilePath(name) {
+  const cacheName = toCacheName(String(name));
+  return path.join(CACHE_DIR, `${cacheName}.meta.json`);
 }
 
 /**
  * Check if cached image exists and get metadata
- * @param {number} index - Configuration index
+ * @param {string|number} name - Configuration name or index
  * @returns {Promise<Object|null>} Cache metadata or null if not found
  */
-async function getCacheMetadata(index) {
+async function getCacheMetadata(name) {
   try {
-    const metadataPath = getMetadataFilePath(index);
+    const metadataPath = getMetadataFilePath(name);
     const metadata = await fs.readFile(metadataPath, 'utf8');
     return JSON.parse(metadata);
   } catch (error) {
@@ -87,7 +90,7 @@ async function getCacheMetadata(index) {
 
 /**
  * Save cached image and metadata
- * @param {number} index - Configuration index
+ * @param {string|number} name - Configuration name or index
  * @param {Buffer} buffer - Image buffer
  * @param {string} contentType - Content type
  * @param {string} imageType - Image type
@@ -95,10 +98,10 @@ async function getCacheMetadata(index) {
  * @param {string} options.trigger - Trigger type for history tracking
  * @param {number} options.generationDuration - Generation duration in ms
  */
-async function saveCachedImage(index, buffer, contentType, imageType, options = {}) {
+async function saveCachedImage(name, buffer, contentType, imageType, options = {}) {
   try {
-    const cachePath = getCacheFilePath(index, imageType);
-    const metadataPath = getMetadataFilePath(index);
+    const cachePath = getCacheFilePath(name, imageType);
+    const metadataPath = getMetadataFilePath(name);
     
     // Use temporary file paths for atomic replacement
     const tempCachePath = cachePath + '.tmp';
@@ -108,7 +111,7 @@ async function saveCachedImage(index, buffer, contentType, imageType, options = 
     const crc32 = calculateCRC32(buffer);
     
     const metadata = {
-      index,
+      name: String(name),
       contentType,
       imageType,
       size: buffer.length,
@@ -130,13 +133,13 @@ async function saveCachedImage(index, buffer, contentType, imageType, options = 
     ]);
 
     // After successful disk write, update memory cache atomically
-    memoryCache.set(index, { buffer, metadata });
+    memoryCache.set(String(name), { buffer, metadata });
 
-    console.log(`[Cache] Saved cached image for config ${index}: ${buffer.length} bytes (memory + disk)`);
+    console.log(`[Cache] Saved cached image for config ${name}: ${buffer.length} bytes (memory + disk)`);
     
     // Record in CRC32 history (non-blocking)
     const { trigger = 'unknown', generationDuration = null } = options;
-    addHistoryEntry(index, crc32, {
+    addHistoryEntry(name, crc32, {
       trigger,
       generationDuration,
       imageSize: buffer.length
@@ -146,21 +149,23 @@ async function saveCachedImage(index, buffer, contentType, imageType, options = 
     
     return metadata;
   } catch (error) {
-    console.error(`[Cache] Failed to save cached image for config ${index}: ${error.message}`);
+    console.error(`[Cache] Failed to save cached image for config ${name}: ${error.message}`);
     throw error;
   }
 }
 
 /**
  * Load cached image
- * @param {number} index - Configuration index
+ * @param {string|number} name - Configuration name or index
  * @returns {Promise<Object|null>} Object with buffer and contentType, or null if not found
  */
-async function loadCachedImage(index) {
+async function loadCachedImage(name) {
+  const nameStr = String(name);
+  
   // Try memory cache first (instant, no I/O)
-  const memoryCached = memoryCache.get(index);
+  const memoryCached = memoryCache.get(nameStr);
   if (memoryCached) {
-    console.log(`[Cache] Loaded from memory for config ${index}: ${memoryCached.buffer.length} bytes`);
+    console.log(`[Cache] Loaded from memory for config ${name}: ${memoryCached.buffer.length} bytes`);
     return {
       buffer: memoryCached.buffer,
       contentType: memoryCached.metadata.contentType,
@@ -170,18 +175,18 @@ async function loadCachedImage(index) {
   
   // Fall back to disk
   try {
-    const metadata = await getCacheMetadata(index);
+    const metadata = await getCacheMetadata(name);
     if (!metadata) {
       return null;
     }
 
-    const cachePath = getCacheFilePath(index, metadata.imageType);
+    const cachePath = getCacheFilePath(name, metadata.imageType);
     const buffer = await fs.readFile(cachePath);
 
-    console.log(`[Cache] Loaded from disk for config ${index}: ${buffer.length} bytes (generated ${metadata.generatedAt})`);
+    console.log(`[Cache] Loaded from disk for config ${name}: ${buffer.length} bytes (generated ${metadata.generatedAt})`);
     
     // Populate memory cache for future reads
-    memoryCache.set(index, { buffer, metadata });
+    memoryCache.set(nameStr, { buffer, metadata });
     
     return {
       buffer,
@@ -189,13 +194,13 @@ async function loadCachedImage(index) {
       metadata
     };
   } catch (error) {
-    console.warn(`[Cache] Failed to load cached image for config ${index}: ${error.message}`);
+    console.warn(`[Cache] Failed to load cached image for config ${name}: ${error.message}`);
     return null;
   }
 }
 
 /**
- * Pre-generate image for a configuration index
+ * Pre-generate image for a configuration name
  * Note: This function is set by the scheduler module to avoid circular dependencies
  * @type {Function}
  */
@@ -210,40 +215,42 @@ function setPreGenerateFunction(fn) {
 }
 
 /**
- * Pre-generate image for a configuration index
- * @param {number} index - Configuration index
+ * Pre-generate image for a configuration name
+ * @param {string|number} name - Configuration name or index
  * @returns {Promise<boolean>} Success status
  */
-async function preGenerateImage(index) {
+async function preGenerateImage(name) {
   if (!preGenerateImageFn) {
     throw new Error('Pre-generate function not set. Call setPreGenerateFunction first.');
   }
-  return preGenerateImageFn(index);
+  return preGenerateImageFn(name);
 }
 
 /**
  * Delete cached image and metadata
- * @param {number} index - Configuration index
+ * @param {string|number} name - Configuration name or index
  */
-async function deleteCachedImage(index) {
+async function deleteCachedImage(name) {
+  const nameStr = String(name);
+  
   // Remove from memory cache first
-  memoryCache.delete(index);
+  memoryCache.delete(nameStr);
   
   try {
-    const metadata = await getCacheMetadata(index);
+    const metadata = await getCacheMetadata(name);
     if (metadata) {
-      const cachePath = getCacheFilePath(index, metadata.imageType);
-      const metadataPath = getMetadataFilePath(index);
+      const cachePath = getCacheFilePath(name, metadata.imageType);
+      const metadataPath = getMetadataFilePath(name);
       
       await Promise.all([
         fs.unlink(cachePath).catch(() => {}),
         fs.unlink(metadataPath).catch(() => {})
       ]);
       
-      console.log(`[Cache] Deleted cached image for config ${index} (memory + disk)`);
+      console.log(`[Cache] Deleted cached image for config ${name} (memory + disk)`);
     }
   } catch (error) {
-    console.warn(`[Cache] Failed to delete cached image for config ${index}: ${error.message}`);
+    console.warn(`[Cache] Failed to delete cached image for config ${name}: ${error.message}`);
   }
 }
 
@@ -258,11 +265,11 @@ function getMemoryCacheStats() {
     configs: []
   };
   
-  for (const [index, cached] of memoryCache.entries()) {
+  for (const [name, cached] of memoryCache.entries()) {
     const bytes = cached.buffer.length;
     stats.totalBytes += bytes;
     stats.configs.push({
-      index,
+      name,
       size: bytes,
       crc32: cached.metadata.crc32,
       generatedAt: cached.metadata.generatedAt

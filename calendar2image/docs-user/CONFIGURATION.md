@@ -18,7 +18,21 @@ This follows the Home Assistant standard for add-on configurations. The folder n
 
 ## File Naming Pattern
 
-Configuration files must follow the naming pattern: `0.json`, `1.json`, `2.json`, etc.
+Configuration files can use any valid filename:
+- **Descriptive names**: `kitchen.json`, `vacation-2024.json`, `Work Calendar.json`, `café.json`
+- **Numeric names**: `0.json`, `1.json`, `2.json` (backward compatible, auto-created on first run)
+- **Valid characters**: Letters, numbers, spaces, hyphens, underscores, unicode characters
+- **Invalid characters**: Path separators (`/`, `\`), parent references (`..`), leading dots (`.`)
+
+**API Endpoints:**
+- Config filename (without `.json`) becomes the API identifier
+- Spaces and special characters must be URL-encoded:
+  - `kitchen.json` → `/api/kitchen.png`
+  - `vacation-2024.json` → `/api/vacation-2024.png`
+  - `Work Calendar.json` → `/api/Work%20Calendar.png` (spaces URL-encoded)
+  - `0.json` → `/api/0.png` (numeric still works)
+
+The dashboard automatically lists all configs, sorted with numeric configs first (0, 1, 2...) followed by alphabetically sorted named configs.
 
 ## Configuration Schema
 

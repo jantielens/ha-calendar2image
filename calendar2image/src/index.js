@@ -20,31 +20,34 @@ app.use((req, res, next) => {
 // Home page - Configuration dashboard
 app.get('/', handleHomePage);
 
-// Configuration visualization page
-app.get('/config/:index(\\d+)', handleConfigPage);
+// Configuration visualization page (supports both numeric and string names)
+app.get('/config/:name', handleConfigPage);
 
-// CRC32 History page
-app.get('/crc32-history/:index(\\d+)', handleCRC32HistoryPage);
+// CRC32 History page (supports both numeric and string names)
+app.get('/crc32-history/:name', handleCRC32HistoryPage);
 
-// Timeline page
-app.get('/timeline/:index(\\d+)', handleTimelinePage);
+// Timeline page (supports both numeric and string names)
+app.get('/timeline/:name', handleTimelinePage);
 
-// Configuration API endpoints
+// Configuration API endpoints (supports both numeric and string names)
 app.get('/api/configs', handleConfigListAPI);
-app.get('/api/config/:index(\\d+)', handleConfigAPI);
+app.get('/api/config/:name', handleConfigAPI);
 
-// CRC32 History API endpoint
-app.get('/api/:index(\\d+)/crc32-history', handleCRC32HistoryAPI);
+// CRC32 History API endpoint (supports both numeric and string names)
+app.get('/api/:name/crc32-history', handleCRC32HistoryAPI);
 
 // API endpoints with file extensions
 // CRC32 checksum endpoint - get CRC32 of image without downloading
-app.get('/api/:index(\\d+).:ext(png|jpg|bmp).crc32', handleCRC32Request);
+// Supports any config name (spaces must be URL-encoded)
+app.get('/api/:name.:ext(png|jpg|bmp).crc32', handleCRC32Request);
 
 // Fresh generation endpoint - bypass cache and generate fresh image
-app.get('/api/:index(\\d+)/fresh.:ext(png|jpg|bmp)', handleFreshImageRequest);
+// Supports any config name (spaces must be URL-encoded)
+app.get('/api/:name/fresh.:ext(png|jpg|bmp)', handleFreshImageRequest);
 
-// Main API endpoint - generate calendar image by config index
-app.get('/api/:index(\\d+).:ext(png|jpg|bmp)', handleImageRequest);
+// Main API endpoint - generate calendar image by config name
+// Supports any config name (spaces must be URL-encoded)
+app.get('/api/:name.:ext(png|jpg|bmp)', handleImageRequest);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -101,11 +104,11 @@ app.use((req, res) => {
             '/ - Home page with configuration dashboard',
             '/crc32-history/:index - CRC32 history visualization page',
             '/api/configs - List all configurations (JSON)',
-            '/api/config/:index - Get specific configuration (JSON)',
-            '/api/:index/crc32-history - Get CRC32 history (JSON)',
-            '/api/:index.:ext (e.g., /api/0.png, /api/1.jpg) - Returns cached/fresh image',
-            '/api/:index.:ext.crc32 (e.g., /api/0.png.crc32) - Returns CRC32 checksum',
-            '/api/:index/fresh.:ext (e.g., /api/0/fresh.png) - Forces fresh generation',
+            '/api/config/:name - Get specific configuration (JSON)',
+            '/api/:name/crc32-history - Get CRC32 history (JSON)',
+            '/api/:name.:ext (e.g., /api/0.png, /api/kitchen.jpg) - Returns cached/fresh image',
+            '/api/:name.:ext.crc32 (e.g., /api/0.png.crc32) - Returns CRC32 checksum',
+            '/api/:name/fresh.:ext (e.g., /api/0/fresh.png) - Forces fresh generation',
             '/health',
             '',
             'Note: Extension (png/jpg/bmp) must match the imageType in the config file'
@@ -131,16 +134,17 @@ const server = app.listen(PORT, '0.0.0.0', async () => {
     console.log(`Server running on port ${PORT}`);
     console.log(`Available endpoints:`);
     console.log(`  - GET /                      : Home page with configuration dashboard`);
-    console.log(`  - GET /crc32-history/:index  : CRC32 history visualization page`);
+    console.log(`  - GET /crc32-history/:name   : CRC32 history visualization page`);
     console.log(`  - GET /api/configs           : List all configurations (JSON)`);
-    console.log(`  - GET /api/config/:index     : Get specific configuration (JSON)`);
-    console.log(`  - GET /api/:index/crc32-history : Get CRC32 history (JSON)`);
-    console.log(`  - GET /api/:index.:ext       : Get cached/fresh image (ext: png, jpg, bmp)`);
-    console.log(`  - GET /api/:index.:ext.crc32 : Get CRC32 checksum (e.g., /api/0.png.crc32)`);
-    console.log(`  - GET /api/:index/fresh.:ext : Force fresh generation`);
+    console.log(`  - GET /api/config/:name      : Get specific configuration (JSON)`);
+    console.log(`  - GET /api/:name/crc32-history : Get CRC32 history (JSON)`);
+    console.log(`  - GET /api/:name.:ext        : Get cached/fresh image (ext: png, jpg, bmp)`);
+    console.log(`  - GET /api/:name.:ext.crc32  : Get CRC32 checksum (e.g., /api/0.png.crc32)`);
+    console.log(`  - GET /api/:name/fresh.:ext  : Force fresh generation`);
     console.log(`  - GET /api/mock-weather      : Mock weather data for testing`);
     console.log(`  - GET /health                : Health check`);
     console.log(`Note: Extension must match imageType in config file`);
+    console.log(`Note: Config names with spaces must be URL-encoded (e.g., kitchen%20week)`);
     console.log('='.repeat(50));
     
     try {

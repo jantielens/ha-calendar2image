@@ -63,7 +63,7 @@ describe('Cache Atomic File Replacement', () => {
 
     // Verify metadata is correct
     expect(metadata).toMatchObject({
-      index,
+      name: String(index),
       contentType,
       imageType,
       size: buffer.length
@@ -95,7 +95,7 @@ describe('Cache Atomic File Replacement', () => {
     expect(cached).not.toBeNull();
     expect(cached.buffer.toString()).toBe(buffer.toString());
     expect(cached.contentType).toBe(contentType);
-    expect(cached.metadata.index).toBe(index);
+    expect(cached.metadata.name).toBe(String(index));
   });
 
   test('should cleanup orphaned temp files on startup', async () => {
@@ -267,7 +267,7 @@ describe('In-Memory Cache', () => {
     // Verify memory cache now has the entry
     stats = getMemoryCacheStats();
     expect(stats.entries).toBe(1);
-    expect(stats.configs[0].index).toBe(index);
+    expect(stats.configs[0].name).toBe(String(index));
   });
 
   test('should delete from both memory and disk', async () => {
@@ -312,7 +312,7 @@ describe('In-Memory Cache', () => {
     stats = getMemoryCacheStats();
     expect(stats.entries).toBe(1);
     expect(stats.totalBytes).toBe(buffer1.length);
-    expect(stats.configs[0].index).toBe(13);
+    expect(stats.configs[0].name).toBe('13');
 
     // Save second image
     await saveCachedImage(14, buffer2, contentType, imageType);
@@ -321,8 +321,8 @@ describe('In-Memory Cache', () => {
     expect(stats.totalBytes).toBe(buffer1.length + buffer2.length);
 
     // Verify configs array
-    const indexes = stats.configs.map(c => c.index).sort();
-    expect(indexes).toEqual([13, 14]);
+    const names = stats.configs.map(c => c.name).sort();
+    expect(names).toEqual(['13', '14']);
   });
 
   test('should clear all memory cache entries', async () => {

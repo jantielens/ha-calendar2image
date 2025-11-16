@@ -14,28 +14,39 @@ Replace `homeassistant.local` with your Home Assistant IP address if needed.
 
 ---
 
+## Config Naming
+
+- **Any valid filename** works: `kitchen.json`, `vacation-2024.json`, `Work Calendar.json`, `café.json`
+- **Numeric configs** still work: `0.json`, `1.json` (backward compatible)
+- **URL encoding**: Spaces and special characters must be URL-encoded in API requests
+  - `Work Calendar.json` → `/api/Work%20Calendar.png`
+  - `café.json` → `/api/caf%C3%A9.png`
+
+---
+
 ## Endpoints
 
-### GET /api/:index.:ext
+### GET /api/:name.:ext
 
 **Returns a calendar image** (cached or fresh depending on configuration)
 
 **Parameters:**
-- `:index` - Configuration index (0, 1, 2, etc.)
+- `:name` - Config name (filename without `.json` extension)
 - `:ext` - Image format (`png`, `jpg`, or `bmp`)
 
 **Important:** The extension must match the `imageType` in the corresponding configuration file, or you'll get a 404 error.
 
 **Examples:**
 ```bash
-# Get first calendar as PNG
+# Numeric config (backward compatible)
 curl http://homeassistant.local:3000/api/0.png -o calendar.png
 
-# Get second calendar as JPG
-curl http://homeassistant.local:3000/api/1.jpg -o calendar.jpg
+# Named configs
+curl http://homeassistant.local:3000/api/kitchen.jpg -o kitchen.jpg
+curl http://homeassistant.local:3000/api/vacation-2024.bmp -o vacation.bmp
 
-# Get third calendar as BMP
-curl http://homeassistant.local:3000/api/2.bmp -o calendar.bmp
+# Config with spaces (URL-encoded)
+curl http://homeassistant.local:3000/api/Work%20Calendar.png -o work.png
 ```
 
 **Response Headers:**
@@ -61,20 +72,23 @@ curl http://homeassistant.local:3000/api/2.bmp -o calendar.bmp
 
 ---
 
-### GET /api/:index/fresh.:ext
+### GET /api/:name/fresh.:ext
 
 **Forces fresh image generation**, bypassing cache
 
 **Parameters:**
-- `:index` - Configuration index (0, 1, 2, etc.)
+- `:name` - Config name (filename without `.json` extension)
 - `:ext` - Image format (`png`, `jpg`, or `bmp`)
 
 **Important:** The extension must match the `imageType` in the configuration file.
 
 **Examples:**
 ```bash
-# Force fresh generation
+# Force fresh generation for numeric config
 curl http://homeassistant.local:3000/api/0/fresh.png -o calendar.png
+
+# Force fresh for named config
+curl http://homeassistant.local:3000/api/kitchen/fresh.png -o fresh-kitchen.png
 ```
 
 **Use Cases:**
@@ -91,21 +105,24 @@ curl http://homeassistant.local:3000/api/0/fresh.png -o calendar.png
 
 ---
 
-### GET /api/:index.:ext.crc32
+### GET /api/:name.:ext.crc32
 
 **Returns the CRC32 checksum** of the image without downloading it
 
 **Parameters:**
-- `:index` - Configuration index (0, 1, 2, etc.)
+- `:name` - Config name (filename without `.json` extension)
 - `:ext` - Image format (`png`, `jpg`, or `bmp`)
 
 **Important:** The extension must match the `imageType` in the configuration file.
 
 **Examples:**
 ```bash
-# Get CRC32 checksum
+# Get CRC32 checksum for numeric config
 curl http://homeassistant.local:3000/api/0.png.crc32
 # Output: 8f8ea89f
+
+# Get CRC32 for named config
+curl http://homeassistant.local:3000/api/kitchen.png.crc32
 ```
 
 **Response:**
@@ -125,23 +142,26 @@ curl http://homeassistant.local:3000/api/0.png.crc32
 
 ---
 
-### GET /api/:index/crc32-history
+### GET /api/:name/crc32-history
 
 **Returns the CRC32 history** for a configuration (last 500 generations)
 
 **Parameters:**
-- `:index` - Configuration index (0, 1, 2, etc.)
+- `:name` - Config name (filename without `.json` extension)
 
 **Examples:**
 ```bash
-# Get CRC32 history for config 0
+# Get CRC32 history for numeric config
 curl http://homeassistant.local:3000/api/0/crc32-history
+
+# Get CRC32 history for named config
+curl http://homeassistant.local:3000/api/vacation-2024/crc32-history
 ```
 
 **Response:**
 ```json
 {
-  "index": 0,
+  "name": "vacation-2024",
   "history": [
     {
       "crc32": "8f8ea89f",
