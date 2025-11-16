@@ -36,12 +36,17 @@ Transform calendars, other data, or both into customizable images - supports ICS
 ### First Steps
 
 The add-on automatically creates configuration files in `/addon_configs/17f877f5_calendar2image/`:
-- `0.json` - Working configuration with sample calendar
+- `0.json` - Working configuration with sample calendar (you can rename this to any `.json` filename)
 - `templates/` - All built-in templates as custom templates (prefixed with `custom-`) for you to customize
 - `README.md` - Configuration documentation
 
+**Naming Your Configurations:**
+- Use any valid filename: `kitchen.json`, `vacation-2024.json`, `Work Calendar.json`, etc.
+- Numeric filenames like `0.json`, `1.json` continue to work (backward compatible)
+- Access images via `/api/your-filename.png` (spaces must be URL-encoded: `Work%20Calendar`)
+
 **Edit the configuration:**
-1. Open `0.json` in File Editor add-on
+1. Open your config file (e.g., `0.json`) in File Editor add-on
    - ⚠️ **Important**: Set `enforce_basepath: false` in File Editor configuration to access add-on config folders ([docs](https://github.com/home-assistant/addons/blob/master/configurator/DOCS.md#option-enforce_basepath-required))
 2. Replace `icsUrl` with your calendar's public ICS URL
 3. Save and view the updated image at `http://homeassistant.local:3000/api/0.png`
@@ -89,22 +94,28 @@ Create JSON files in `/addon_configs/17f877f5_calendar2image/`:
 
 ### Image Endpoints
 
+All endpoints accept any valid config filename. Use URL encoding for spaces or special characters.
+
 ```bash
 # Get calendar image (cached or fresh)
-GET /api/:index.:ext
-# Example: http://homeassistant.local:3000/api/0.png
+GET /api/:name.:ext
+# Examples: 
+#   http://homeassistant.local:3000/api/kitchen.png
+#   http://homeassistant.local:3000/api/vacation-2024.png
+#   http://homeassistant.local:3000/api/Work%20Calendar.png  (spaces URL-encoded)
+#   http://homeassistant.local:3000/api/0.png  (numeric configs still work)
 
 # Force fresh generation (bypass cache)
-GET /api/:index/fresh.:ext
+GET /api/:name/fresh.:ext
 
 # Get CRC32 checksum (without downloading image)
-GET /api/:index.:ext.crc32
+GET /api/:name.:ext.crc32
 
 # Get CRC32 history (JSON)
-GET /api/:index/crc32-history
+GET /api/:name/crc32-history
 
 # View CRC32 history (visual page)
-GET /crc32-history/:index
+GET /crc32-history/:name
 ```
 
 **Note:** Extension must match the `imageType` in your config file.

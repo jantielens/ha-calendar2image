@@ -1,5 +1,5 @@
 name: HA Calendar2Image
-version: "0.12.2"
+version: "0.13.0"
 slug: calendar2image
 description: Transform calendars, other data, or both into customizable images - supports ICS feeds, external data sources, custom templates, intelligent caching, and e-ink optimization for ultra-low-power displays.
 url: https://github.com/jantielens/ha-calendar2image

@@ -13,13 +13,23 @@ During local development, use this `data/calendar2image/` folder.
 
 ## File Naming
 
-Configuration files must be named with numeric IDs:
-- `0.json` - First configuration (accessible via `/api/0.png` or other extension)
-- `1.json` - Second configuration (accessible via `/api/1.png` or other extension)
+## File Naming
+
+Configuration files can use any valid filename:
+- **Descriptive names**: `kitchen.json`, `vacation-2024.json`, `Work Calendar.json`, `café.json`
+- **Numeric names**: `0.json`, `1.json` (backward compatible)
+- **Valid characters**: Letters, numbers, spaces, hyphens, underscores, unicode characters
+- **Invalid characters**: Path separators (`/`, `\`), parent references (`..`), leading dots (`.`)
+
+**API Access:**
+- Config filename (without `.json`) becomes the endpoint identifier
+- Spaces must be URL-encoded: `Work Calendar.json` → `/api/Work%20Calendar.png`
+- Examples:
+  - `kitchen.json` → `/api/kitchen.png`
+  - `vacation-2024.json` → `/api/vacation-2024.png`
+  - `0.json` → `/api/0.png`
 
 **Note:** The API endpoint extension must match the `imageType` in the config file.
-- `2.json` - Third configuration (accessible via `/api/2`)
-- etc.
 
 ## Configuration Schema
 

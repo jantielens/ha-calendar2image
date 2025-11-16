@@ -1,5 +1,40 @@
 # Changelog
 
+## [0.13.0] - 2025-11-16
+
+### Added
+- **Arbitrary Config Filenames Support** (#48)
+  - Config files can now use any valid filename, not just numeric (e.g., `kitchen.json`, `vacation-2024.json`, `Work Calendar.json`, `café.json`)
+  - All `*.json` files in the config directory are now recognized and loaded
+  - API endpoints now accept config names via URL: `/api/kitchen.png`, `/api/vacation-2024.png`
+  - URL encoding automatically handled for names with spaces or unicode characters (e.g., `/api/kitchen%20week.png`)
+  - Natural sorting: numeric configs appear first (sorted numerically), followed by alphabetic configs (sorted alphabetically)
+  - Backward compatible: existing numeric configs (`0.json`, `1.json`) continue to work without changes
+  
+### Security
+- **Path Traversal Prevention** - New `sanitizeConfigName()` utility function prevents malicious filename attacks
+  - Rejects filenames with path separators (`/`, `\`)
+  - Rejects parent directory references (`..`)
+  - Rejects filenames starting with dots (`.hidden`)
+  - Rejects reserved system names (`con`, `prn`, `aux`, `nul`)
+  - Preserves valid characters: spaces, unicode, hyphens, underscores, alphanumeric
+
+### Changed
+- **Config Loader** - `loadConfig()` now accepts both string names and numeric indices
+- **API Routes** - Changed from `:index(\\d+)` pattern to `:name` to accept any valid config name
+- **Scheduler & File Watcher** - Now monitors all `*.json` files for changes, not just numeric ones
+- **Cache System** - Uses sanitized config names for cache keys (spaces converted to underscores for filesystem safety)
+
+### Testing
+- Added 23 new tests for arbitrary config name support
+- Test coverage includes: spaces, unicode, hyphens, underscores, path traversal prevention, URL encoding
+- All 281 tests passing
+
+### Documentation
+- Updated README.md with examples of arbitrary config filenames
+- Updated API-REFERENCE.md to document URL encoding requirements
+- Updated CONFIGURATION.md to reflect new filename flexibility
+
 ## [0.12.2] - 2025-11-12
 
 ### Fixed
