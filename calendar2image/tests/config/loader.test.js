@@ -123,11 +123,11 @@ describe('config loader', () => {
     });
 
     it('should throw error for negative index', async () => {
-      await expect(loadConfig(-1, tempDir)).rejects.toThrow('Invalid config index');
+      await expect(loadConfig(-1, tempDir)).rejects.toThrow('Invalid config');
     });
 
-    it('should throw error for non-number index', async () => {
-      await expect(loadConfig('abc', tempDir)).rejects.toThrow('Invalid config index');
+    it('should throw error for invalid config name with path traversal', async () => {
+      await expect(loadConfig('../etc/passwd', tempDir)).rejects.toThrow('Invalid config name');
     });
   });
 
@@ -187,7 +187,7 @@ describe('config loader', () => {
 
       await fs.writeFile(path.join(tempDir, '0.json'), JSON.stringify(config0));
       await fs.writeFile(path.join(tempDir, 'readme.txt'), 'some text');
-      await fs.writeFile(path.join(tempDir, 'config.json'), JSON.stringify(config0));
+      await fs.writeFile(path.join(tempDir, 'config.xml'), JSON.stringify(config0)); // Changed to .xml so it won't be loaded
 
       const result = await loadAllConfigs(tempDir);
       

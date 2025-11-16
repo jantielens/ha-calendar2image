@@ -120,7 +120,7 @@ describe('Scheduler Config Watcher', () => {
     // Verify config 0 is scheduled
     let status = getScheduleStatus();
     expect(status).toHaveLength(1);
-    expect(status[0].index).toBe(0);
+    expect(status[0].name).toBe('0');
 
     // Wait a bit for watcher to start
     await new Promise(resolve => setTimeout(resolve, 500));
@@ -147,7 +147,7 @@ describe('Scheduler Config Watcher', () => {
     // Verify config 1 is now scheduled
     status = getScheduleStatus();
     expect(status).toHaveLength(2);
-    expect(status.map(s => s.index).sort()).toEqual([0, 1]);
+    expect(status.map(s => s.name).sort()).toEqual(['0', '1']);
     
     // Verify pre-generation was triggered by checking fork was called
     expect(mockFork).toHaveBeenCalled();
@@ -203,7 +203,7 @@ describe('Scheduler Config Watcher', () => {
     // Verify config 1 is removed from schedule
     status = getScheduleStatus();
     expect(status).toHaveLength(1);
-    expect(status[0].index).toBe(0);
+    expect(status[0].name).toBe('0');
   }, 10000);
 
   test('should update schedule when config file is modified', async () => {

@@ -2,11 +2,11 @@ const path = require('path');
 
 /**
  * Sanitize a config name to prevent path traversal attacks
- * Removes path separators, parent directory references, and leading/trailing dots
+ * Throws an error if the name contains path separators or invalid characters
  * 
  * @param {string} name - The config name to sanitize
  * @returns {string} Sanitized config name
- * @throws {Error} If the name is empty or invalid after sanitization
+ * @throws {Error} If the name is empty or contains invalid characters
  */
 function sanitizeConfigName(name) {
   if (typeof name !== 'string' || !name) {
@@ -21,14 +21,20 @@ function sanitizeConfigName(name) {
     throw new Error('Config name cannot be empty');
   }
 
-  // Prevent path traversal by removing:
-  // - Path separators (/, \)
-  // - Parent directory references (..)
-  // - Current directory reference (.)
-  // - Leading/trailing whitespace
-  sanitized = sanitized.replace(/[\/\\]/g, '');
-  sanitized = sanitized.replace(/\.\./g, '');
-  sanitized = sanitized.replace(/^\./g, '');
+  // Check for path traversal attempts - throw error if detected
+  if (sanitized.includes('/') || sanitized.includes('\\')) {
+    throw new Error('Config name cannot contain path separators');
+  }
+  
+  if (sanitized.includes('..')) {
+    throw new Error('Config name cannot contain parent directory references');
+  }
+  
+  if (sanitized.startsWith('.')) {
+    throw new Error('Config name cannot start with a dot');
+  }
+  
+  // Trim whitespace
   sanitized = sanitized.trim();
 
   // Check if anything remains after sanitization
