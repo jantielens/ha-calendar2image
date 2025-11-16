@@ -69,23 +69,23 @@ async function fetchExtraDataForConfig(config, configIndex) {
  * Main API handler for generating calendar images
  * Orchestrates the entire pipeline: config -> fetch -> render -> generate
  * 
- * @param {number} index - Configuration index (0, 1, 2, etc.)
+ * @param {string|number} name - Configuration name or index (e.g., 'kitchen', 0, 1, 2)
  * @param {Object} options - Generation options
  * @param {boolean} options.saveCache - Whether to save the generated image to cache
  * @returns {Promise<Object>} Object with buffer and contentType
  * @throws {Error} With appropriate error details for HTTP response handling
  */
-async function generateCalendarImage(index, options = {}) {
+async function generateCalendarImage(name, options = {}) {
   const { saveCache = false, trigger = 'unknown' } = options;
   const version = getVersion();
   
-  console.log(`[API] Starting image generation for config index ${index} (v${version})`);
+  console.log(`[API] Starting image generation for config ${name} (v${version})`);
   const generationStart = Date.now();
   
   try {
     // Step 1: Load configuration
-    console.log(`[API] Loading configuration ${index}...`);
-    const config = await loadConfig(index);
+    console.log(`[API] Loading configuration ${name}...`);
+    const config = await loadConfig(name);
     const icsUrlDisplay = config.icsUrl ? `"${config.icsUrl}"` : 'none';
     console.log(`[API] Configuration loaded: template="${config.template}", icsUrl=${icsUrlDisplay}`);
     console.log(`[API] Image settings: ${config.width}x${config.height}, ${config.imageType}, grayscale=${config.grayscale}, bitDepth=${config.bitDepth}, rotate=${config.rotate}°`);
@@ -111,7 +111,7 @@ async function generateCalendarImage(index, options = {}) {
           expandRecurringTo: config.expandRecurringTo,
           timezone: config.timezone
         }),
-        fetchExtraDataForConfig(config, index)
+        fetchExtraDataForConfig(config, name)
       ]);
       
       fetchDuration = Date.now() - startFetch;
@@ -137,7 +137,7 @@ async function generateCalendarImage(index, options = {}) {
       }
     } else {
       console.log(`[API] No icsUrl configured, skipping calendar fetch...`);
-      extraData = await fetchExtraDataForConfig(config, index);
+      extraData = await fetchExtraDataForConfig(config, name);
       fetchDuration = Date.now() - startFetch;
       console.log(`[API] Skipped calendar fetch in ${fetchDuration}ms (no icsUrl)`);
     }
@@ -178,7 +178,7 @@ async function generateCalendarImage(index, options = {}) {
 
     // Step 5: Calculate CRC32 and check if it changed
     const newCRC32 = calculateCRC32(result.buffer);
-    const oldMetadata = await getCacheMetadata(index);
+    const oldMetadata = await getCacheMetadata(name);
     const crc32Changed = !oldMetadata || oldMetadata.crc32 !== newCRC32;
     const generationDuration = (Date.now() - generationStart) / 1000; // Convert to seconds
 
@@ -187,7 +187,7 @@ async function generateCalendarImage(index, options = {}) {
                               trigger === 'boot' ? EVENT_SUBTYPES.BOOT :
                               EVENT_SUBTYPES.ON_DEMAND;
     
-    await logGeneration(index, generationSubtype, {
+    await logGeneration(name, generationSubtype, {
       crc32: newCRC32,
       previousCrc32: oldMetadata ? oldMetadata.crc32 : null,
       changed: crc32Changed,
@@ -201,7 +201,7 @@ async function generateCalendarImage(index, options = {}) {
     if (saveCache) {
       try {
         const generationDurationMs = Date.now() - generationStart;
-        await saveCachedImage(index, result.buffer, result.contentType, config.imageType, {
+        await saveCachedImage(name, result.buffer, result.contentType, config.imageType, {
           trigger,
           generationDuration: generationDurationMs
         });
@@ -218,7 +218,7 @@ async function generateCalendarImage(index, options = {}) {
     const errorMessage = error.message || 'Unknown error';
     
     // Log error to timeline
-    await logError(index, EVENT_SUBTYPES.GENERATION_ERROR, {
+    await logError(name, EVENT_SUBTYPES.GENERATION_ERROR, {
       error: errorMessage,
       trigger,
       duration: (Date.now() - generationStart) / 1000
@@ -226,18 +226,18 @@ async function generateCalendarImage(index, options = {}) {
     
     // Configuration errors (404 - Not Found)
     if (errorMessage.includes('Configuration file not found')) {
-      console.error(`[API] Configuration ${index} not found: ${errorMessage}`);
-      const notFoundError = new Error(`Configuration ${index} not found`);
+      console.error(`[API] Configuration ${name} not found: ${errorMessage}`);
+      const notFoundError = new Error(`Configuration ${name} not found`);
       notFoundError.statusCode = 404;
       notFoundError.details = errorMessage;
       throw notFoundError;
     }
 
     // Invalid configuration (400 - Bad Request)
-    if (errorMessage.includes('Invalid config index') || 
+    if (errorMessage.includes('Invalid config') || 
         errorMessage.includes('Configuration validation failed')) {
-      console.error(`[API] Invalid configuration ${index}: ${errorMessage}`);
-      const badRequestError = new Error(`Invalid configuration ${index}`);
+      console.error(`[API] Invalid configuration ${name}: ${errorMessage}`);
+      const badRequestError = new Error(`Invalid configuration ${name}`);
       badRequestError.statusCode = 400;
       badRequestError.details = errorMessage;
       throw badRequestError;
@@ -283,7 +283,7 @@ async function generateCalendarImage(index, options = {}) {
 }
 
 /**
- * Express middleware handler for /api/:index.:ext endpoint
+ * Express middleware handler for /api/:name.:ext endpoint
  * Returns cached image if available, otherwise generates fresh
  * Validates that requested extension matches config imageType
  * 
@@ -293,18 +293,25 @@ async function generateCalendarImage(index, options = {}) {
  */
 async function handleImageRequest(req, res, next) {
   const requestStartTime = Date.now(); // Track request start time
-  const indexParam = req.params.index;
+  const nameParam = decodeURIComponent(req.params.name);
   const requestedExt = req.params.ext;
   
-  // Validate index parameter
-  const index = parseInt(indexParam, 10);
-  
-  if (isNaN(index) || index < 0 || indexParam !== index.toString()) {
-    console.warn(`[API] Invalid index parameter: "${indexParam}"`);
+  // Validate name parameter
+  let name;
+  try {
+    // Support both numeric (legacy) and string names
+    // If it's a numeric string, parse it as a number for backward compatibility
+    if (/^\d+$/.test(nameParam)) {
+      name = parseInt(nameParam, 10);
+    } else {
+      name = nameParam;
+    }
+  } catch (error) {
+    console.warn(`[API] Invalid name parameter: "${nameParam}"`);
     return res.status(400).json({
       error: 'Bad Request',
-      message: 'Invalid index parameter',
-      details: 'Index must be a non-negative integer (0, 1, 2, etc.)'
+      message: 'Invalid name parameter',
+      details: 'Name must be a valid config filename (without .json extension)'
     });
   }
 
@@ -312,18 +319,18 @@ async function handleImageRequest(req, res, next) {
     // Check if config has preGenerateInterval to determine caching behavior
     let config;
     try {
-      config = await loadConfig(index);
+      config = await loadConfig(name);
     } catch (configError) {
       // Re-throw with appropriate status code
       const errorMessage = configError.message || 'Unknown error';
       if (errorMessage.includes('Configuration file not found')) {
-        const notFoundError = new Error(`Configuration ${index} not found`);
+        const notFoundError = new Error(`Configuration ${name} not found`);
         notFoundError.statusCode = 404;
         notFoundError.details = errorMessage;
         throw notFoundError;
-      } else if (errorMessage.includes('Invalid config index') || 
+      } else if (errorMessage.includes('Invalid config') || 
                  errorMessage.includes('Configuration validation failed')) {
-        const badRequestError = new Error(`Invalid configuration ${index}`);
+        const badRequestError = new Error(`Invalid configuration ${name}`);
         badRequestError.statusCode = 400;
         badRequestError.details = errorMessage;
         throw badRequestError;
@@ -335,11 +342,11 @@ async function handleImageRequest(req, res, next) {
     
     // Validate requested extension matches config imageType
     if (requestedExt !== config.imageType) {
-      console.warn(`[API] Extension mismatch for config ${index}: requested .${requestedExt}, config has ${config.imageType}`);
+      console.warn(`[API] Extension mismatch for config ${name}: requested .${requestedExt}, config has ${config.imageType}`);
       return res.status(404).json({
         error: 'Not Found',
-        message: `Config ${index} serves ${config.imageType} images, not ${requestedExt}`,
-        details: `Use /api/${index}.${config.imageType} instead`
+        message: `Config ${name} serves ${config.imageType} images, not ${requestedExt}`,
+        details: `Use /api/${encodeURIComponent(String(name))}.${config.imageType} instead`
       });
     }
     
@@ -347,8 +354,8 @@ async function handleImageRequest(req, res, next) {
     
     if (useCache) {
       // Try to load cached image first
-      console.log(`[API] Checking cache for config ${index}...`);
-      const cached = await loadCachedImage(index);
+      console.log(`[API] Checking cache for config ${name}...`);
+      const cached = await loadCachedImage(name);
       
       if (cached) {
         // Serve cached image IMMEDIATELY
@@ -358,14 +365,14 @@ async function handleImageRequest(req, res, next) {
         res.set('X-Generated-At', cached.metadata.generatedAt);
         res.set('X-CRC32', cached.metadata.crc32 || calculateCRC32(cached.buffer));
         
-        console.log(`[API] Serving cached image for config ${index} (${cached.buffer.length} bytes)`);
+        console.log(`[API] Serving cached image for config ${name} (${cached.buffer.length} bytes)`);
         res.send(cached.buffer);
         
         // Log download event to timeline AFTER response is sent (fire-and-forget)
         const clientIp = req.ip || req.connection.remoteAddress || 'unknown';
         const userAgent = req.get('user-agent') || 'unknown';
         const duration = Date.now() - requestStartTime;
-        logDownload(index, EVENT_SUBTYPES.IMAGE, {
+        logDownload(name, EVENT_SUBTYPES.IMAGE, {
           ip: clientIp,
           userAgent,
           cacheHit: true,
@@ -377,12 +384,12 @@ async function handleImageRequest(req, res, next) {
         return;
       }
     } else {
-      console.log(`[API] Config ${index} has no preGenerateInterval, generating fresh image...`);
+      console.log(`[API] Config ${name} has no preGenerateInterval, generating fresh image...`);
     }
     
     // No cache available or no preGenerateInterval, generate fresh image
-    console.log(`[API] Generating fresh image for config ${index}...`);
-    const result = await generateCalendarImage(index, { 
+    console.log(`[API] Generating fresh image for config ${name}...`);
+    const result = await generateCalendarImage(name, { 
       saveCache: useCache,
       trigger: useCache ? 'cache_miss' : 'on_demand'
     });
@@ -396,7 +403,7 @@ async function handleImageRequest(req, res, next) {
     res.set('X-Cache', useCache ? 'MISS' : 'DISABLED');
     res.set('X-CRC32', crc32);
     
-    console.log(`[API] Successfully returning fresh image for config ${index} (${result.buffer.length} bytes)`);
+    console.log(`[API] Successfully returning fresh image for config ${name} (${result.buffer.length} bytes)`);
     
     // Send binary data IMMEDIATELY
     res.send(result.buffer);
@@ -405,7 +412,7 @@ async function handleImageRequest(req, res, next) {
     const clientIp = req.ip || req.connection.remoteAddress || 'unknown';
     const userAgent = req.get('user-agent') || 'unknown';
     const duration = Date.now() - requestStartTime;
-    logDownload(index, EVENT_SUBTYPES.IMAGE, {
+    logDownload(name, EVENT_SUBTYPES.IMAGE, {
       ip: clientIp,
       userAgent,
       cacheHit: false,
@@ -429,7 +436,7 @@ async function handleImageRequest(req, res, next) {
 }
 
 /**
- * Express middleware handler for /api/:index/fresh.:ext endpoint
+ * Express middleware handler for /api/:name/fresh.:ext endpoint
  * Always generates a fresh image, bypassing cache
  * Validates that requested extension matches config imageType
  * 
@@ -438,18 +445,24 @@ async function handleImageRequest(req, res, next) {
  * @param {Function} next - Express next middleware function
  */
 async function handleFreshImageRequest(req, res, next) {
-  const indexParam = req.params.index;
+  const nameParam = decodeURIComponent(req.params.name);
   const requestedExt = req.params.ext;
   
-  // Validate index parameter
-  const index = parseInt(indexParam, 10);
-  
-  if (isNaN(index) || index < 0 || indexParam !== index.toString()) {
-    console.warn(`[API] Invalid index parameter: "${indexParam}"`);
+  // Validate name parameter
+  let name;
+  try {
+    // Support both numeric (legacy) and string names
+    if (/^\d+$/.test(nameParam)) {
+      name = parseInt(nameParam, 10);
+    } else {
+      name = nameParam;
+    }
+  } catch (error) {
+    console.warn(`[API] Invalid name parameter: "${nameParam}"`);
     return res.status(400).json({
       error: 'Bad Request',
-      message: 'Invalid index parameter',
-      details: 'Index must be a non-negative integer (0, 1, 2, etc.)'
+      message: 'Invalid name parameter',
+      details: 'Name must be a valid config filename (without .json extension)'
     });
   }
 
@@ -457,18 +470,18 @@ async function handleFreshImageRequest(req, res, next) {
     // Load config to validate extension
     let config;
     try {
-      config = await loadConfig(index);
+      config = await loadConfig(name);
     } catch (configError) {
       // Re-throw with appropriate status code
       const errorMessage = configError.message || 'Unknown error';
       if (errorMessage.includes('Configuration file not found')) {
-        const notFoundError = new Error(`Configuration ${index} not found`);
+        const notFoundError = new Error(`Configuration ${name} not found`);
         notFoundError.statusCode = 404;
         notFoundError.details = errorMessage;
         throw notFoundError;
-      } else if (errorMessage.includes('Invalid config index') || 
+      } else if (errorMessage.includes('Invalid config') || 
                  errorMessage.includes('Configuration validation failed')) {
-        const badRequestError = new Error(`Invalid configuration ${index}`);
+        const badRequestError = new Error(`Invalid configuration ${name}`);
         badRequestError.statusCode = 400;
         badRequestError.details = errorMessage;
         throw badRequestError;
@@ -480,18 +493,18 @@ async function handleFreshImageRequest(req, res, next) {
     
     // Validate requested extension matches config imageType
     if (requestedExt !== config.imageType) {
-      console.warn(`[API] Extension mismatch for config ${index}: requested .${requestedExt}, config has ${config.imageType}`);
+      console.warn(`[API] Extension mismatch for config ${name}: requested .${requestedExt}, config has ${config.imageType}`);
       return res.status(404).json({
         error: 'Not Found',
-        message: `Config ${index} serves ${config.imageType} images, not ${requestedExt}`,
-        details: `Use /api/${index}/fresh.${config.imageType} instead`
+        message: `Config ${name} serves ${config.imageType} images, not ${requestedExt}`,
+        details: `Use /api/${encodeURIComponent(String(name))}/fresh.${config.imageType} instead`
       });
     }
     
-    console.log(`[API] Forcing fresh generation for config ${index}...`);
+    console.log(`[API] Forcing fresh generation for config ${name}...`);
     
     // Generate fresh image and save to cache
-    const result = await generateCalendarImage(index, { 
+    const result = await generateCalendarImage(name, { 
       saveCache: true,
       trigger: 'fresh'
     });
@@ -505,7 +518,7 @@ async function handleFreshImageRequest(req, res, next) {
     res.set('X-Cache', 'BYPASS');
     res.set('X-CRC32', crc32);
     
-    console.log(`[API] Successfully returning fresh image for config ${index} (${result.buffer.length} bytes)`);
+    console.log(`[API] Successfully returning fresh image for config ${name} (${result.buffer.length} bytes)`);
     
     // Send binary data
     res.send(result.buffer);
@@ -540,7 +553,7 @@ function getErrorName(statusCode) {
 }
 
 /**
- * Express middleware handler for /api/:index.:ext.crc32 endpoint
+ * Express middleware handler for /api/:name.:ext.crc32 endpoint
  * Returns CRC32 checksum of the image (cached or generated)
  * Validates that requested extension matches config imageType
  * 
@@ -550,41 +563,47 @@ function getErrorName(statusCode) {
  */
 async function handleCRC32Request(req, res, next) {
   const requestStartTime = Date.now(); // Track request start time
-  const indexParam = req.params.index;
+  const nameParam = decodeURIComponent(req.params.name);
   const requestedExt = req.params.ext;
   
-  // Validate index parameter
-  const index = parseInt(indexParam, 10);
-  
-  if (isNaN(index) || index < 0 || indexParam !== index.toString()) {
-    console.warn(`[API] Invalid index parameter: "${indexParam}"`);
-    return res.status(400).send('Invalid index parameter');
+  // Validate name parameter
+  let name;
+  try {
+    // Support both numeric (legacy) and string names
+    if (/^\d+$/.test(nameParam)) {
+      name = parseInt(nameParam, 10);
+    } else {
+      name = nameParam;
+    }
+  } catch (error) {
+    console.warn(`[API] Invalid name parameter: "${nameParam}"`);
+    return res.status(400).send('Invalid name parameter');
   }
 
   try {
     // Load config to validate extension
-    const config = await loadConfig(index);
+    const config = await loadConfig(name);
     
     // Validate requested extension matches config imageType
     if (requestedExt !== config.imageType) {
-      console.warn(`[API] Extension mismatch for config ${index}: requested .${requestedExt}, config has ${config.imageType}`);
-      return res.status(404).send(`Config ${index} serves ${config.imageType} images, not ${requestedExt}`);
+      console.warn(`[API] Extension mismatch for config ${name}: requested .${requestedExt}, config has ${config.imageType}`);
+      return res.status(404).send(`Config ${name} serves ${config.imageType} images, not ${requestedExt}`);
     }
     
     // Try to load cached metadata first
-    console.log(`[API] Checking CRC32 for config ${index}...`);
-    const metadata = await getCacheMetadata(index);
+    console.log(`[API] Checking CRC32 for config ${name}...`);
+    const metadata = await getCacheMetadata(name);
     
     if (metadata && metadata.crc32) {
       // Return cached CRC32 IMMEDIATELY (don't wait for logging)
-      console.log(`[API] Returning cached CRC32 for config ${index}: ${metadata.crc32}`);
+      console.log(`[API] Returning cached CRC32 for config ${name}: ${metadata.crc32}`);
       res.type('text/plain').send(metadata.crc32);
       
       // Log CRC32 download to timeline AFTER response is sent (fire-and-forget)
       const clientIp = req.ip || req.connection.remoteAddress || 'unknown';
       const userAgent = req.get('user-agent') || 'unknown';
       const duration = Date.now() - requestStartTime;
-      logDownload(index, EVENT_SUBTYPES.CRC32, {
+      logDownload(name, EVENT_SUBTYPES.CRC32, {
         ip: clientIp,
         userAgent,
         crc32: metadata.crc32,
@@ -596,8 +615,8 @@ async function handleCRC32Request(req, res, next) {
     }
     
     // No cache or no CRC32 in metadata, generate fresh image
-    console.log(`[API] No cached CRC32 for config ${index}, generating fresh image...`);
-    const result = await generateCalendarImage(index, { 
+    console.log(`[API] No cached CRC32 for config ${name}, generating fresh image...`);
+    const result = await generateCalendarImage(name, { 
       saveCache: true,
       trigger: 'crc32_check'
     });
@@ -606,14 +625,14 @@ async function handleCRC32Request(req, res, next) {
     const crc32 = calculateCRC32(result.buffer);
     
     // Return CRC32 IMMEDIATELY
-    console.log(`[API] Returning fresh CRC32 for config ${index}: ${crc32}`);
+    console.log(`[API] Returning fresh CRC32 for config ${name}: ${crc32}`);
     res.type('text/plain').send(crc32);
     
     // Log CRC32 download to timeline AFTER response is sent (fire-and-forget)
     const clientIp = req.ip || req.connection.remoteAddress || 'unknown';
     const userAgent = req.get('user-agent') || 'unknown';
     const duration = Date.now() - requestStartTime;
-    logDownload(index, EVENT_SUBTYPES.CRC32, {
+    logDownload(name, EVENT_SUBTYPES.CRC32, {
       ip: clientIp,
       userAgent,
       crc32,

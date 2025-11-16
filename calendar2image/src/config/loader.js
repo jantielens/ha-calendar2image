@@ -1,6 +1,7 @@
 const fs = require('fs').promises;
 const path = require('path');
 const { validateConfig, applyDefaults } = require('./schema');
+const { sanitizeConfigName } = require('../utils/sanitize');
 
 // Configuration directory
 // Home Assistant mounts addon_config at /config inside the container
@@ -15,18 +16,32 @@ if (HOST_CONFIG_PATH && HOST_CONFIG_PATH !== CONFIG_DIR) {
 
 
 /**
- * Loads a single configuration file by index
- * @param {number} index - Configuration index (0, 1, 2, etc.)
+ * Loads a single configuration file by name
+ * @param {string|number} name - Configuration name (e.g., 'kitchen', 'vacation-2024', or numeric like 0, 1, 2)
  * @param {string} [configDir] - Optional custom config directory
  * @returns {Promise<Object>} Configuration object with defaults applied
  * @throws {Error} If config file doesn't exist, is invalid, or fails validation
  */
-async function loadConfig(index, configDir = CONFIG_DIR) {
-  if (typeof index !== 'number' || index < 0) {
-    throw new Error(`Invalid config index: ${index}. Must be a non-negative number`);
+async function loadConfig(name, configDir = CONFIG_DIR) {
+  // Support both numeric (legacy) and string names
+  let configName;
+  if (typeof name === 'number') {
+    if (name < 0) {
+      throw new Error(`Invalid config index: ${name}. Must be a non-negative number`);
+    }
+    configName = name.toString();
+  } else if (typeof name === 'string') {
+    // Sanitize the name to prevent path traversal
+    try {
+      configName = sanitizeConfigName(name);
+    } catch (error) {
+      throw new Error(`Invalid config name: ${error.message}`);
+    }
+  } else {
+    throw new Error(`Invalid config name: ${name}. Must be a string or non-negative number`);
   }
 
-  const configPath = path.join(configDir, `${index}.json`);
+  const configPath = path.join(configDir, `${configName}.json`);
   
   let configData;
   try {
@@ -62,7 +77,7 @@ async function loadConfig(index, configDir = CONFIG_DIR) {
 /**
  * Loads all configuration files from the config directory
  * @param {string} [configDir] - Optional custom config directory
- * @returns {Promise<Array>} Array of objects with index and config
+ * @returns {Promise<Array>} Array of objects with name and config
  * @throws {Error} If config directory doesn't exist or any config is invalid
  */
 async function loadAllConfigs(configDir = CONFIG_DIR) {
@@ -76,23 +91,28 @@ async function loadAllConfigs(configDir = CONFIG_DIR) {
     throw new Error(`Failed to read configuration directory ${configDir}: ${error.message}`);
   }
 
-  // Filter for JSON files matching pattern: 0.json, 1.json, etc.
-  const configFiles = files.filter(file => /^\d+\.json$/.test(file));
+  // Filter for all JSON files (not just numeric ones)
+  const configFiles = files.filter(file => file.endsWith('.json'));
 
   if (configFiles.length === 0) {
-    throw new Error(`No configuration files found in ${configDir}. Expected files like 0.json, 1.json, etc.`);
+    throw new Error(`No configuration files found in ${configDir}. Expected .json files`);
   }
 
   const configs = [];
   const errors = [];
 
   for (const file of configFiles) {
-    const index = parseInt(path.basename(file, '.json'), 10);
+    const name = path.basename(file, '.json');
     try {
-      const config = await loadConfig(index, configDir);
-      configs.push({ index, config });
+      const config = await loadConfig(name, configDir);
+      configs.push({ 
+        name,
+        // Keep 'index' for backward compatibility if the name is numeric
+        index: /^\d+$/.test(name) ? parseInt(name, 10) : undefined,
+        config 
+      });
     } catch (error) {
-      errors.push(`Config ${index}: ${error.message}`);
+      errors.push(`Config ${name}: ${error.message}`);
     }
   }
 
@@ -100,6 +120,23 @@ async function loadAllConfigs(configDir = CONFIG_DIR) {
   if (errors.length > 0) {
     throw new Error(`Failed to load configurations:\n${errors.join('\n')}`);
   }
+
+  // Sort configs: numeric first (by number), then alphabetic
+  configs.sort((a, b) => {
+    const aIsNumeric = typeof a.index === 'number';
+    const bIsNumeric = typeof b.index === 'number';
+    
+    if (aIsNumeric && bIsNumeric) {
+      return a.index - b.index;
+    } else if (aIsNumeric) {
+      return -1; // a comes first
+    } else if (bIsNumeric) {
+      return 1; // b comes first
+    } else {
+      // Both are non-numeric, sort alphabetically
+      return a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' });
+    }
+  });
 
   return configs;
 }
