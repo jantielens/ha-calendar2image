@@ -91,6 +91,7 @@ Each configuration file should contain:
   - **⚠️ Important**: Only [IANA timezone database](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones) names are accepted. 
   - Timezone abbreviations like `"CET"`, `"EST"`, `"PST"` are **NOT valid** and will cause validation errors.
   - Use the full timezone name from the IANA database (e.g., use `"Europe/Brussels"` instead of `"CET"`, `"America/New_York"` instead of `"EST"`)
+  - **Windows TZIDs in ICS**: If the incoming ICS data uses Microsoft/Windows timezone IDs (e.g., `"Romance Standard Time"`), they are normalized to IANA equivalents. Unknown Windows IDs fall back to UTC with a warning in the logs.
 - **extraDataUrl** (string or array, optional): URL(s) to fetch additional JSON data for templates. See [Extra Data Guide](EXTRA-DATA.md) for details.
   - **String format** (simple): Single URL
   - **Array format** (advanced): Array of data source objects with per-source configuration
