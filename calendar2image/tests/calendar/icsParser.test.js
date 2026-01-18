@@ -137,6 +137,59 @@ END:VCALENDAR`;
       expect(events[0].timezone).toBe('America/New_York');
     });
 
+    it('should normalize Windows TZIDs to IANA timezones', () => {
+      const icsData = `BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Test//Test//EN
+BEGIN:VTIMEZONE
+TZID:Romance Standard Time
+BEGIN:STANDARD
+DTSTART:16010101T030000
+TZOFFSETFROM:+0200
+TZOFFSETTO:+0100
+RRULE:FREQ=YEARLY;INTERVAL=1;BYDAY=-1SU;BYMONTH=10
+END:STANDARD
+BEGIN:DAYLIGHT
+DTSTART:16010101T020000
+TZOFFSETFROM:+0100
+TZOFFSETTO:+0200
+RRULE:FREQ=YEARLY;INTERVAL=1;BYDAY=-1SU;BYMONTH=3
+END:DAYLIGHT
+END:VTIMEZONE
+BEGIN:VEVENT
+UID:tz-event-windows
+SUMMARY:Event with Windows TZID
+DTSTART;TZID=Romance Standard Time:20251020T090000
+DTEND;TZID=Romance Standard Time:20251020T170000
+END:VEVENT
+END:VCALENDAR`;
+
+      const events = parseICS(icsData);
+
+      expect(events).toHaveLength(1);
+      expect(events[0].summary).toBe('Event with Windows TZID');
+      expect(events[0].timezone).toBe('Europe/Paris');
+    });
+
+    it('should fall back to UTC for unknown Windows TZIDs', () => {
+      const icsData = `BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Test//Test//EN
+BEGIN:VEVENT
+UID:tz-event-unknown
+SUMMARY:Event with Unknown TZID
+DTSTART;TZID=Unknown Standard Time:20251020T090000
+DTEND;TZID=Unknown Standard Time:20251020T170000
+END:VEVENT
+END:VCALENDAR`;
+
+      const events = parseICS(icsData);
+
+      expect(events).toHaveLength(1);
+      expect(events[0].summary).toBe('Event with Unknown TZID');
+      expect(events[0].timezone).toBe('UTC');
+    });
+
     it('should handle all-day events', () => {
       const icsData = `BEGIN:VCALENDAR
 VERSION:2.0

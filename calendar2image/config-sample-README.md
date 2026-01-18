@@ -46,7 +46,7 @@ Configuration files must be named with numeric IDs:
 | `expandRecurringTo` | integer | `31` | Any positive integer | Number of days in the future to expand recurring events |
 | `preGenerateInterval` | string | (none) | Cron expression | Schedule for automatic pre-generation (e.g., `"*/5 * * * *"` for every 5 minutes). Runs in configured timezone. |
 | `locale` | string | `"en-US"` | BCP 47 locale code | Locale for date/time formatting (e.g., `"de-DE"`, `"fr-FR"`) |
-| `timezone` | string | (none) | IANA timezone name | Timezone for event times AND scheduling (e.g., `"Europe/Berlin"`, `"America/New_York"`) |
+| `timezone` | string | (none) | IANA timezone name | Timezone for event times AND scheduling (e.g., `"Europe/Berlin"`, `"America/New_York"`). Windows TZIDs in ICS inputs (e.g., `"Romance Standard Time"`) are normalized to IANA; unknown Windows IDs fall back to UTC. |
 
 ## Examples
 

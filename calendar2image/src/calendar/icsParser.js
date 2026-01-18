@@ -1,4 +1,5 @@
 const ICAL = require('ical.js');
+const { normalizeWindowsTimezones } = require('./windowsTimezones');
 
 /**
  * Converts a date to a specific timezone and returns ISO string
@@ -53,7 +54,8 @@ function parseICS(icsData, options = {}) {
 
   let jcalData;
   try {
-    jcalData = ICAL.parse(icsData);
+    const normalizedIcsData = normalizeWindowsTimezones(icsData);
+    jcalData = ICAL.parse(normalizedIcsData);
   } catch (error) {
     throw new Error(`Failed to parse ICS data: ${error.message}`);
   }
