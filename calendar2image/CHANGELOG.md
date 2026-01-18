@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.15.0] - 2026-01-18
+
+### Added
+- Windows timezone normalization for ICS inputs using a full Windows-to-IANA mapping table
+
+### Fixed
+- ICS parsing now handles Microsoft TZIDs (e.g., "Romance Standard Time") by mapping to IANA and falling back to UTC when unknown
+
 ## [0.14.0] - 2025-01-19
 
 ### Added
