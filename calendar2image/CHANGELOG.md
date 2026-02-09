@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.15.1] - 2026-02-09
+
+### Fixed
+- Add amd64 build support so the add-on can install on x86_64/Proxmox hosts
+
 ## [0.15.0] - 2026-01-18
 
 ### Added
@@ -235,9 +240,9 @@ Sharp's built-in `gamma()` function is optimized for image resize operations and
 
 ### Changed
 - **Timezone Configuration - Breaking Change for Deprecated Abbreviations**
-  - ⚠️ **Action Required**: If you use timezone abbreviations like `"CET"`, `"EST"`, `"PST"`, etc., update your configuration to use proper IANA timezone names
-  - Replace `"CET"` with region-based names like `"Europe/Brussels"`, `"Europe/Berlin"`, etc.
-  - Replace `"EST"` with `"America/New_York"`, `"PST"` with `"America/Los_Angeles"`, etc.
+  - ⚠️ **Action Required**: If you use timezone abbreviations like "CET", "EST", "PST", etc., update your configuration to use proper IANA timezone names
+  - Replace "CET" with region-based names like "Europe/Brussels", "Europe/Berlin", etc.
+  - Replace "EST" with "America/New_York", "PST" with "America/Los_Angeles", etc.
   - See [IANA Timezone Database](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones) for valid timezone names
 
 ### Fixed
@@ -288,11 +293,6 @@ Sharp's built-in `gamma()` function is optimized for image resize operations and
   - CRC32 blocks now properly group consecutive events with the same image version
   - Non-CRC32 events (ICS, config, system, errors) continue to display in chronological order
 
-### Technical Details
-- ExtraData cache hits and stale serves no longer create timeline events
-- Timeline page CRC32 grouping now works correctly without interruptions from cache events
-- Console logging still provides full visibility into cache behavior for debugging
-
 ## [0.8.6] - 2025-11-08
 
 ### Added
@@ -310,7 +310,7 @@ Sharp's built-in `gamma()` function is optimized for image resize operations and
 ### Technical Details
 - ExtraData cache files stored in cache directory with MD5-hashed filenames
 - Background refresh prevents duplicate fetches with tracking
-- Comprehensive logging: cache hits, stale serves, refreshes, and errors
+- Comprehensive logging: cache hits, misses, stale serves, refreshes, and errors
 - Timeline events: `EXTRA_DATA_FETCH`, `EXTRA_DATA_CACHE_HIT`, `EXTRA_DATA_STALE_SERVE`, `EXTRA_DATA_REFRESH`, `EXTRA_DATA_ERROR`
 
 ## [0.8.5] - 2025-11-08
