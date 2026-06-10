@@ -19,5 +19,11 @@ export TEMPLATES_DIR=/config/templates
 export ADDON_SLUG=${ADDON_SLUG:-calendar2image}
 export HOST_CONFIG_PATH=${HOST_CONFIG_PATH:-/addon_configs/${ADDON_SLUG}}
 
+# Reclaim disk space from leftover Chrome profile directories before starting.
+# Older versions could leak `puppeteer_dev_chrome_profile-*` dirs into /tmp,
+# accumulating to many GB. This clears them on every (re)start as a safety net.
+echo "[INFO] Cleaning up stale Chrome profile directories in /tmp..."
+rm -rf /tmp/puppeteer_dev_chrome_profile-* /tmp/c2i-chrome-profile-* 2>/dev/null || true
+
 cd /app
 exec node src/index.js

@@ -8,6 +8,7 @@
  */
 
 const { generateImage } = require('./index');
+const { closeBrowser } = require('./browser');
 const { renderTemplate } = require('../templates');
 const { getCalendarEvents } = require('../calendar');
 const { loadConfig } = require('../config');
@@ -164,6 +165,10 @@ async function generateCalendarImageInWorker(name, trigger = 'unknown') {
       eventCount: events.length
     });
     
+    // Close the browser to release Chrome and remove its temporary profile
+    // directory before exiting (the process 'exit' handler is a backstop).
+    await closeBrowser();
+
     // Exit cleanly
     process.exit(0);
     
@@ -191,6 +196,10 @@ async function generateCalendarImageInWorker(name, trigger = 'unknown') {
       duration: duration
     });
     
+    // Close the browser to release Chrome and remove its temporary profile
+    // directory before exiting (the process 'exit' handler is a backstop).
+    await closeBrowser();
+
     // Exit with error
     process.exit(1);
   }
