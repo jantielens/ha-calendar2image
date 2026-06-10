@@ -159,7 +159,16 @@ async function launchBrowser() {
 
   console.log('Launch options:', JSON.stringify(launchOptions, null, 2));
 
-  const browser = await puppeteer.launch(launchOptions);
+  let browser;
+  try {
+    browser = await puppeteer.launch(launchOptions);
+  } catch (error) {
+    // If launch fails (bad Chromium path, sandbox error, etc.), Chromium may
+    // have already created the profile dir. Remove it before rethrowing so
+    // repeated launch failures don't leak directories into /tmp.
+    cleanupUserDataDirSync();
+    throw error;
+  }
 
   console.log('Puppeteer browser launched successfully');
 
