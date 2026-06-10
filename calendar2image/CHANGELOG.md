@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.15.2] - 2026-06-10
+
+### Fixed
+- Prevent unbounded disk growth from leaked Puppeteer Chrome profile directories in `/tmp`
+  - Image generation now uses a controlled, uniquely named `userDataDir` and removes it after each render
+  - Browser is closed before the image worker process exits, and a process `exit` safety net synchronously removes the profile directory even if the browser does not close cleanly
+  - Stale `puppeteer_dev_chrome_profile-*` and `c2i-chrome-profile-*` directories are reaped on startup and on container (re)start to reclaim space from previous versions
+
 ## [0.15.1] - 2026-02-09
 
 ### Fixed

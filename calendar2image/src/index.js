@@ -6,6 +6,7 @@ const { handleConfigPage } = require('./api/configHandler');
 const { handleTimelinePage } = require('./api/timelineHandler');
 const { ensureCacheDir } = require('./cache');
 const { initializeScheduler, generateAllImagesNow, stopAllSchedules } = require('./scheduler');
+const { reapStaleProfiles } = require('./image/browser');
 const { getVersion } = require('./utils/version');
 
 const app = express();
@@ -148,6 +149,11 @@ const server = app.listen(PORT, '0.0.0.0', async () => {
     console.log('='.repeat(50));
     
     try {
+        // Reap stale Chrome profile directories left behind by previous runs
+        // or older add-on versions (prevents unbounded /tmp growth).
+        console.log('Reaping stale Chrome profile directories...');
+        reapStaleProfiles();
+
         // Initialize cache directory
         console.log('Initializing cache system...');
         await ensureCacheDir();
